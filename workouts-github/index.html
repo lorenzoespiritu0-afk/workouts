@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Workouts</title>
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#14171F">
+<meta name="theme-color" content="#000000">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -16,23 +16,21 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px);
   padding-bottom:env(safe-area-inset-bottom,0px);
-  --bg:#EDEFF2;--surface:#FFFFFF;--ink:#14171F;--muted:#677080;--line:#D9DDE3;--chip:#E2E5EA;
-  --run:#2F6BFF;--walk:#7A5AF8;--ride:#0E9F6E;--lift:#E39B00;--climb:#D9467E;--hike:#9A6B2F;--hang:#C2410C;--other:#5E6675;
-  --gold:#E2A400;--silver:#9AA3B0;--bronze:#B8733A;--xp:#7A5AF8;
-  --num:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
-  --font:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --bg:#000000;--surface:#141416;--ink:#F5F5F7;--muted:#8E8E93;--line:#26272B;--chip:#1E1F23;
+  --run:#4F8DFF;--walk:#A58BFF;--ride:#2FC48D;--lift:#E8A93A;--climb:#FF5C8A;--hike:#C99A5B;--hang:#FF8A4C;--other:#8E8E93;
+  --gold:#F4B63F;--silver:#C0C6CF;--bronze:#C8834B;--xp:#F4B63F;--accent:#F4B63F;--accent2:#5AC8FA;
+  --num:-apple-system,BlinkMacSystemFont,"SF Pro Display","Inter",system-ui,sans-serif;
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter",system-ui,sans-serif;
 }
 *,*::before,*::after{box-sizing:inherit}
-@media (prefers-color-scheme:dark){
-  :root:not([data-theme="light"]){--bg:#0F1218;--surface:#191D26;--ink:#F1F3F7;--muted:#9AA1AE;--line:#2A303C;--chip:#232835}
-}
-:root[data-theme="dark"]{--bg:#0F1218;--surface:#191D26;--ink:#F1F3F7;--muted:#9AA1AE;--line:#2A303C;--chip:#232835}
+
+
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);-webkit-tap-highlight-color:transparent}
 button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0}
@@ -294,6 +292,85 @@ select{-webkit-appearance:none;appearance:none;background-image:linear-gradient(
 .gl input,.gl select{padding:10px 8px;font-size:15px}
 .wrow{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
 .wrow:last-child{border-bottom:0}
+
+/* ===== elite theme ===== */
+html,body{background:#000}
+body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;font-feature-settings:"tnum" 1;letter-spacing:-.005em}
+::selection{background:rgba(244,182,63,.35)}
+h1{font-family:var(--num);font-weight:800;font-size:2.55rem;letter-spacing:-.04em;line-height:1}
+h2.sec{font-family:var(--num);font-weight:700;font-size:1.3rem;letter-spacing:-.02em;margin:30px 0 12px}
+h2.sec i{width:8px;height:8px;border-radius:50%}
+.sheet h3,.ins h3{font-family:var(--num);font-weight:700;letter-spacing:-.025em}
+.sheet h3{font-size:1.65rem}.ins h3{font-size:1.15rem}
+.sheet h4{font-family:var(--font);font-weight:600;font-size:.95rem;color:var(--muted);letter-spacing:0}
+.n b,.tot b,.rec .v,.bigv,.medal b,.lvnum b,.rpev,.card .nums b,.segcard .best,.plc .cn,.trow .tv,.liftrow b,.celeb .big{font-family:var(--num);font-weight:700;letter-spacing:-.035em;font-variant-numeric:tabular-nums}
+.n b{font-size:1.35rem}.dstats .n b{font-size:clamp(1.02rem,5.1vw,1.4rem)}.card .n b{font-size:clamp(1.1rem,5.4vw,1.35rem)}
+.acts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.actbtn{background:#1E1F23;border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:12px 10px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:8px;justify-content:flex-start}
+.actbtn i{width:8px;height:8px;border-radius:50%;background:var(--c);box-shadow:0 0 10px var(--c)}
+.tot b{font-size:clamp(1.5rem,7vw,1.9rem)}
+.rec .v{font-size:clamp(1.45rem,6.8vw,2.1rem)}
+.bigv{font-size:2.7rem}
+.n span,.tot span,.rec .l,.rec .s,.xpinfo,.hint,.sub{color:var(--muted)}
+.unit{opacity:.55;font-weight:600}
+.card,.tot,.rec,.ins,.tlist,.lifts,.chart,.medal,.badge,.segcard,.plc,.empty,.level,.cal,.banner{background:var(--surface);border:1px solid rgba(255,255,255,.06);box-shadow:none}
+.card{border-radius:20px;padding:16px 18px 16px 20px}
+.card::before{width:3px;top:16px;bottom:16px;border-radius:0 3px 3px 0}
+.card .title{font-weight:600;letter-spacing:-.01em}
+.month{font-family:var(--font);font-weight:600;font-size:.82rem;color:var(--muted);letter-spacing:.01em;margin:26px 0 10px}
+.chip{background:var(--chip);color:var(--ink);font-weight:600}
+.chip[aria-pressed=true]{background:#F5F5F7;color:#000}
+.seg{background:var(--chip);border-radius:12px;padding:3px}
+.seg button{color:var(--muted);border-radius:9px;font-weight:600}
+.seg button[aria-pressed=true]{background:#2E2F34;color:var(--ink);box-shadow:none}
+.tchip{background:var(--chip);color:var(--ink)}
+.tchip[aria-pressed=true]{background:var(--c);color:var(--ct,#fff)}
+.gchip{background:#2A2B30;color:var(--ink)}
+.gchip[aria-pressed=true]{background:#F5F5F7;color:#000}
+.typepick button{background:var(--chip);color:var(--ink)}
+nav{background:rgba(10,10,12,.72);-webkit-backdrop-filter:saturate(180%) blur(22px);backdrop-filter:saturate(180%) blur(22px);border-top:1px solid rgba(255,255,255,.08)}
+nav .tab{color:#6E6E73}
+nav .tab[aria-current=page]{color:var(--accent)}
+nav .plus{background:var(--accent);color:#000;font-weight:500;box-shadow:0 8px 28px rgba(244,182,63,.28)}
+.lvpill{background:rgba(244,182,63,.1);color:var(--accent);border:1px solid rgba(244,182,63,.35)}
+.link{color:var(--muted)}
+.level{background:radial-gradient(120% 140% at 0% 0%,rgba(244,182,63,.12),transparent 55%),var(--surface)}
+.lvnum{background:conic-gradient(from 220deg,#F4B63F,#FFE7A8,#B9821F,#F4B63F);padding:4px;color:var(--ink)}
+.lvnum>div{background:#000;border-radius:50%;width:100%;height:100%;display:grid;place-items:center;align-content:center}
+.lvnum span{color:var(--muted);opacity:1}
+.lvnum b{color:var(--accent)}
+.rank{font-family:var(--num);font-weight:800;letter-spacing:-.03em}
+.xpbar{background:#26272B;height:8px}
+.xpbar span{background:linear-gradient(90deg,#B9821F,#F4B63F,#FFE7A8)}
+.xpchip{background:var(--accent);color:#000}
+.aw .xp{color:var(--accent)}
+.btn{background:var(--chip);color:var(--ink);font-weight:600}
+.btn.primary{background:#F5F5F7;color:#000}
+.btn.danger{color:#FF453A}
+.addex{border:1.5px dashed #34353A;color:var(--muted)}
+input,textarea,select{background:var(--chip);border:1px solid transparent;color:var(--ink)}
+input:focus,textarea:focus,select:focus{border-color:rgba(244,182,63,.6);outline:none}
+input::placeholder,textarea::placeholder{color:#5C5C61}
+input[type=date],input[type=time]{color-scheme:dark}
+.ex,.gpx,details,.timer,.fb,.newplace,.prob{background:#0B0B0C;border:1px solid rgba(255,255,255,.05)}
+.ex input,.newplace input,.newplace select,details input,.prob input{background:var(--chip)}
+.sheet{background:#0E0E10;border:1px solid rgba(255,255,255,.08);border-bottom:0;border-radius:28px 28px 0 0;padding-top:12px}
+.sheet::before{content:"";display:block;width:38px;height:5px;border-radius:3px;background:#3A3A3F;margin:0 auto 16px}
+.scrim{background:rgba(0,0,0,.6);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.toast{background:#F5F5F7;color:#000;font-weight:600}
+.trow{border-bottom-color:rgba(255,255,255,.06)}
+.liftrow{border-bottom-color:rgba(255,255,255,.06)}
+.route{background-color:#0B0B0C;background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px)}
+.mdot.m1{color:#000}.mdot.m2{color:#000}
+.badge .ic{box-shadow:inset 0 -3px 0 rgba(0,0,0,.25),0 0 0 1px rgba(255,255,255,.06)}
+.badge.locked .ic{background:#1E1F23;opacity:.5}
+.mini{background:#26272B}
+.gauge i{background:#F5F5F7}
+.cday{color:#5C5C61}.cday.act{background:#1E1F23;color:var(--ink)}.cday.today{box-shadow:inset 0 0 0 2px var(--accent)}
+.calh button{background:var(--chip);color:var(--ink)}
+.celeb .lvup{background:var(--accent);color:#000}
+.banner{color:var(--muted)}
+.empty strong{color:var(--ink)}
 </style>
 </head>
 <body>
@@ -840,6 +917,81 @@ const ACC=[
   {id:"c10s",icon:"🎯",name:"Ten in a session",desc:"Send 10 problems in one session",test:s=>s.type==="climb"&&sends(s).length>=10},
   {id:"w3",icon:"⚙️",name:"Watt machine",desc:"Average 3 W/kg on a ride of 30+ minutes",xp:150,test:s=>s.type==="ride"&&s.dur>=1800&&wkg(s)>=3},
   {id:"w4",icon:"🚀",name:"Power house",desc:"Average 4 W/kg on a ride of 30+ minutes",xp:300,test:s=>s.type==="ride"&&s.dur>=1800&&wkg(s)>=4},
+  {id:"hpheid",icon:"🏛️",name:"Pheidippides would be proud",desc:"Run 40 km in one week, the legendary Marathon-to-Athens distance",xp:200,test:(s,c)=>s.type==="run"&&c.fun.wkRunKm>=40},
+  {id:"hbannister",icon:"⏱️",name:"Bannister chaser",desc:"Run a mile in under 6 minutes",xp:250,test:s=>s.type==="run"&&s.efforts&&s.efforts["1609.34"]<360},
+  {id:"hbolt",icon:"⚡",name:"Lightning pose",desc:"Run 400 m in under 90 seconds",xp:250,test:s=>s.type==="run"&&s.efforts&&s.efforts["400"]<90},
+  {id:"hbreak2",icon:"🧪",name:"Breaking2 fan club",desc:"Hold under 4:30 per km for 5 km or more",xp:300,test:s=>s.type==="run"&&s.dist>=5&&s.dur/s.dist<270},
+  {id:"hsalt",icon:"🧂",name:"Salt March",desc:"Walk 390 km in total, the length of Gandhi's 1930 march",xp:400,prog:c=>[c.td.walk||0,390],pf:pDist(390)},
+  {id:"hlegion",icon:"🛡️",name:"Legionary",desc:"Walk or hike 30 km in one go, a Roman legion's standard day",xp:250,test:s=>(s.type==="walk"||s.type==="hike")&&s.dist>=30},
+  {id:"hhannibal",icon:"🐘",name:"Hannibal's crossing",desc:"Climb 2,000 m in one hike",xp:400,test:s=>s.type==="hike"&&s.elev>=2000},
+  {id:"hgarin",icon:"🚴",name:"Maurice Garin",desc:"Ride 2,428 km in total, the length of the first Tour de France in 1903",xp:400,prog:c=>[c.td.ride||0,2428],pf:pDist(2428)},
+  {id:"hhour",icon:"⌚",name:"Hour record chaser",desc:"Average 35 km/h on a ride of 45+ minutes",xp:300,test:s=>s.type==="ride"&&s.dur>=2700&&s.dist/(s.dur/3600)>=35},
+  {id:"hmilo",icon:"🐂",name:"Milo of Croton",desc:"Log 30 lifting sessions. He carried a calf daily until it was a bull.",xp:250,prog:c=>[c.tc.lift||0,30]},
+  {id:"hdiaz",icon:"🥇",name:"Hidilyn's 224",desc:"Your best squat, bench, and deadlift add up to 224 kg or more",xp:300,test:s=>s.type==="lift"&&bestE1rm("squat")+bestE1rm("bench")+bestE1rm("deadlift")>=224},
+  {id:"hbleau",icon:"🪨",name:"Bleausard",desc:"Log 25 bouldering sessions, like the Fontainebleau regulars",xp:250,prog:c=>[c.tc.climb||0,25]},
+  {id:"hgullich",icon:"🪜",name:"Güllich's board",desc:"Log 10 hangboard sessions",xp:200,prog:c=>[c.tc.hang||0,10]},
+  {id:"hitgoes",icon:"🗣️",name:"It goes, boys!",desc:"Flash 3 problems in one session",xp:150,test:s=>s.type==="climb"&&flashes(s).length>=3},
+  {id:"helcap",icon:"🏔️",name:"El Cap in a gym",desc:"Send 225 problems, about 900 m at 4 m each, the height of El Capitan",xp:400,prog:c=>[c.sends,225]},
+  {id:"pspeedcars",icon:"🏎️",name:"I am speed",desc:"Average 30 km/h on a ride",xp:150,test:s=>s.type==="ride"&&s.dur>=1200&&s.dist/(s.dur/3600)>=30},
+  {id:"ppokemon",icon:"🔴",name:"Gotta catch 'em all",desc:"Unlock 50 accolades",xp:400,test:(s,c)=>(c.accN||0)>=50},
+  {id:"pillbeback",icon:"🤖",name:"I'll be back",desc:"Visit the same place 10 times",xp:150,test:(s,c)=>s.placeId&&(c.fun.placeN[s.placeId]||0)>=10},
+  {id:"phakuna",icon:"🐗",name:"Hakuna matata",desc:"Log an easy day rated 1 or 2 out of 10",xp:50,test:s=>s.rpe&&s.rpe<=2},
+  {id:"pwinter",icon:"🐺",name:"Winter is coming",desc:"Work out 10 times in December",xp:200,test:(s,c)=>(c.fun.dec[s.date.slice(0,4)]||0)>=10},
+  {id:"pelements",icon:"🌀",name:"Master of the elements",desc:"Run, ride, hike, and climb all in the same month",xp:300,test:(s,c)=>{const m=c.fun.monthAct[s.date.slice(0,7)];return ["run","ride","hike","climb"].every(t=>m.has(t));}},
+  {id:"pshrek",icon:"🧅",name:"Ogres have layers",desc:"Three workouts in one day",xp:200,test:(s,c)=>c.fun.dayN[s.date]>=3},
+  {id:"pmando",icon:"🪖",name:"This is the way",desc:"4 workouts a week for 4 weeks in a row",xp:300,test:(s,c)=>{let w=weekKey(s.date);for(let i=0;i<4;i++){if((c.weeks[w]||0)<4)return false;w=keyOf(addDays(parseDate(w),-7));}return true;}},
+  {id:"procky",icon:"🥊",name:"Rocky steps",desc:"Climb 100+ m on a run that starts before 7 am",xp:150,test:s=>s.type==="run"&&s.elev>=100&&s.time&&s.time<"07:00"},
+  {id:"piron",icon:"🦾",name:"Iron Man",desc:"Run 10 km and ride 40 km in the same week",xp:250,test:(s,c)=>c.fun.wkRunKm>=10&&((c.fun.wkRide[weekKey(s.date)]||0)>=40)},
+  {id:"pdarna",icon:"💎",name:"Ding, ang bato!",desc:"Send a grade harder than anything you've sent before",xp:200,test:(s,c)=>{if(s.type!=="climb")return false;const h=hardest(s),m=c.maxGrade[sysKey(s)];return h&&m!=null&&h.g>m;}},
+  {id:"ppacman",icon:"🥊",name:"Eight-division champ",desc:"Win gold medals in 8 different categories",xp:400,test:(s,c)=>(c.goldKeys?c.goldKeys.size:0)>=8},
+  {id:"pjune12",icon:"🇵🇭",name:"Kalayaan run",desc:"Work out on June 12, Independence Day",xp:150,test:s=>s.date.slice(5)==="06-12"},
+  {id:"prizal",icon:"📖",name:"Rizal Day",desc:"Work out on December 30",xp:150,test:s=>s.date.slice(5)==="12-30"},
+  {id:"pundas",icon:"🕯️",name:"Undas walk",desc:"Work out on November 1",xp:100,test:s=>s.date.slice(5)==="11-01"},
+  {id:"phugot",icon:"💔",name:"Hugot session",desc:"Work out on February 14",xp:100,test:s=>s.date.slice(5)==="02-14"},
+  {id:"pyulo",icon:"🤸",name:"Double gold",desc:"Earn two gold medals in one workout",xp:150,test:(s,c)=>(c.curGold||0)>=2},
+  {id:"pobiena",icon:"🎋",name:"100 pole vaults",desc:"Climb 600 m in one week, a hundred of EJ Obiena's 6-meter vaults",xp:200,test:(s,c)=>(c.fun.wkElev[weekKey(s.date)]||0)>=600},
+  {id:"p9000",icon:"💥",name:"It's over 9000!",desc:"Lift more than 9,000 kg in one session",xp:150,test:s=>volume(s)>9000},
+  {id:"pforrest",icon:"🏃‍♂️",name:"Run, Forrest, run",desc:"Run 3 days in a row",xp:100,test:(s,c)=>s.type==="run"&&c.fun.runRun.n>=3},
+  {id:"pmordor",icon:"💍",name:"One does not simply walk",desc:"Hike 15+ km with 1,000+ m of climbing",xp:300,test:s=>s.type==="hike"&&s.dist>=15&&s.elev>=1000},
+  {id:"phobbit",icon:"🥐",name:"Second breakfast",desc:"Finish two workouts before noon on the same day",xp:100,test:(s,c)=>c.fun.dayAM[s.date]>=2},
+  {id:"pbarben",icon:"🎀",name:"Barbenheimer",desc:"Do two different activity types on the same day",xp:100,test:(s,c)=>c.fun.dayTypes[s.date].size>=2},
+  {id:"pspeed",icon:"🎮",name:"Speedrun any%",desc:"Log a workout under 10 minutes",xp:50,test:s=>s.dur>0&&s.dur<600},
+  {id:"p934",icon:"🧳",name:"Platform 9¾",desc:"Run between 9.75 and 9.85 km",xp:100,test:s=>s.type==="run"&&s.dist>=9.75&&s.dist<9.85},
+  {id:"ppi",icon:"🥧",name:"Pi run",desc:"Run 3.14 km, or work out on March 14",xp:100,test:s=>(s.type==="run"&&s.dist>=3.13&&s.dist<3.16)||s.date.slice(5)==="03-14"},
+  {id:"pmay4",icon:"🌌",name:"May the 4th be with you",desc:"Work out on May 4",xp:100,test:s=>s.date.slice(5)==="05-04"},
+  {id:"pleap",icon:"🐸",name:"Leap of faith",desc:"Work out on February 29",xp:250,test:s=>s.date.slice(5)==="02-29"},
+  {id:"pgroundhog",icon:"🦫",name:"Groundhog Day",desc:"Do the same activity 5 days in a row",xp:150,test:(s,c)=>c.fun.typeRun.n>=5},
+  {id:"plegday",icon:"🍗",name:"Leg day skipper",desc:"5 lifting sessions in a row without legs. We see you.",xp:50,test:(s,c)=>c.fun.noLeg>=5},
+  {id:"prick",icon:"🕺",name:"Rickrolled",desc:"Come back after 14 or more days off",xp:100,test:(s,c)=>c.fun.gap>=14},
+  {id:"pupside",icon:"🔦",name:"The Upside Down",desc:"Start a workout between midnight and 4 am",xp:100,test:s=>!!s.time&&s.time<"04:00"},
+  {id:"pscott",icon:"⚡",name:"Great Scott!",desc:"Ride 88 km or more in one go",xp:200,test:s=>s.type==="ride"&&s.dist>=88},
+  {id:"pbalance",icon:"🧤",name:"Perfectly balanced",desc:"A week with equal cardio and strength time (1 hour+ each)",xp:200,test:(s,c)=>{const w=weekKey(s.date),a=c.fun.wkCardio[w]||0,b=c.fun.wkStr[w]||0;return a>=60&&b>=60&&Math.abs(a-b)<=Math.max(a,b)*0.1;}},
+  {id:"pspidey",icon:"🕷️",name:"Friendly neighborhood climber",desc:"Send 100 boulder problems",xp:200,prog:c=>[c.sends,100]},
+  {id:"pmission",icon:"🕶️",name:"Mission accepted",desc:"Complete 10 weekly or monthly challenges",xp:150,prog:c=>[c.chalDone||0,10]},
+  {id:"pking",icon:"🚢",name:"King of the world",desc:"Reach a summit above 2,500 m",xp:300,test:s=>s.type==="hike"&&s.summit&&s.maxEle>=2500},
+  {id:"passemble",icon:"🛡️",name:"Assemble!",desc:"Do 5 different activity types in one month",xp:200,test:(s,c)=>c.fun.monthTypes[s.date.slice(0,7)].size>=5},
+  {id:"pbeyond",icon:"🚀",name:"To infinity and beyond",desc:"Reach level 25",xp:300,test:(s,c)=>c.xpSoFar>=xpForLevel(25)},
+  {id:"pdoor",icon:"🚪",name:"Hold the door",desc:"Hold a single hang for 60 seconds or more",xp:150,test:s=>s.type==="hang"&&(s.hangs||[]).some(h=>h.hang>=60)},
+  {id:"psimbang",icon:"🕯️",name:"Simbang Gabi complete",desc:"Work out 9 times between December 16 and 24",xp:400,test:(s,c)=>(c.fun.simbang[s.date.slice(0,4)]||0)>=9},
+  {id:"pnoche",icon:"🎄",name:"Noche Buena burner",desc:"Work out on December 24 or 25",xp:150,test:s=>["12-24","12-25"].includes(s.date.slice(5))},
+  {id:"pber",icon:"🎶",name:"Ber months na!",desc:"Work out on September 1",xp:100,test:s=>s.date.slice(5)==="09-01"},
+  {id:"pnewyear",icon:"🎆",name:"Bagong taon, bagong ako",desc:"Work out on January 1",xp:150,test:s=>s.date.slice(5)==="01-01"},
+  {id:"plechon",icon:"🐖",name:"Lechon burner",desc:"Burn 1,000+ calories in one workout",xp:150,test:s=>s.cal>=1000},
+  {id:"punli",icon:"🍚",name:"Unli rice unlocked",desc:"Burn 1,500+ calories in one day",xp:200,test:(s,c)=>c.fun.dayCal[s.date]>=1500},
+  {id:"pedsa",icon:"🚗",name:"EDSA traffic survivor",desc:"One workout lasting 2.5 hours or more",xp:200,test:s=>s.dur>=9000},
+  {id:"pbalik",icon:"📦",name:"Balikbayan box",desc:"Hike carrying a 15+ kg pack",xp:200,test:s=>s.type==="hike"&&s.pack>=15},
+  {id:"pjeep",icon:"🚐",name:"Jeepney driver",desc:"Log 20 rides",xp:200,prog:c=>[c.tc.ride||0,20]},
+  {id:"phalo",icon:"🍧",name:"Halo-halo",desc:"Do 3 different activity types in one day",xp:250,test:(s,c)=>c.fun.dayTypes[s.date].size>=3},
+  {id:"papo",icon:"🦅",name:"Apo-level",desc:"Reach 2,954 m, the height of the country's tallest peak",xp:400,test:s=>s.maxEle>=2954},
+  {id:"pchoco",icon:"🍫",name:"Chocolate Hills",desc:"Climb 1,776 m in one week, one meter for every hill",xp:250,test:(s,c)=>(c.fun.wkElev[weekKey(s.date)]||0)>=1776},
+  {id:"phabagat",icon:"🌧️",name:"Habagat hero",desc:"Finish 3 hikes in wet or muddy conditions",xp:200,test:(s,c)=>c.fun.wet>=3},
+  {id:"pvideoke",icon:"🎤",name:"Videoke champ",desc:"Start 10 workouts after 9 pm",xp:150,test:(s,c)=>c.fun.night9>=10},
+  {id:"pflores",icon:"🌸",name:"Flores de Mayo",desc:"Log 12 workouts in May",xp:250,test:(s,c)=>(c.fun.may[s.date.slice(0,4)]||0)>=12},
+  {id:"plodi",icon:"🙌",name:"Lodi",desc:"Reach level 20",xp:250,test:(s,c)=>c.xpSoFar>=xpForLevel(20)},
+  {id:"ppetmalu",icon:"😎",name:"Petmalu",desc:"Earn 5 gold medals in one workout",xp:200,test:(s,c)=>(c.curGold||0)>=5},
+  {id:"psanaall",icon:"🥹",name:"Sana all",desc:"Complete a perfect month",xp:150,prog:c=>[c.perfMonths||0,1]},
+  {id:"ptita",icon:"👜",name:"Tita walk",desc:"10,000 steps in one walk",xp:100,test:s=>s.type==="walk"&&s.steps>=10000},
+  {id:"psabaw",icon:"🍜",name:"Sabaw mode",desc:"Rate a workout 10/10 effort",xp:50,test:s=>s.rpe===10},
   {id:"hg1",icon:"🪵",name:"Board initiate",desc:"Log your first hangboard session",xp:50,prog:c=>[c.tc.hang||0,1]},
   {id:"hg20",icon:"🤏",name:"Tendon builder",desc:"Log 20 hangboard sessions",xp:200,prog:c=>[c.tc.hang||0,20]},
   {id:"hgbw",icon:"🪨",name:"Half bodyweight hang",desc:"Hang with added weight of half your bodyweight",xp:400,test:s=>{const w=weightOn(s.date);return s.type==="hang"&&w&&maxAdd(s)>=w*0.5;}},
@@ -964,6 +1116,7 @@ function compute(){
   const hist={},by={},earned={},timeline=[];
   const ctx={count:0,tc:{},td:{},vol:0,sends:0,flashes:0,gold:0,silver:0,bronze:0,streak:0,bestStreak:0,weeks:{},weekend:{},
     elev:0,summits:0,early:0,days:new Set(),months:{},weekTypes:{},weekDays:{},types:new Set(),projSent:0,siege:false,goalHits:0,goalWeeks:{},goalStreak:0,goalStreakBest:0,maxGrade:{}};
+  const ALLT={types:new Set(list.map(x=>x.type))};
   const weekLists={},projDone=new Set(),G=goals(),chCache=new Map(),perLists={},FROZEN=new Set(settings.freezes||[]);
   ctx.chalDone=0;ctx.perfWeeks=0;ctx.perfMonths=0;ctx.monthBadges=[];ctx.perfWeekStreak=0;ctx.perfWeekBest=0;ctx.weekMin={};ctx.monthMin={};ctx.dayStreak=0;ctx.dayStreakBest=0;ctx.lastDay=null;ctx.perfWeekSet={};
   let xp=0;
@@ -988,6 +1141,7 @@ function compute(){
       if(!arr.length){}
       else if(c.goldOnly){if(arr.every(v=>v<c.value))rank=1;}
       else{rank=better(arr);if(rank>3)rank=null;}
+      if(rank===1)(ctx.goldKeys=ctx.goldKeys||new Set()).add(c.key);
       if(rank){r.medals.push({rank,label:medalLabel(c,rank),title,value:c.fmt(c.value),sub:c.sub||"",caption:rankCaption(rank),seg:c.seg});ctx[["gold","silver","bronze"][rank-1]]++;mxp+=MEDAL_XP[rank-1];}
       else if(yarr.length&&!c.goldOnly&&arr.length>yarr.length){const yr=better(yarr);if(yr<=3)r.ymedals.push({rank:yr,label:(yr===1?"Best":yr===2?"2nd best":"3rd best")+" "+c.noun+" of "+year,title,value:c.fmt(c.value),sub:c.sub||"",caption:rankCaption(yr,year),year});}
       arr.push(c.value);yarr.push(c.value);
@@ -1022,6 +1176,14 @@ function compute(){
     (ctx.weekTypes[wk]=ctx.weekTypes[wk]||new Set()).add(s.type);
     (ctx.weekDays[wk]=ctx.weekDays[wk]||new Set()).add(s.date);
     if(ctx.weeks[wk]===3)add(30,"3 workouts this week");
+    if(ctx.weeks[wk]===5)add(50,"5 workouts this week");
+    if(s.rpe)add(5,"Rated effort");
+    if(s.rpe>=8)add(15,"Hard effort");
+    if(s.fromPlan)add(20,"Followed a plan");
+    if(s.notes||s.photo||s.fuel)add(5,"Logged details");
+    if(s.placeId){ctx.placesSeen=ctx.placesSeen||new Set();if(!ctx.placesSeen.has(s.placeId)){if(ctx.placesSeen.size)add(20,"New place");ctx.placesSeen.add(s.placeId);}}
+    {const segN=cats(s).filter(c=>c.seg).length;if(segN)add(10*segN,"Segment efforts");}
+    {const km=formMetric(s);if(km!=null){const hist=(ctx.formHist=ctx.formHist||{})[s.type]||(ctx.formHist[s.type]=[]);if(hist.length>=3){const avg=hist.slice(-5).reduce((a,b)=>a+b,0)/Math.min(5,hist.length);if(km>avg*1.05)add(25,"Above your average");}hist.push(km);}}
     const dow=parseDate(s.date).getDay();
     if(dow===6||dow===0)ctx.weekend[wk]=(ctx.weekend[wk]||0)|(dow===6?1:2);
     // weekly goals
@@ -1047,11 +1209,40 @@ function compute(){
       }
     }
     ctx.weekMin[wk]=(ctx.weekMin[wk]||0)+(s.dur||0)/60;ctx.monthMin[mk]=(ctx.monthMin[mk]||0)+(s.dur||0)/60;
+    if(ctx.lastDay!==s.date&&ctx.lastDay&&keyOf(addDays(parseDate(ctx.lastDay),1))===s.date&&ctx.dayStreak>=1)add(Math.min(50,5*(ctx.dayStreak+1)),"Day streak");
+    // daily quest
+    {const DQ=(ctx.dq=ctx.dq||{}),dl=(DQ[s.date]=DQ[s.date]||[]),q=questFor(s.date,ALLT);const before=q?q.ok(dl,ctx.lastBeforeDay):true;dl.push(s);if(q&&!before&&q.ok(dl,ctx.lastBeforeDay)){r.quest=q;ctx.questsDone=(ctx.questsDone||0)+1;add(q.xp,"Daily quest");}}
+    if(ctx.lastDay!==s.date)ctx.lastBeforeDay=ctx.lastSession||null;
+    ctx.lastSession=s;
     if(ctx.lastDay!==s.date){ctx.dayStreak=ctx.lastDay&&keyOf(addDays(parseDate(ctx.lastDay),1))===s.date?ctx.dayStreak+1:1;ctx.dayStreakBest=Math.max(ctx.dayStreakBest,ctx.dayStreak);ctx.lastDay=s.date;}
+    // fun-trophy counters
+    {const F=ctx.fun||(ctx.fun={dayTypes:{},dayN:{},dayCal:{},dayAM:{},prevDate:null,gap:0,typeRun:{t:null,n:0,d:null},runRun:{n:0,d:null},noLeg:0,night9:0,wet:0,simbang:{},may:{},monthTypes:{},wkCardio:{},wkStr:{},wkElev:{}});
+      F.gap=F.prevDate?Math.round((parseDate(s.date)-parseDate(F.prevDate))/864e5):0;
+      const y=s.date.slice(0,4),md=s.date.slice(5);
+      (F.dayTypes[s.date]=F.dayTypes[s.date]||new Set()).add(s.type);
+      F.dayN[s.date]=(F.dayN[s.date]||0)+1;F.dayCal[s.date]=(F.dayCal[s.date]||0)+(s.cal||0);
+      if(s.time&&s.time<"12:00")F.dayAM[s.date]=(F.dayAM[s.date]||0)+1;
+      const tr=F.typeRun;if(tr.t===s.type&&tr.d&&keyOf(addDays(parseDate(tr.d),1))===s.date){tr.n++;tr.d=s.date;}else if(!(tr.t===s.type&&tr.d===s.date)){tr.t=s.type;tr.n=1;tr.d=s.date;}
+      if(s.type==="run"){const rr=F.runRun;if(rr.d&&keyOf(addDays(parseDate(rr.d),1))===s.date){rr.n++;rr.d=s.date;}else if(rr.d!==s.date){rr.n=1;rr.d=s.date;}}
+      if(s.type==="lift"){const legs=(s.ex||[]).some(e=>(e.mus&&e.mus.length?e.mus:guessMuscles(e.name)).some(m=>m==="Legs"||m==="Glutes"));F.noLeg=legs?0:F.noLeg+1;}
+      if(s.time&&s.time>="21:00")F.night9++;
+      if(s.type==="hike"&&(s.cond||[]).some(c=>c==="Wet"||c==="Muddy"))F.wet++;
+      if(md>="12-16"&&md<="12-24")F.simbang[y]=(F.simbang[y]||0)+1;
+      if(md.startsWith("05-"))F.may[y]=(F.may[y]||0)+1;
+      (F.monthTypes[s.date.slice(0,7)]=F.monthTypes[s.date.slice(0,7)]||new Set()).add(s.type);
+      const isStr=s.type==="lift"||s.type==="climb"||s.type==="hang";
+      if(isStr)F.wkStr[wk]=(F.wkStr[wk]||0)+(s.dur||0)/60;else F.wkCardio[wk]=(F.wkCardio[wk]||0)+(s.dur||0)/60;
+      if(s.type!=="lift"&&s.type!=="climb")F.wkElev[wk]=(F.wkElev[wk]||0)+(s.elev||0);
+      F.weekRun=F.weekRun||{};if(s.type==="run")F.weekRun[wk]=(F.weekRun[wk]||0)+(s.dist||0);
+      F.placeN=F.placeN||{};if(s.placeId)F.placeN[s.placeId]=(F.placeN[s.placeId]||0)+1;
+      F.dec=F.dec||{};if(s.date.slice(5,7)==="12")F.dec[s.date.slice(0,4)]=(F.dec[s.date.slice(0,4)]||0)+1;
+      F.monthAct=F.monthAct||{};(F.monthAct[s.date.slice(0,7)]=F.monthAct[s.date.slice(0,7)]||new Set()).add(s.type);
+      F.wkRunKm=F.weekRun[wk]||0;F.wkRide=F.wkRide||{};if(s.type==="ride")F.wkRide[wk]=(F.wkRide[wk]||0)+(s.dist||0);
+      F.prevDate=s.date;ctx.xpSoFar=xp+r.xp;ctx.curGold=r.medals.filter(m=>m.rank===1).length;}
     for(const A of ACC){
       if(earned[A.id])continue;
       let ok;if(A.test)ok=A.test(s,ctx);else{const [a,b]=A.prog(ctx);ok=a>=b;}
-      if(ok){earned[A.id]={date:s.date,sid:s.id};r.acc.push(A);add(A.xp||100,A.name);}
+      if(ok){earned[A.id]={date:s.date,sid:s.id};r.acc.push(A);add(A.xp||100,A.name);ctx.accN=(ctx.accN||0)+1;}
     }
     if(s.type==="climb"){const h=hardest(s);const k=sysKey(s);if(h&&(ctx.maxGrade[k]==null||h.g>ctx.maxGrade[k]))ctx.maxGrade[k]=h.g;}
     r.cum=xp+r.xp;
@@ -1061,8 +1252,12 @@ function compute(){
   const thisWk=weekKey(keyOf(new Date())),lastWk=keyOf(addDays(parseDate(thisWk),-7));
   const curStreak=ctx.weeks[thisWk]||ctx.weeks[lastWk]||FROZEN.has(lastWk)?ctx.streak:0;
   const ltDone=longGoals().filter(g=>g.done);
+  const checkinXP=Object.keys(settings.checkins||{}).length*10;
+  let planXP=0;try{for(const ev of events().filter(e=>e.plan))planXP+=planView(ev).filter(x=>x.status==="done").length*25;}catch(e){}
+  const rankXP=Object.values(settings.rankBest||{}).reduce((a,t)=>a+(RANK_XP[t]||0),0);
   const ltXP=ltDone.reduce((a,g)=>a+(g.xp||500),0);
-  return {by,earned,ctx,xp:xp+ltXP,ltXP,ltDone,timeline:timeline.reverse(),curStreak,chCache,perLists};
+  const total=xp+ltXP+checkinXP+planXP+rankXP,svc=settings.service||[],offset=svc.length?svc[svc.length-1].xp:0;
+  return {by,earned,ctx,xp:Math.max(0,total-offset),xpTotal:total,offset,extraXP:{checkinXP,planXP,rankXP},ltXP,ltDone,timeline:timeline.reverse(),curStreak,chCache,perLists};
 }
 
 /* ================= insights: effort, load, recovery, VO2max ================= */
@@ -1225,6 +1420,10 @@ function feedback(s){
     const st={};s.probs.forEach(p=>p.style&&(st[p.style]=(st[p.style]||0)+1));
     if(Object.keys(st).length===1&&s.probs.length>=4)out.push(`Everything today was ${Object.keys(st)[0].toLowerCase()}. Try a few problems in a different style to round out your climbing.`);
   }
+  if(s.fuel&&s.dur>=2700){const h=s.dur/3600,fp=fuelPlan(s.type,s.dur/60,effortOf(s).v);
+    if(fp&&s.fuel.fl!=null){const rate=s.fuel.fl/h;out.push(rate<fp.lo*0.7?`You drank about ${Math.round(rate)} ml an hour. In this heat, aim for ${fp.lo}–${fp.hi} ml an hour next time.`:rate>1000?`You drank about ${Math.round(rate)} ml an hour, which is on the high side. More than about 1 L an hour can dilute your sodium.`:`Your fluid intake of about ${Math.round(rate)} ml an hour was in a good range.`);}
+    if(fp&&fp.cho[1]>=30&&s.fuel.gels!=null){const g=s.fuel.gels*22/h;if(g<fp.cho[0]*0.6)out.push(`About ${Math.round(g)} g of carbs an hour from gels is low for a session this long. Try ${fp.cho[0]}–${fp.cho[1]} g an hour.`);}
+    if(s.fuel.pre&&s.fuel.post){const pct=(s.fuel.pre-s.fuel.post)/s.fuel.pre*100;if(pct>2)out.push(`You lost ${round(pct,1)}% of your body weight. Losses over about 2% start to hurt performance, especially in the heat.`);else if(pct<-0.5)out.push("You gained weight during the session, which usually means drinking more than you sweat. Ease back a little next time.");}}
   const e=effortOf(s),hrs=Math.round(recoveryHours(s));
   out.push(`${e.est?"Estimated effort":"Effort"} ${e.v}/10 for ${fmtDur(s.dur||0)} gives a training load of ${Math.round(loadOf(s))}. Allow about ${hrs} hours before your next hard session.`);
   return out;
@@ -1265,7 +1464,7 @@ function feedData(s){
   return c;
 }
 function feedPush(s){if(remote&&settings.share&&settings.share.on)writeDoc("f_"+s.id,remote.db.collection("feed").doc("s_"+s.id),()=>feedData(sessions[s.id]));}
-const profileData=()=>({name:bio().name||"",dist:settings.dist,wt:settings.wt,circuit:settings.circuit||null,custom:settings.custom||null,updatedAt:Date.now()});
+const profileData=()=>({service:settings.service||[],name:bio().name||"",dist:settings.dist,wt:settings.wt,circuit:settings.circuit||null,custom:settings.custom||null,updatedAt:Date.now()});
 function profilePush(){if(remote&&settings.share&&settings.share.on)writeDoc("prof",remote.db.collection("profile").doc("main"),profileData);}
 async function applySharing(){
   saveLocal();pushSettings();
@@ -1276,7 +1475,7 @@ async function applySharing(){
     writeDoc("prof",remote.db.collection("profile").doc("main"),()=>null);
   }
 }
-function upsert(s){s.updatedAt=Date.now();if(!s.created)s.created=s.updatedAt;sessions[s.id]=s;invalidate();saveLocal();render();pushSession(s);setTimeout(()=>{if(!$("scrim").classList.contains("open"))checkLongGoals();else pendingGoalCheck=true;},50);}
+function upsert(s){s.updatedAt=Date.now();if(!s.created)s.created=s.updatedAt;sessions[s.id]=s;invalidate();saveLocal();render();pushSession(s);setTimeout(()=>{checkRanks();if(!$("scrim").classList.contains("open"))checkLongGoals();else pendingGoalCheck=true;},50);}
 let pendingGoalCheck=false;
 function upsertSeg(g){g.updatedAt=Date.now();segments[g.id]=g;invalidate();saveLocal();render();pushSegment(g);}
 async function enterViewer(db){
@@ -1287,7 +1486,7 @@ async function enterViewer(db){
   viewer={name:(prof&&prof.name)||"",shared:!!prof};
   sessions={};for(const d of docs){const b=d.data();if(b&&b.id)sessions[b.id]=JSON.parse(JSON.stringify(b));}
   segments={};
-  settings={...settings,dist:(prof&&prof.dist)||"km",wt:(prof&&prof.wt)||"kg",circuit:(prof&&prof.circuit)||null,custom:(prof&&prof.custom)||null,bio:{},share:{on:false},places:[],defPlace:{},goals:[],projects:[],weights:[]};
+  settings={...settings,service:(prof&&prof.service)||[],dist:(prof&&prof.dist)||"km",wt:(prof&&prof.wt)||"kg",circuit:(prof&&prof.circuit)||null,custom:(prof&&prof.custom)||null,bio:{},share:{on:false},places:[],defPlace:{},goals:[],projects:[],weights:[]};
   document.body.classList.add("viewer");view="log";closeSheet();invalidate();render();
 }
 async function initRemote(){
@@ -1366,7 +1565,7 @@ function renderLog(){
   const list=live().filter(s=>(filter==="all"||s.type===filter)&&(!placeFilter||s.placeId===placeFilter)).sort((a,b)=>chrono(b,a));
   let html=viewer?`<div class="top"><h1>${esc(viewer.name?viewer.name+"'s":"Shared")} workouts</h1><div class="topr"><button class="lvpill" data-go="trophies">Level ${L}</button></div></div>
   <div class="banner">${viewer.shared?"You're viewing a shared workout log. It's read-only. Refresh the page to see anything new they've logged.":"Nothing has been shared here yet. The owner can turn on sharing in Settings."}</div>`
-  :`<div class="top"><h1>Workouts</h1><div class="topr"><button class="lvpill" data-go="trophies">Level ${L}</button><button class="link" data-act="settings">Settings</button></div></div>
+  :`<div class="top"><h1>Workouts</h1><div class="topr"><button class="lvpill" data-go="trophies" style="display:flex;align-items:center;gap:4px">${svcList().length?serviceMedalSVG(svcList()[svcList().length-1].year,svcIndexInYear(svcList().length-1),22):""}Level ${L}${L>=40?" ★":""}</button><button class="link" data-act="settings">Settings</button></div></div>
   <div class="chips">${[["all","All"],...Object.entries(TYPES)].map(([k,v])=>`<button class="chip" data-filter="${k}" aria-pressed="${filter===k}">${v}</button>`).join("")}</div>
   ${!viewer&&places().length?`<select class="pfilter" id="pfilter" aria-label="Filter by place"><option value="">All places</option>${places().map(p=>`<option value="${p.id}"${placeFilter===p.id?" selected":""}>${esc(p.name)}</option>`).join("")}</select>`:""}`;
   if(!viewer)html+=activeBanner();
@@ -1419,7 +1618,7 @@ function renderRecords(){
     <div class="tot"><b>${fmtTotalDur(totTime)}</b><span>Total time</span></div>
     <div class="tot"><b>${round(toDispDist(totDist),1)}<span class="unit">${dU()}</span></b><span>Distance</span></div>
     <div class="tot"><b>${Math.round(toDispWt(totVol)).toLocaleString()}<span class="unit">${wU()}</span></b><span>Weight lifted</span></div>
-  </div>${renderChart(all)}`;
+  </div>${renderChart(all)}${viewer?"":rankHTML()}`;
   html+=`<h2 class="sec" style="--c:var(--run)"><i></i>Running</h2><div class="recs">
     ${recCard("Fastest pace",best(runs.filter(s=>s.dist>=1),pace,true),fmtPace,"run")}
     ${recCard("Longest run",best(runs,s=>s.dist),fmtDist,"run")}
@@ -1489,10 +1688,13 @@ function renderChart(all){
 }
 
 function levelBlock(xp){
-  const L=levelOf(xp),a=xpForLevel(L),b=xpForLevel(L+1),pct=Math.min(100,(xp-a)/(b-a)*100);
+  const L=levelOf(xp),a=xpForLevel(L),b=xpForLevel(L+1),pct=Math.min(100,(xp-a)/(b-a)*100),c=getC(),sv=svcList();
   return `<div class="level"><div class="lvnum"><div><span>Level</span><b>${L}</b></div></div>
     <div><div class="rank">${rankOf(L)}</div><div class="xpbar"><span id="xpfill" style="width:${pct}%"></span></div>
-    <div class="xpinfo">${(b-xp).toLocaleString()} XP to level ${L+1}. ${xp.toLocaleString()} XP total.</div></div></div>`;
+    <div class="xpinfo">${(b-xp).toLocaleString()} XP to level ${L+1}. ${c.xpTotal.toLocaleString()} lifetime XP.</div></div></div>
+    ${sv.length||L>=40?`<div class="ins" style="margin-top:10px"><div class="row2"><div><h3>Service medals</h3><div class="xpinfo">${sv.length?`${sv.length} earned`:"Unlocked at level 40"}</div></div>${L>=40&&!viewer?`<button class="chip" data-act="service" style="background:var(--gold);color:#fff">Claim ${new Date().getFullYear()} medal</button>`:""}</div>
+      ${sv.length?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">${serviceShelf(54)}</div>`:""}
+      <p class="hint">At level 40 or above, you can trade your level for a service medal stamped with the year. Your level resets to 1, and each extra medal in the same year changes color: silver, sky, blue, purple, pink, red, then black.</p></div>`:""}`;
 }
 function badgeHTML(A,e,c){
   let sub;
@@ -1512,6 +1714,7 @@ function renderTrophies(){
     <div class="medal"><span class="mdot m3">3</span><b>${c.ctx.bronze}</b><span>Bronze</span></div>
   </div>
   <p class="hint">Gold is a new best, silver your 2nd best, bronze your 3rd best, judged against everything you'd logged up to that day. Medals start once there's something to beat, so your first workout of each kind sets the bar. ${c.curStreak?`You're on a ${c.curStreak}-week streak.`:""}</p>`;
+  if(!viewer)html+=questCard();
   if(!viewer)html+=challengesHTML(c);
   if(!viewer){const f=freezeInfo(c);html+=`<div class="ins"><div class="row2"><div><h3>🧊 Streak freezes</h3><div class="xpinfo">${f.avail} available. Earn one for every perfect week.</div></div>${f.canUse?`<button class="chip" data-act="freeze" style="background:#2F9BD6;color:#fff">Use on last week</button>`:""}</div><p class="hint">A freeze covers a week with no workouts so your weekly streak doesn't break, for sick weeks or travel.${f.canUse?" Last week was empty, so your streak is at risk. Use a freeze to save it.":""}</p></div>`;}
   if(c.ctx.monthBadges.length||c.ltDone.length){
@@ -1534,7 +1737,7 @@ function renderTrophies(){
   <div class="badges">${[...ACC.filter(A=>c.earned[A.id]),...ACC.filter(A=>!c.earned[A.id])].map(A=>badgeHTML(A,c.earned[A.id],c)).join("")}</div>
   <h2 class="sec">How XP works</h2>
   <div class="tlist" style="padding:12px 16px;font-size:.9rem;line-height:1.6;color:var(--muted)">
-  Every workout earns 20 XP, plus 1 XP per minute (up to 180), 10 XP per ${dU()==="mi"?"km run (about 16 per mile)":"km run"}, 6 per km walked, 3 per km ridden, 1 per 200 kg lifted, and 1 per 10 m climbed. Medals add 25, 10, or 5 XP. Three workouts in a week adds a 30 XP bonus, and accolades add 50 to 600 XP. Weekly challenges add 60 XP each (75 more for all three), monthly challenges 150 each (200 more for all three), weekly goals 40, and long-term goals 500. Trophy colors show their worth: Common, Uncommon, Rare, Epic, and Legendary. Each level takes 100 XP more than the last.</div>`;
+  Every workout earns 20 XP, plus 1 XP per minute (up to 180), 10 XP per ${dU()==="mi"?"km run (about 16 per mile)":"km run"}, 6 per km walked, 3 per km ridden, 1 per 200 kg lifted, and 1 per 10 m climbed. Medals add 25, 10, or 5 XP. Three workouts in a week adds a 30 XP bonus, and accolades add 50 to 600 XP. Every workout can also earn repeatable bonuses: a daily quest (20–45), day streaks (up to 50 a day), 5 workouts in a week (50), rating your effort (5), hard efforts (15), beating your recent average (25), following a plan (20), planned event sessions (25), new places (20), segment efforts (10 each), logging details (5), and morning check-ins (10). Rank-ups pay out too. Weekly challenges add 60 XP each (75 more for all three), monthly challenges 150 each (200 more for all three), weekly goals 40, and long-term goals 500. Trophy colors show their worth: Common, Uncommon, Rare, Epic, and Legendary. Each level takes 100 XP more than the last.</div>`;
   return html;
 }
 function segEfforts(g){
@@ -1561,7 +1764,7 @@ function openChooser(){
     ${active?`<button class="ins" id="ch-res" style="width:100%;text-align:left;display:block;border:2px solid ${col(active.plan.type)}"><h3 style="font-size:1.3rem">● Resume: ${esc(active.plan.title)}</h3><p class="hint" style="margin:2px 0 0">${fmtDur(elapsedSec())} in progress</p></button>`:""}
     <button class="ins" id="ch-start" style="width:100%;text-align:left;display:block;background:var(--xp);color:#fff"><h3 style="font-size:1.4rem">▶ Start a workout</h3><p style="margin:4px 0 0;opacity:.9;font-size:.9rem">Get a session built for your time, energy, recovery, and goals, then track it live.</p></button>
     <button class="ins" id="ch-log" style="width:100%;text-align:left;display:block;background:var(--bg)"><h3 style="font-size:1.4rem">✓ Log a finished workout</h3><p class="hint" style="margin:4px 0 0">Type it in, or import a GPX file from Strava, Garmin, or another app.</p></button>
-    ${routines().length?`<label>Your routines</label><div class="tlist">${routines().map(r=>`<div class="trow"><span class="mdot" style="background:${col(r.type)};font-size:.75rem">${TYPES[r.type][0]}</span><div class="tx"><b>${esc(r.name)}</b><span>${TYPES[r.type]}</span></div><button class="tchip" data-rstart="${r.id}" style="--c:var(--ink)">Start</button><button class="x" data-rdel="${r.id}" aria-label="Delete routine">×</button></div>`).join("")}</div>`:""}
+    ${routines().length?`<label>Your routines</label><div class="tlist">${routines().map(r=>`<div class="trow"><span class="mdot" style="background:${col(r.type)};font-size:.75rem">${TYPES[r.type][0]}</span><div class="tx"><b>${esc(r.name)}</b><span>${TYPES[r.type]}</span></div><button class="tchip" data-rstart="${r.id}" style="--c:#F5F5F7;--ct:#000">Start</button><button class="x" data-rdel="${r.id}" aria-label="Delete routine">×</button></div>`).join("")}</div>`:""}
     ${Object.keys(TYPES).some(t=>lastOfType(t))?`<label>Repeat your last</label><div class="tchips">${Object.entries(TYPES).filter(([t])=>lastOfType(t)).map(([t,n])=>`<button class="tchip" data-rep="${t}" style="background:${col(t)};color:#fff">${n}</button>`).join("")}</div>`:""}
     <div class="row"><button class="btn" id="ch-cancel">Cancel</button></div>`);
   document.querySelectorAll("[data-rstart]").forEach(b=>b.onclick=()=>{const r=routines().find(x=>x.id===b.dataset.rstart);if(r)startActive(routinePlan(r));});
@@ -1585,6 +1788,8 @@ $("app").addEventListener("click",e=>{
   else if(d.pain)openPain(painList().find(x=>x.id===d.pain));
   else if(d.act==="checkin2")openCheckin();
   else if(d.act==="freeze")useFreeze();
+  else if(d.act==="fuelcalc")openFuelCalc();
+  else if(d.act==="service")openServiceClaim();
   else if(d.act==="addevent")openEventEditor(null);
   else if(d.ev)openEvent(eventById(d.ev));
   else if(d.pday)openPlannedDay(d.pday);
@@ -1652,10 +1857,12 @@ function renderInsights(){
   if(coachTab==="today"){
     html+=activeBanner();
     html+=checkinCard();
+    html+=questCard();
     html+=todayPlanCard();
     html+=`<div class="ins" style="--c:var(--xp)"><div class="row2"><div><h3>Ready to train?</h3><div class="xpinfo">${esc(quickSuggestion())}</div></div></div>
-      <div class="row" style="margin-top:12px;flex-wrap:wrap">${[["lift","Lift"],["run","Run"],["ride","Ride"],["climb","Boulder"],["hang","Board"]].map(([t,n])=>`<button class="btn" data-plan="${t}" style="background:${col(t)};color:#fff;padding:12px 6px;min-width:56px">${n}</button>`).join("")}</div>
+      <div class="acts">${[["lift","Lift"],["run","Run"],["ride","Ride"],["hike","Hike"],["climb","Boulder"],["hang","Board"]].map(([t,n])=>`<button class="actbtn" data-plan="${t}" style="--c:${col(t)}"><i></i>${n}</button>`).join("")}</div>
       <p class="hint">Pick an activity and I'll build a session around your time, energy, recovery, and goals.</p></div>`;
+    html+=`<button class="ins" data-act="fuelcalc" style="width:100%;text-align:left;display:block"><div class="row2"><div><h3>💧 Fuel calculator</h3><div class="xpinfo">Fluid, sodium, and gels for any session, tuned for heat and humidity</div></div><span class="chip">Open</span></div></button>`;
     html+=goalsCard();
     html+=painCard();
     if(!live().length)return html+`<div class="empty"><strong>Nothing to analyze yet</strong>Log a few workouts and rate how hard each one felt. Recovery advice and recommendations will appear here.</div>`;
@@ -1707,7 +1914,7 @@ function renderLongGoals(){
       <span class="xpchip" style="background:${pr.status==="ontrack"?"var(--ride)":pr.status==="behind"?"#E0532F":"#9AA3B0"}">${pr.status==="ontrack"?"On track":pr.status==="behind"?"Behind":"Overdue"}</span></div>
       ${goalBars(g,pr)}<p class="hint" style="margin:2px 0 0">${pr.daysLeft>=0?`${pr.daysLeft} days left, target ${fmtDate(g.date)}`:`Target date was ${fmtDate(g.date)}. Tap to set a new one.`}</p></button>`;}
   if(done.length)h+=`<h2 class="sec" style="--c:var(--gold)"><i></i>Achieved</h2><div class="tlist">${done.map(g=>`<button class="trow" data-lg="${g.id}"><span class="mdot" style="background:${tierBg(g.xp||500)}">${LT_KINDS[g.kind].icon}</span><div class="tx"><b>${esc(ltTitle(g))}</b><span>Achieved ${fmtDate(g.done)}</span></div><span class="tv" style="font-size:1rem;color:${tierOf(500)[2]}">+${g.xp||500} XP</span></button>`).join("")}</div>`;
-  h+=`<div class="ins" style="margin-top:14px"><div class="row2"><h3>Training profile</h3><button class="chip" data-act="profile">Edit</button></div><p class="hint">${lt.days} days a week, about ${lt.mins} minutes per session, ${lt.level}.${lt.cautions&&lt.cautions.length?" Careful with: "+lt.cautions.join(", ").toLowerCase()+".":""}</p></div>`;
+  h+=`<div class="ins" style="margin-top:14px"><div class="row2"><h3>Training profile</h3><button class="chip" data-act="profile">Edit</button></div><p class="hint">${lt.days} days a week, about ${lt.mins} minutes per session, ${lt.level}, ${({hot:"hot and humid",mild:"mild",cool:"cool"})[lt.climate||"hot"]} climate.${lt.cautions&&lt.cautions.length?" Careful with: "+lt.cautions.join(", ").toLowerCase()+".":""}</p></div>`;
   return h;
 }
 /* ================= sheets ================= */
@@ -1765,7 +1972,7 @@ function openForm(existing,preset){
     body+=`<label>Type</label><div class="typepick">${Object.entries(TYPES).map(([k,t])=>`<button style="--c:${col(k)}" data-type="${k}" aria-pressed="${d.type===k}">${t}</button>`).join("")}</div>
     <label for="f-place">Place</label><select id="f-place"><option value="">No place</option>${places().map(p=>`<option value="${p.id}"${d.placeId===p.id?" selected":""}>${esc(p.name)}</option>`).join("")}<option value="__new"${addingPlace?" selected":""}>+ Add a new place</option></select>
     ${addingPlace?`<div class="newplace"><input id="np-name" type="text" maxlength="40" placeholder="Place name, e.g. Boulder Hub Makati"><select id="np-kind" style="margin-top:8px">${Object.entries(PLACE_KINDS).map(([k,[n]])=>`<option value="${k}"${k===(d.type==="climb"?"climbgym":d.type==="lift"?"gym":d.type==="run"?"park":d.type==="ride"?"road":"other")?" selected":""}>${n}</option>`).join("")}</select><div class="row" style="margin-top:8px"><button class="btn" id="np-cancel">Cancel</button><button class="btn primary" id="np-save">Add place</button></div>${d.type==="climb"?`<p class="hint">You can give this gym its own color circuit from the Places tab.</p>`:""}</div>`
-    :d.placeId?`<div class="tchips" style="margin-top:8px;--c:var(--ink)"><button class="tchip" id="f-defplace" aria-pressed="${makeDefault}">Default for future ${TYPES[d.type].toLowerCase()} sessions</button></div>`:""}
+    :d.placeId?`<div class="tchips" style="margin-top:8px;--c:#F5F5F7;--ct:#000"><button class="tchip" id="f-defplace" aria-pressed="${makeDefault}">Default for future ${TYPES[d.type].toLowerCase()} sessions</button></div>`:""}
     <label for="f-title">Title</label><input id="f-title" type="text" maxlength="60" placeholder="${esc(defaultTitle(d.type,d.time))}" value="${esc(d.title)}">
     <div class="grid2" style="margin-top:14px"><div><label for="f-date">Date</label><input id="f-date" type="date" value="${d.date}"></div><div><label for="f-time">Start time</label><input id="f-time" type="time" value="${d.time||""}"></div></div>
     <label>${noRoute?"Duration":"Moving time"}</label><div class="grid3">
@@ -1844,6 +2051,9 @@ function openForm(existing,preset){
     <div class="row2" style="display:flex;justify-content:space-between;align-items:baseline"><span class="rpev" id="rpev"></span><span class="hint" id="rpew" style="margin:0"></span></div>
     <input type="range" id="f-rpe" min="0" max="10" step="1" value="${d.rpe||0}" style="--c:var(--xp)">
     <div class="rpe"><span>Not rated</span><span>Easy</span><span>Moderate</span><span>Hard</span><span>Max</span></div>
+    ${["run","walk","hike","ride","climb","other"].includes(d.type)?`<details${d.fuel?" open":""}><summary>💧 Fueling and sweat rate (optional)</summary><p class="hint">Weigh yourself right before and after, without clothes if you can, to learn your sweat rate.</p>
+      <div class="grid2" style="margin-top:8px"><div><label for="fu-pre">Weight before (${wU()})</label><input id="fu-pre" type="number" inputmode="decimal" step="any" value="${d.fuel&&d.fuel.pre?round(toDispWt(d.fuel.pre),1):""}"></div><div><label for="fu-post">Weight after (${wU()})</label><input id="fu-post" type="number" inputmode="decimal" step="any" value="${d.fuel&&d.fuel.post?round(toDispWt(d.fuel.post),1):""}"></div>
+      <div><label for="fu-fl">Fluid drunk (ml)</label><input id="fu-fl" type="number" inputmode="numeric" value="${d.fuel&&d.fuel.fl||""}"></div><div><label for="fu-g">Gels or carb servings</label><input id="fu-g" type="number" inputmode="numeric" value="${d.fuel&&d.fuel.gels||""}"></div></div></details>`:""}
     <label for="f-notes">Notes</label><textarea id="f-notes" placeholder="How did it feel?">${esc(d.notes)}</textarea>
     <div class="err" id="ferr"></div>
     <div class="row"><button class="btn" id="fcancel">Cancel</button><button class="btn primary" id="fsave">${existing?"Save changes":"Save workout"}</button></div>`;
@@ -1862,6 +2072,7 @@ function openForm(existing,preset){
     if(effs.length){d.efforts={};effs.forEach(i=>{const t=parseClock(i.value);if(t>0)d.efforts[i.dataset.d]=Math.round(t);});}
     if($("f-eloss")){const x=num($("f-eloss").value);d.eloss=x!=null?fromDispElev(x):null;const m=num($("f-maxele").value);d.maxEle=m!=null?fromDispElev(m):d.track?d.maxEle:null;d.rests=num($("f-rests").value);const rm=num($("f-restm").value);d.restSec=rm!=null?rm*60:null;const pk=num($("f-pack").value);d.pack=pk?fromDispWt(pk):null;}
     if($("f-steps"))d.steps=num($("f-steps").value);
+    if($("fu-pre")){const pre=num($("fu-pre").value),post=num($("fu-post").value),fl=num($("fu-fl").value),g=num($("fu-g").value);d.fuel=pre||post||fl||g?{pre:pre?fromDispWt(pre):null,post:post?fromDispWt(post):null,fl:fl||0,gels:g||0}:null;if(!d.fuel)delete d.fuel;}
     if($("hlist"))d.hangs=[...document.querySelectorAll("#hlist .ex")].map(r=>{const a=num(r.querySelector(".ha").value);return {grip:r.querySelector(".hg").value,edge:num(r.querySelector(".he").value),add:a!=null?fromDispWt(a):0,hang:num(r.querySelector(".hh").value),rest:num(r.querySelector(".hr").value),reps:num(r.querySelector(".hp").value),sets:num(r.querySelector(".hs").value)};});
     if($("f-gear")){d.gearId=$("f-gear").value;gearTouched=true;}
     if($("exlist")){
@@ -2002,14 +2213,17 @@ function celebrate(id,beforeXP){
     ${L1>L0?`<div class="lvup">Level up! You reached level ${L1}</div>`:""}
     ${r.acc.length?`<h4>New accolade${r.acc.length>1?"s":""}</h4><div class="badges">${r.acc.map(A=>badgeHTML(A,c.earned[A.id],c)).join("")}</div>`:""}
     ${r.projects.length?`<h4>Project sent!</h4><div class="tlist">${r.projects.map(x=>`<div class="trow"><span class="mdot" style="background:var(--climb)">🎯</span><div class="tx"><b>${esc(x.name)}</b><span>After ${x.attempts} attempt${x.attempts===1?"":"s"}</span></div><span class="tv">${esc(x.grade||"")}</span></div>`).join("")}</div>`:""}
+    ${r.quest?`<div class="trow" style="justify-content:center;border:0"><span class="xpchip" style="background:var(--ride)">🎯 Daily quest done: ${esc(r.quest.t)}, +${r.quest.xp} XP</span></div>`:""}
+    ${L1>=40&&!viewer?`<div class="row" style="margin-top:6px"><button class="btn" id="csv" style="background:var(--gold);color:#fff">🏅 Service medal available</button></div>`:""}
     ${r.chal.length?`<h4>Challenge${r.chal.length>1?"s":""} complete</h4><div class="tlist">${r.chal.map(ch=>`<div class="trow"><span class="mdot" style="background:${tierBg(ch.xp)}">${ch.kind==="week"?"W":"M"}</span><div class="tx"><b>${esc(ch.label)}</b><span>${ch.kind==="week"?"Weekly":"Monthly"} challenge, +${ch.xp} XP</span></div></div>`).join("")}${r.perfect.map(pf=>`<div class="trow"><span class="mdot" style="background:${tierBg(CH_BONUS[pf.kind])}">🌟</span><div class="tx"><b>Perfect ${pf.kind}!</b><span>All 3 challenges done, +${CH_BONUS[pf.kind]} XP</span></div></div>`).join("")}</div>`:""}
     ${r.goals.length?`<h4>Weekly goal${r.goals.length>1?"s":""} reached</h4><div class="tlist">${r.goals.map(g=>`<div class="trow"><span class="mdot" style="background:var(--ride)">✓</span><div class="tx"><b>${esc(goalLabel(g))}</b><span>Target ${esc(fmtGoal(g,g.target))}</span></div></div>`).join("")}</div>`:""}
     ${r.medals.length||(r.ymedals||[]).length?`<h4>Medals</h4><div class="tlist">${medalRows(r)}</div><div class="row"><button class="btn" id="cpr">Share PRs as image</button></div>`:""}
     <h4>Feedback</h4><div class="fb" style="text-align:left">${feedback(s).map(t=>`<p>${esc(t)}</p>`).join("")}</div>
+    ${dykHTML(s,' style="text-align:left"')}
     <div class="row"><button class="btn" id="cview">View workout</button><button class="btn primary" id="cdone">Done</button></div></div>`);
   requestAnimationFrame(()=>setTimeout(()=>{const f=$("cxp");if(f)f.style.width=endPct+"%";},120));
   if(navigator.vibrate)navigator.vibrate(L1>L0?[20,60,20]:15);
-  $("cdone").onclick=closeSheet;$("cview").onclick=()=>openDetail(s);if($("cpr"))$("cpr").onclick=()=>openPRShare(s);
+  $("cdone").onclick=closeSheet;$("cview").onclick=()=>openDetail(s);if($("cpr"))$("cpr").onclick=()=>openPRShare(s);if($("csv"))$("csv").onclick=()=>openServiceClaim();
 }
 
 /* ---------- workout detail ---------- */
@@ -2063,6 +2277,7 @@ function openDetail(s){
   html+=`<div class="dstats">${st.map(([l,v])=>`<div class="n"><b>${esc(v)}</b><span>${l}</span></div>`).join("")}</div>`;
   if(r)html+=`<span class="xpchip">+${r.xp} XP</span>`;
   if(s.photo)html+=`<div id="d-photo" style="margin:4px 0 12px"></div>`;
+  if(s.fuel&&s.dur){const h=s.dur/3600,sr=s.fuel.pre&&s.fuel.post?((s.fuel.pre-s.fuel.post)*1000+(s.fuel.fl||0))/h:null;html+=`<p class="hint" style="margin:-4px 0 10px">💧 ${s.fuel.fl?`${s.fuel.fl} ml drunk (${Math.round(s.fuel.fl/h)} ml/h)`:"No fluid logged"}${s.fuel.gels?`, ${s.fuel.gels} gel${s.fuel.gels===1?"":"s"}`:""}${sr?`. Sweat rate about ${r50(sr)} ml/h, ${s.fuel.pre>s.fuel.post?`lost ${round(toDispWt(s.fuel.pre-s.fuel.post),1)} ${wU()} (${round((s.fuel.pre-s.fuel.post)/s.fuel.pre*100,1)}% of body weight)`:"no weight lost"}`:""}.</p>`;}
   if(gearById(s.gearId))html+=`<p class="hint" style="margin:-4px 0 10px">Gear: ${esc(gearById(s.gearId).name)}</p>`;
   if(s.type==="hang"&&s.hangs&&s.hangs.length)html+=`<h4>Hangs</h4><table><thead><tr><th>Grip</th><th>Edge</th><th>Load</th><th>Sets × reps</th></tr></thead><tbody>${s.hangs.map(h=>`<tr><td>${esc(h.grip)}</td><td>${h.edge?h.edge+" mm":"–"}</td><td>${fmtAdd(h.add||0)}</td><td>${h.sets} × ${h.reps} (${h.hang}s/${h.rest}s)</td></tr>`).join("")}</tbody></table>`;
   if(s.cond&&s.cond.length)html+=`<p class="hint" style="margin:-6px 0 10px">Trail: ${esc(s.cond.join(", ").toLowerCase())}</p>`;
@@ -2080,6 +2295,7 @@ function openDetail(s){
   if(s.type==="climb"&&s.probs&&s.probs.length)html+=`<h4>Problems</h4><div class="tlist">${s.probs.map((p,i)=>`<div class="trow">${p.gc?`<span class="mdot" style="background:${p.gc};box-shadow:0 0 0 1px var(--line)"></span>`:`<span class="mdot" style="background:var(--climb);font-size:.8rem;width:auto;min-width:28px;padding:0 6px;border-radius:8px">${esc(p.gl)}</span>`}<div class="tx"><b>${p.proj?"🎯 ":""}${esc(p.name||(p.gc?p.gl+" problem":"Problem "+(i+1)))}</b><span>${[p.style,(p.holds||[]).join(", ")].filter(Boolean).map(esc).join(". ")||"No style noted"}</span></div><span class="tv" style="font-size:1rem;text-align:right">${RESULTS[p.res]}<br><small style="color:var(--muted);font-family:var(--font);font-weight:500;font-size:.75rem">${p.att||1} ${(p.att||1)===1?"try":"tries"}</small></span></div>`).join("")}</div>`;
   if(s.notes)html+=`<div class="notes">${esc(s.notes)}</div>`;
   html+=`<h4>Feedback</h4><div class="fb">${feedback(s).map(t=>`<p>${esc(t)}</p>`).join("")}</div>`;
+  html+=dykHTML(s);
   html+=viewer?`<div class="row"><button class="btn primary" id="dclose">Close</button></div></div>`:`<div class="row"><button class="btn primary" id="dshare">Share as image</button>${hasTimes(s)?`<button class="btn" id="dseg">Create segment</button>`:""}</div>
     <div class="row" style="margin-top:10px"><button class="btn" id="dedit">Edit</button><button class="btn danger" id="ddel">Delete</button><button class="btn" id="dclose">Close</button></div></div>`;
   openSheet(html);
@@ -2156,7 +2372,7 @@ function openAccolade(id){
 }
 
 /* ---------- share image ---------- */
-const TYPE_HEX={run:"#2F6BFF",walk:"#7A5AF8",hike:"#9A6B2F",ride:"#0E9F6E",lift:"#E39B00",climb:"#D9467E",hang:"#C2410C",other:"#5E6675"};
+const TYPE_HEX={run:"#4F8DFF",walk:"#A58BFF",hike:"#C99A5B",ride:"#2FC48D",lift:"#E8A93A",climb:"#FF5C8A",hang:"#FF8A4C",other:"#8E8E93"};
 const FONTS={
   sport:{num:'800 {s}px "Barlow Condensed","Arial Narrow",sans-serif',label:'600 {s}px "Barlow",system-ui,sans-serif',title:'700 {s}px "Barlow",system-ui,sans-serif',k:1},
   clean:{num:'700 {s}px "Barlow",system-ui,sans-serif',label:'500 {s}px "Barlow",system-ui,sans-serif',title:'600 {s}px "Barlow",system-ui,sans-serif',k:.78},
@@ -2292,7 +2508,7 @@ function openShare(s){
     <div class="preview" id="pv"><span style="color:#fff">Drawing…</span></div>
     <div class="row"><button class="btn primary" id="ssave">Save image</button><button class="btn" id="scopy">Copy image</button></div>
     <p class="hint" id="shint">You can also press and hold the image above and choose "Save to Photos".</p>
-    <div class="opts" style="--c:var(--ink)">
+    <div class="opts" style="--c:#F5F5F7;--ct:#000">
       <div class="plabel">Layout</div>${segH("o-layout","layout",[["stack","Stacked"],["list","List"],["row","Row"],["grid","Grid"],["hero","Big"]])}
       <div class="plabel">Size</div>${segH("o-size","size",[["fit","Fit to content"],["story","Story 9:16"],["square","Square"]])}
       <div class="plabel">Stats to show (tap to add or remove, in order)</div><div class="tchips" id="o-stats">${allStats(s).map(st=>`<button class="tchip" data-k="${st.k}" aria-pressed="${o.stats.includes(st.k)}">${st.l}</button>`).join("")}</div>
@@ -2499,7 +2715,7 @@ function openPlaceEditor(p,after){
       <label>Color circuit</label>
       ${circ?`<div id="pcirc">${cHTML()}</div><button class="addex" id="pl-addc">+ Add color</button><p class="hint">Easiest first. Tap a swatch to change its color. Grades already logged here keep the colors they were saved with.</p><button class="link" id="pl-nocirc">Use my default circuit instead</button>`
         :`<p class="hint" style="margin-top:0">This place uses your default circuit from Settings.</p><button class="addex" id="pl-circ">Give this place its own circuit</button>`}
-      <label>Default place for</label><div class="tchips" id="pl-defs" style="--c:var(--ink)">${Object.entries(TYPES).map(([t,n])=>`<button class="tchip" data-t="${t}" aria-pressed="${defs[t]===d.id}">${n}</button>`).join("")}</div>
+      <label>Default place for</label><div class="tchips" id="pl-defs" style="--c:#F5F5F7;--ct:#000">${Object.entries(TYPES).map(([t,n])=>`<button class="tchip" data-t="${t}" aria-pressed="${defs[t]===d.id}">${n}</button>`).join("")}</div>
       <p class="hint">New workouts of these types start with this place selected. Otherwise it remembers the last place you used.</p>
       <div class="err" id="pl-err"></div>
       <div class="row"><button class="btn" id="pl-cancel">Cancel</button><button class="btn primary" id="pl-save">${isNew?"Add place":"Save changes"}</button></div>
@@ -2653,7 +2869,7 @@ function recapData(ym){
   const days=[...new Set(ms.map(s=>s.date))].sort();let bestRun=0,run=0,prevD=null;for(const d of days){run=prevD&&keyOf(addDays(parseDate(prevD),1))===d?run+1:1;bestRun=Math.max(bestRun,run);prevD=d;}
   return {ym,label:parseDate(ym+"-01").toLocaleDateString(undefined,{month:"long",year:"numeric"}),ms,count:ms.length,days:days.length,time:sum(ms,s=>s.dur),prevTime:sum(prev,s=>s.dur),
     dist:sum(ms,s=>DIST_TYPES.includes(s.type)?s.dist:0),elev:sum(ms,s=>s.type!=="lift"&&s.type!=="climb"?s.elev:0),vol:sum(ms,volume),sends:sum(ms,s=>s.type==="climb"?sends(s).length:0),
-    summits:ms.filter(s=>s.summit).length,xpGain,lvStart:levelOf(xpStart),lvEnd:levelOf(xpStart+xpGain),medals,acc,projs,fav,byType,bestRun,
+    summits:ms.filter(s=>s.summit).length,xpGain,lvStart:levelAt(xpStart,ym+"-01"),lvEnd:levelAt(xpStart+xpGain,keyOf(new Date(y,m,0))),medals,acc,projs,fav,byType,bestRun,
     longest:best(ms,s=>s.dur||null)};
 }
 function recapStats(R){
@@ -2727,7 +2943,7 @@ function imageSheet(title,sub,drawFn,fname,segs,toggles,o,back){
   openSheet(`<h3>${esc(title)}</h3><p class="sub">${esc(sub)}</p><div class="preview" id="pv"><span style="color:#fff">Drawing…</span></div>
     <div class="row"><button class="btn primary" id="is-save">Save image</button><button class="btn" id="is-copy">Copy image</button></div>
     <p class="hint" id="is-hint">You can also press and hold the image and choose "Save to Photos".</p>
-    <div class="opts" style="--c:var(--ink)">${segs.map(sg=>`<div class="plabel">${sg.label}</div><div class="seg" data-sk="${sg.key}">${sg.opts.map(([v,t])=>`<button data-v="${v}" aria-pressed="${o[sg.key]===v}">${t}</button>`).join("")}</div>`).join("")}
+    <div class="opts" style="--c:#F5F5F7;--ct:#000">${segs.map(sg=>`<div class="plabel">${sg.label}</div><div class="seg" data-sk="${sg.key}">${sg.opts.map(([v,t])=>`<button data-v="${v}" aria-pressed="${o[sg.key]===v}">${t}</button>`).join("")}</div>`).join("")}
     ${toggles.length?`<div class="plabel">Show</div><div class="tchips">${toggles.map(([k,t])=>`<button class="tchip" data-tk="${k}" aria-pressed="${!!o[k]}">${t}</button>`).join("")}</div>`:""}</div>
     <div id="is-extra"></div>
     <div class="row" style="margin-top:16px"><button class="btn" id="is-back">Back</button></div>`);
@@ -2807,7 +3023,7 @@ function openPRShare(s){
     {label:"Size",key:"size",opts:[["fit","Fit"],["story","Story 9:16"],["square","Square"]]},
     {label:"Text color (no card only)",key:"color",opts:[["#FFFFFF","White"],["#121212","Black"]]}],
     [["header","Workout title"]],o,()=>openDetail(s));
-  $("is-extra").innerHTML=`<div class="plabel" style="margin-top:12px">Medals to include</div><div class="tchips" style="--c:var(--ink)">${all.map(m=>`<button class="tchip" data-pk="${m.k}" aria-pressed="${o.picked.has(m.k)}">${m.rank===1?"🥇":m.rank===2?"🥈":"🥉"} ${esc(m.title)}${m.year?" ("+m.year+")":""}</button>`).join("")}</div>`;
+  $("is-extra").innerHTML=`<div class="plabel" style="margin-top:12px">Medals to include</div><div class="tchips" style="--c:#F5F5F7;--ct:#000">${all.map(m=>`<button class="tchip" data-pk="${m.k}" aria-pressed="${o.picked.has(m.k)}">${m.rank===1?"🥇":m.rank===2?"🥈":"🥉"} ${esc(m.title)}${m.year?" ("+m.year+")":""}</button>`).join("")}</div>`;
   document.querySelectorAll("[data-pk]").forEach(b=>b.onclick=()=>{const k=b.dataset.pk;if(o.picked.has(k))o.picked.delete(k);else{if(o.picked.size>=6){toast("Up to 6 medals");return;}o.picked.add(k);}b.setAttribute("aria-pressed",o.picked.has(k));redraw();});
 }
 
@@ -2883,7 +3099,7 @@ function ltTitle(g){
 }
 function openWizard(mode){
   const lt=LT();
-  const st={step:mode==="profile"?2:0,sel:new Set(),d:{},prof:{days:lt.days||3,mins:lt.mins||60,level:lt.level||"intermediate",cautions:[...(lt.cautions||[])]},keep:new Set(longGoals().filter(g=>!g.done).map(g=>g.id))};
+  const st={step:mode==="profile"?2:0,sel:new Set(),d:{},prof:{days:lt.days||3,mins:lt.mins||60,level:lt.level||"intermediate",climate:lt.climate||"hot",cautions:[...(lt.cautions||[])]},keep:new Set(longGoals().filter(g=>!g.done).map(g=>g.id))};
   const mk=k=>{const today=keyOf(new Date());const by=keyOf(addDays(new Date(),91));
     const base={kind:k,by:"3m",date:by};
     if(k==="race")return {...base,dist:"5",time:""};
@@ -2932,6 +3148,7 @@ function openWizard(mode){
         <label>Days per week you can train</label><div class="seg" data-p="days">${[2,3,4,5,6,7].map(v=>`<button data-v="${v}" aria-pressed="${P.days==v}">${v}</button>`).join("")}</div>
         <label>Usual session length</label><div class="seg" data-p="mins">${[30,45,60,90,120].map(v=>`<button data-v="${v}" aria-pressed="${P.mins==v}">${v<120?v+" min":"2 h"}</button>`).join("")}</div>
         <label>Experience</label><div class="seg" data-p="level">${[["beginner","Beginner"],["intermediate","Intermediate"],["advanced","Advanced"]].map(([v,n])=>`<button data-v="${v}" aria-pressed="${P.level===v}">${n}</button>`).join("")}</div>
+        <label>Where you train</label><div class="seg" data-p="climate">${[["hot","Hot and humid"],["mild","Mild"],["cool","Cool"]].map(([v,n])=>`<button data-v="${v}" aria-pressed="${P.climate===v}">${n}</button>`).join("")}</div>
         <label>Anything to be careful with?</label><div class="tchips" style="--c:#D13B4F">${CAUTIONS.map(c=>`<button class="tchip" data-caut="${c}" aria-pressed="${P.cautions.includes(c)}">${c}</button>`).join("")}</div>
         <p class="hint">Workouts will go easier on these areas. This app can't replace advice from a doctor or physio for an injury.</p>
         <div class="row">${mode==="profile"?`<button class="btn" id="wz-skip">Cancel</button>`:`<button class="btn" id="wz-back">Back</button>`}<button class="btn primary" id="wz-next">${mode==="profile"?"Save":"Next"}</button></div>`;
@@ -2958,7 +3175,7 @@ function openWizard(mode){
       draw();}));
     q("[data-gg]").forEach(b=>b.onclick=()=>{const [k,i]=b.dataset.gg.split(":");st.d[k].g=+i;q(`[data-gg^="${k}:"]`).forEach(z=>z.setAttribute("aria-pressed",z===b));});
     q("select[data-i]").forEach(sl=>sl.onchange=()=>{readInputs();draw();});
-    q("[data-p]").forEach(el=>el.querySelectorAll("button").forEach(b=>b.onclick=()=>{const f=el.dataset.p;st.prof[f]=f==="level"?b.dataset.v:+b.dataset.v;el.querySelectorAll("button").forEach(z=>z.setAttribute("aria-pressed",z===b));}));
+    q("[data-p]").forEach(el=>el.querySelectorAll("button").forEach(b=>b.onclick=()=>{const f=el.dataset.p;st.prof[f]=f==="level"||f==="climate"?b.dataset.v:+b.dataset.v;el.querySelectorAll("button").forEach(z=>z.setAttribute("aria-pressed",z===b));}));
     q("[data-caut]").forEach(b=>b.onclick=()=>{const c=b.dataset.caut,a=st.prof.cautions,i=a.indexOf(c);if(i>=0)a.splice(i,1);else a.push(c);b.setAttribute("aria-pressed",i<0);});
     if($("wz-skip"))$("wz-skip").onclick=()=>{if(mode==="first"){LT().onboarded=true;LT().lastCheck=Date.now();settings.updatedAt=Date.now();saveLocal();pushSettings();}closeSheet();};
     if($("wz-back"))$("wz-back").onclick=()=>{readInputs();st.step=st.step===3&&!st.sel.size?0:st.step-1;draw();};
@@ -3083,7 +3300,7 @@ function genLift(o){
   return {type:"lift",title:sp.n+({strength:", strength",muscle:", muscle building",endurance:", muscular endurance",power:", power"}[focus]),why,rpe,est,
     blocks:[{n:"Warm-up",items:[{text:"5 minutes of easy cardio (bike, rower, or brisk walk)"},{text:`Dynamic stretches for ${sp.m.slice(0,3).join(", ").toLowerCase()}`},{text:`2 light ramp-up sets of ${items[0]?items[0].ex:"your first exercise"}`}]},
       {n:"Main work",items},
-      {n:"Cool-down",items:[{text:`5 minutes of stretching: ${sp.m.slice(0,3).join(", ").toLowerCase()}`}]}]};
+      {n:"Cool-down",items:[{text:`5 minutes of stretching: ${sp.m.slice(0,3).join(", ").toLowerCase()}`}]}].concat(o.mins-est>25?[{n:"With the extra time",items:[{text:`About ${Math.round(o.mins-est)} minutes left: easy cardio, mobility, or core. Lifting much past 90 minutes adds fatigue faster than it adds strength.`}]}]:[])};
 }
 function runBase(){
   const since=keyOf(addDays(new Date(),-120));let b=null;
@@ -3109,12 +3326,20 @@ function genRun(o){
   else if(o.effort==="hard")kind=o.mins<35?"tempo":raceG&&(+raceG.dist>=21)?["tempo","cruise"][o.seed%2]:["tempo","intervals","hills","cruise"][o.seed%4];
   else kind=o.mins<35?"tempo":["intervals","reps"][o.seed%2];
   if(kind==="hills"&&(caut.includes("Knees")||caut.includes("Ankles")))kind="cruise";
+  if(o.mins>=150&&o.feel!=="sore")kind="ultra_"+(o.effort==="max"?"hard":o.effort);
   if(raceG){const D=RACE_D[raceG.dist][1];why.push(`Built toward your ${RACE_D[raceG.dist][0]}${raceG.time?` goal pace of ${fmtPace(raceG.time/(D/1000))}`:""}, ${Math.max(0,Math.ceil((parseDate(raceG.date)-Date.now())/6048e5))} weeks out.`);}
   if(caut.includes("Knees")||caut.includes("Ankles"))why.push("Choose soft surfaces or a track to go easy on your joints.");
   const M=o.mins;let title,blocks,rpe;
   const wu=m=>({n:"Warm-up",items:[{text:`${m} minutes easy ${easy}`},{text:"4 × 20-second strides, walking back between"}]});
   const cd=m=>({n:"Cool-down",items:[{text:`${m} minutes easy jog, then light stretching`}]});
-  if(kind==="recovery"){title="Recovery run";rpe=3;blocks=[{n:"Run",items:[{text:`${Math.min(M,35)} minutes very easy ${easy}. Slower than you think.`},{text:"Walk breaks are fine. The goal is blood flow, not fitness."}]}];}
+  if(kind.startsWith("ultra")){
+    const H=round(M/60,1),climbs=!(caut.includes("Knees")||caut.includes("Ankles"));
+    if(kind==="ultra_easy"){title=`Time on feet, ${H} h`;rpe=4;blocks=[{n:"Run and walk",items:[{text:`${H} hours of easy running and walking ${easy}`},{text:"Run 25 minutes, walk 5 minutes, and repeat. Walk every steep climb from the start"},{text:"The goal is hours on your legs, not pace"}]}];}
+    else if(kind==="ultra_moderate"){title=`Ultra long run, ${H} h`;rpe=5;blocks=[{n:"Long run",items:[{text:`${H} hours ${climbs?"on trails or a hilly route if you can":"on flat, soft surfaces"} ${easy}`},{text:climbs?"Run the flats and downhills easy, power-hike the climbs with hands on knees":"Keep it steady and add short walk breaks every 30 minutes"},{text:"Wear your race kit and vest, and practice exactly what you'll eat and drink on race day"}]},{n:"Cool-down",items:[{text:"10 minutes easy walk, then legs up for a few minutes"}]}];}
+    else {const blk=M>=240?3:2;title=`Long run with race-effort blocks, ${H} h`;rpe=6;blocks=[{n:"Long run",items:[{text:`First third of the run ${easy}`},{text:`Middle: ${blk} × 20 minutes at ultra race effort (about 6–7/10, slower than marathon pace), 10 minutes easy between`},{text:`Finish the rest ${easy}, walking climbs`}]},{n:"Cool-down",items:[{text:"10 minutes easy walk"}]}];if(o.effort==="max")why.push("All-out doesn't work for hours, so this keeps the hard efforts in controlled blocks.");}
+    why.push("For ultra training, an easier 1–2 hour run the next day (back-to-back long runs) teaches you to run on tired legs.");
+    if(LT().climate!=="cool")why.push("Long runs in Manila and Davao heat are safest started before sunrise, with refills planned along the way.");
+  }else if(kind==="recovery"){title="Recovery run";rpe=3;blocks=[{n:"Run",items:[{text:`${Math.min(M,35)} minutes very easy ${easy}. Slower than you think.`},{text:"Walk breaks are fine. The goal is blood flow, not fitness."}]}];}
   else if(kind==="easy"){title="Easy aerobic run";rpe=4;blocks=[{n:"Run",items:[{text:`${M-5} minutes ${easy}`},{text:"5 minutes walk and stretch"}]}];}
   else if(kind==="long"){title="Long run";rpe=5;blocks=[{n:"Run",items:[{text:`${M-10} minutes ${easy}`},{text:`Last 10 minutes at marathon effort${b?" ("+fmtPace(P("mar"))+")":""}`},{text:"Take water if it's hot. Practice your race fuel on runs over 75 minutes."}]}];}
   else if(kind==="strides"){title="Steady run with strides";rpe=5;blocks=[{n:"Run",items:[{text:`${M-8} minutes ${easy}`},{text:"6 × 20-second strides at fast but relaxed pace, 60 seconds walk between"}]},cd(5)];}
@@ -3125,7 +3350,7 @@ function genRun(o){
   else if(kind==="intervals"){const rep=b?P("int")*0.8:210;const n=Math.max(3,Math.min(8,Math.floor((M-22)*60/(rep+120))));title="VO2max intervals";rpe=8;blocks=[wu(12),{n:"Main set",items:[{text:`${n} × 800 m ${intp}${b?` (${fmtClock(rep)} each)`:""}, 2 minutes easy jog between`}]},cd(8)];}
   else {const rep=b?P("rep")*0.4:85;const n=Math.max(6,Math.min(12,Math.floor((M-22)*60/(rep+90))));title="400 m repeats";rpe=9;blocks=[wu(12),{n:"Main set",items:[{text:`${n} × 400 m ${b?`at ${fmtPace(P("rep"))} (${fmtClock(rep)} each)`:"fast and controlled"}, 90 seconds walk or jog between`}]},cd(8)];}
   const est=kind==="recovery"?Math.min(M,35):M;
-  const dist=b?(est*60)/(b*({recovery:1.36,easy:1.29,long:1.27}[kind]||1.18)):null;
+  const dist=b?(est*60)/(b*({recovery:1.36,easy:1.29,long:1.27,ultra_easy:1.6,ultra_moderate:1.5,ultra_hard:1.4}[kind]||1.18)):null;
   return {type:"run",title,why,rpe,est,blocks,distEst:dist};
 }
 function genRide(o){
@@ -3140,10 +3365,14 @@ function genRide(o){
   else if(o.effort==="moderate")kind=o.mins>=90||(g&&g.kind==="ride")?"endurance":"sweetspot";
   else if(o.effort==="hard")kind=g&&g.kind==="ftp"?["threshold","sweetspot","overunder"][o.seed%3]:["threshold","overunder"][o.seed%2];
   else kind=["vo2","3030"][o.seed%2];
+  if(o.mins>=150&&o.feel!=="sore")kind=o.effort==="easy"||o.effort==="moderate"?"longz2":"longss";
   const M=o.mins;let title,blocks,rpe;
   const wu={n:"Warm-up",items:[{text:`10 minutes building from easy to moderate ${z(.5,.7,"(easy spin)")}`},{text:"3 × 30-second high-cadence spin-ups"}]};
   const cd=m=>({n:"Cool-down",items:[{text:`${m} minutes easy spin ${z(.4,.55,"")}`.trim()}]});
-  if(kind==="recovery"){title="Recovery spin";rpe=2;blocks=[{n:"Ride",items:[{text:`${Math.min(M,45)} minutes very easy ${z(.4,.55,"(you should barely feel your legs)")}, cadence 90+`}]}];}
+  if(kind==="longz2"||kind==="longss"){const H=round(M/60,1);title=kind==="longz2"?`Long endurance ride, ${H} h`:`Long ride with sweet spot, ${H} h`;rpe=kind==="longz2"?4:6;
+    blocks=[{n:"Ride",items:[{text:`${H} hours steady ${z(.56,.75,"at a pace you could hold all day")}`},...(kind==="longss"?[{text:`In the middle hour: ${M>=240?3:2} × 20 minutes ${z(.88,.93,"(hard but sustainable)")}, 10 minutes easy between`}]:[]),{text:"Keep cadence comfortable, ease off on climbs to stay in the zone, and stand up every 20–30 minutes"},{text:"A coffee and refill stop around halfway is part of the plan"}]}];
+    why.push("Long rides build the aerobic base that makes every other ride easier.");}
+  else if(kind==="recovery"){title="Recovery spin";rpe=2;blocks=[{n:"Ride",items:[{text:`${Math.min(M,45)} minutes very easy ${z(.4,.55,"(you should barely feel your legs)")}, cadence 90+`}]}];}
   else if(kind==="endurance"){title="Endurance ride";rpe=4;const tempo=o.effort==="moderate"&&M>=60;blocks=[{n:"Ride",items:[{text:`${M}${tempo?" minutes total":" minutes"} steady ${z(.56,.75,"at a pace you could hold for hours")}`},...(tempo?[{text:`Include 3 × 8 minutes tempo ${z(.76,.87,"(steady but working)")}, 5 minutes easy between`}]:[]),{text:"Eat something every 45 minutes on rides over 90 minutes."}]}];}
   else if(kind==="sweetspot"){const t=Math.max(8,Math.min(20,Math.floor((M-25)/2)));title="Sweet spot intervals";rpe=6;blocks=[wu,{n:"Main set",items:[{text:`2 × ${t} minutes ${z(.88,.93,"(hard but sustainable)")}, 5 minutes easy between`}]},cd(Math.max(5,M-20-2*t-5))];}
   else if(kind==="threshold"){const n=Math.max(2,Math.min(4,Math.floor((M-20)/15)));title="Threshold intervals";rpe=8;blocks=[wu,{n:"Main set",items:[{text:`${n} × 10 minutes ${z(.95,1.05,"(your 1-hour race effort)")}, 5 minutes easy between`}]},cd(Math.max(5,M-10-n*15))];}
@@ -3170,6 +3399,20 @@ function genClimb(o){
   else kind=proj?"project":"limit";
   if(g&&g.kind==="grade"&&(kind==="limit"||kind==="project"))why.push(`Pushing toward your goal: ${ltTitle(g)}.`);
   const M=o.mins,scale=Math.max(0.5,Math.min(1.6,(M-20)/45));
+  if(M>=180){
+    const H=round(M/60,1),hrsMain=Math.max(1,(M-75)/60),hard=!fingerRisk&&(o.effort==="hard"||o.effort==="max"),easyDay=fingerRisk||o.effort==="easy";
+    const am=easyDay?[{text:`Technique block: ${Math.round(4+hrsMain)} problems at ${G(-3)} with silent feet and smooth hips`}]:hard?[{text:`Limit block while you're freshest: ${Math.max(3,Math.round(hrsMain))} problems at ${G(0)} to ${G(1)}${proj?`, including your project ${proj.name}`:""}`},{text:"Up to 5 attempts each, 3–4 minutes rest between tries"}]:[{text:`Pyramid: ${Math.round(4+hrsMain*1.5)} at ${G(-3)}, ${Math.round(3+hrsMain)} at ${G(-2)}, ${Math.round(2+hrsMain*0.5)} at ${G(-1)}`}];
+    const pmN=Math.round(6+hrsMain*3);
+    const blocks=[{n:"Warm-up (30 min)",items:[{text:"10 minutes mobility: wrists, fingers, shoulders, hips"},{text:`8–10 easy problems from ${G(-5)} up to ${G(-2)}`}]},
+      {n:"Morning session",items:am},
+      {n:"Midday break (30–45 min)",items:[{text:"Eat a real meal, rehydrate, and get out of the heat"},{text:"File or sand down any rough skin, and tape a split before it gets worse"}]},
+      {n:"Afternoon session",items:[{text:`Volume: ${pmN} problems at ${G(-3)} to ${G(-2)}, flashing new ones where you can`},{text:"Climb with friends, take turns, and rest while they climb"}]},
+      {n:"Late session",items:[{text:`Easy mileage at ${G(-4)}: downclimb everything`},{text:"Stop as soon as your skin is thin or moves get sloppy. Injuries happen in the last hour."}]},
+      {n:"Cool-down",items:[{text:"Push-ups 3 × 12, reverse wrist curls 2 × 15"},{text:"Forearm and shoulder stretches, then moisturize your hands"}]}];
+    why.push(`${H} hours on the wall is a lot for fingers and skin, so the hardest climbing comes first while you're fresh.`);
+    if(fingerRisk)why.push("Your fingers are flagged, so the whole day stays below your limit.");
+    return {type:"climb",title:`Climbing day, ${H} h`,why,rpe:hard?7:easyDay?4:6,est:M,blocks,gs,placeId:pl};
+  }
   const wu={n:"Warm-up",items:[{text:"5 minutes mobility: wrist circles, shoulder rolls, hip openers"},{text:`6–8 easy problems climbing up from ${G(-5)} to ${G(-2)}`},{text:"Finish with 2 problems at "+G(-1)+" to prime"}]};
   let title,main,rpe;
   if(kind==="technique"){title="Technique session";rpe=4;main=[{text:`Silent feet: ${Math.round(6*scale)} problems at ${G(-3)}, placing each foot without a sound`},{text:`Downclimbing: ${Math.round(4*scale)} problems at ${G(-4)}, climb back down every move`},{text:`Slab and balance: ${Math.round(4*scale)} problems at ${G(-3)}, focus on hips over feet`}];}
@@ -3196,25 +3439,37 @@ function genHang(o){
   else why.push("Start with bodyweight. If it feels easy, add weight next time.");
   if(lvl==="beginner")why.push("Repeaters on an open-hand grip build tendon strength safely while you're new to the board.");
   const h=maxH?{grip,edge,add,hang:10,rest:180,reps:1,sets:o.mins>=45?6:4}:{grip,edge,add:best!=null?Math.max(0,best-5):0,hang:7,rest:3,reps:6,sets:o.mins>=45?6:4};
+  if(o.mins>60)why.push("Hangboard sessions work best kept short. Use the rest of your time for easy climbing or mobility.");
   return {type:"hang",title:maxH?"Max hangs":"Repeaters",why,rpe:maxH?8:7,est:Math.min(o.mins,maxH?h.sets*3.5+15:h.sets*4+15),hangs:[h],
     blocks:[{n:"Warm-up",items:[{text:"10 minutes easy climbing, or progressive hangs on a big edge"},{text:`2–3 lighter hangs on ${edge} mm, building up`}]},
       {n:"Hangs",items:[{text:maxH?`${h.sets} × 10-second ${grip.toLowerCase()} hangs on ${edge} mm at ${fmtAdd(h.add)}, 3 minutes rest`:`${h.sets} sets of 6 × (7 s on / 3 s off), ${grip.toLowerCase()} on ${edge} mm at ${fmtAdd(h.add)}, 3 minutes between sets`,hang:h}]},
       {n:"Cool-down",items:[{text:"Antagonist push-ups 2 × 12 and forearm stretches"}]}]};
 }
+function genHike(o){
+  const why=[],caut=cautionsNow(),H=round(o.mins/60,1),rate={easy:250,moderate:350,hard:450,max:500}[o.effort]||350;
+  const knees=caut.includes("Knees")||caut.includes("Ankles");
+  const climb=Math.round(rate*o.mins/60*(o.mins>=180?0.55:0.65)),g=goalFor("hike");
+  if(g)why.push(`Building toward your goal: ${ltTitle(g)}.`);
+  if(knees)why.push("Use trekking poles and take descents slowly to protect your knees and ankles.");
+  if(o.feel==="sore"||o.effort==="easy")return {type:"hike",title:`Easy walk or flat trail, ${H} h`,why,rpe:3,est:o.mins,blocks:[{n:"Walk",items:[{text:`${H} hours at a relaxed pace you could chat at`},{text:"Light day pack. Enjoy it"}]}]};
+  if(o.mins<90&&o.effort!=="moderate")return {type:"hike",title:"Hill or stair intervals",why,rpe:7,est:o.mins,blocks:[{n:"Warm-up",items:[{text:"10 minutes brisk walking"}]},{n:"Main set",items:[{text:`${Math.max(4,Math.floor((o.mins-20)/4))} × 3 minutes uphill or on stairs at hard effort, walk down to recover`},{text:"Wear your pack with 5–10 kg in it"}]},{n:"Cool-down",items:[{text:"10 minutes easy walk and calf stretches"}]}]};
+  return {type:"hike",title:o.mins>=360?`Big mountain day, ${H} h`:`Training hike, ${H} h`,why,rpe:o.effort==="moderate"?5:7,est:o.mins,blocks:[{n:"Hike",items:[{text:`${H} hours with about ${Math.round(toDispElev(climb)).toLocaleString()} ${elevU()} of climbing`},{text:`Carry ${o.effort==="moderate"?"a 5–8 kg":"an 8–12 kg or full trip"} pack and walk at a pace where you can still breathe through your nose on the flats`},{text:"Take a short planned break every hour rather than long stops, and eat something at each one"},{text:o.mins>=360?"Start before dawn: Philippine mountains get hot, and afternoon storms roll in fast":"Turn around by the halfway time even if you haven't reached the top"}]}]};
+}
 function buildPlan(o){
   const order=["easy","moderate","hard","max"],names={easy:"easy",moderate:"moderate",hard:"hard",max:"all out"};
   let eff=o.effort;
   if(o.feel==="sore")eff="easy";else if(o.feel==="tired")eff=order[Math.max(0,order.indexOf(o.effort)-1)];
-  const pl=({lift:genLift,run:genRun,ride:genRide,climb:genClimb,hang:genHang})[o.type]({...o,effort:eff});
+  const pl=({lift:genLift,run:genRun,ride:genRide,climb:genClimb,hang:genHang,hike:genHike})[o.type]({...o,effort:eff});
   if(eff!==o.effort)pl.why.unshift(`You said you're ${o.feel}, so I've dialed it down from ${names[o.effort]} to ${names[eff]}.`);
   return pl;
 }
 function planHTML(pl){
+  const fp=pl.est>=45?fuelPlan(pl.type,pl.est,pl.rpe):null;
   return `<div class="ins" style="background:var(--bg);margin-top:16px;--c:${col(pl.type)}"><div class="row2"><h3>${esc(pl.title)}</h3><span class="xpchip" style="background:${col(pl.type)}">About ${pl.est} min</span></div>
     <p class="hint" style="margin-top:4px">Target effort ${pl.rpe}/10${pl.distEst?`, roughly ${fmtDist(pl.distEst)}`:""}</p>
     ${pl.why.length?`<div class="fb" style="background:var(--surface);margin:10px 0">${pl.why.map(t=>`<p>${esc(t)}</p>`).join("")}</div>`:""}
     ${pl.blocks.map(b=>`<h4 style="margin:14px 0 6px">${esc(b.n)}</h4>${b.items.map(it=>it.ex?`<div class="trow" style="padding:8px 0"><span class="mdot" style="background:${col(pl.type)};font-size:.75rem">${it.sets}×</span><div class="tx"><b>${esc(it.ex)}</b><span>${it.sets} sets of ${it.reps}${it.w?` at ${fmtWt(it.w)}`:""}, rest ${it.rest>=120?it.rest/60+" min":it.rest+" s"}. ${esc(it.note)}</span></div></div>`:`<p style="margin:6px 0;font-size:.92rem;line-height:1.45">• ${esc(it.text)}</p>`).join("")}`).join("")}
-  </div>`;
+  ${fuelHTML(fp)}</div>`;
 }
 let planPrefs=null;
 function openPlanner(type){
@@ -3227,8 +3482,9 @@ function openPlanner(type){
     const rec=recoveryLeft();
     const g=goalFor(o.type);
     openSheet(`<h3>Start a workout</h3><p class="sub">Answer a few quick questions and I'll build today's session.</p>
-      <label>Activity</label><div class="seg" data-po="type">${[["lift","Lift"],["run","Run"],["ride","Ride"],["climb","Boulder"],["hang","Board"]].map(([v,n])=>`<button data-v="${v}" aria-pressed="${o.type===v}">${n}</button>`).join("")}</div>
-      <label>Time available</label><div class="seg" data-po="mins">${[20,30,45,60,90,120].map(v=>`<button data-v="${v}" aria-pressed="${o.mins==v}">${v<120?v:"2h"}</button>`).join("")}</div>
+      <label>Activity</label><div class="seg" data-po="type">${[["lift","Lift"],["run","Run"],["ride","Ride"],["hike","Hike"],["climb","Boulder"],["hang","Board"]].map(([v,n])=>`<button data-v="${v}" aria-pressed="${o.type===v}">${n}</button>`).join("")}</div>
+      <label>Time available</label><div class="tchips" data-po="mins" style="--c:#F5F5F7;--ct:#000">${TIME_OPTS.map(v=>`<button class="tchip" data-v="${v}" aria-pressed="${o.mins==v}">${timeLabel(v)}</button>`).join("")}</div>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:8px"><span class="hint" style="margin:0;white-space:nowrap">Or custom:</span><input id="pl-custom" type="number" inputmode="decimal" step="0.25" min="0.25" max="24" placeholder="hours, e.g. 5.5" value="${TIME_OPTS.includes(o.mins)?"":round(o.mins/60,2)}" style="max-width:150px"></div>
       <label>Effort goal</label><div class="seg" data-po="effort">${[["easy","Easy"],["moderate","Moderate"],["hard","Hard"],["max","All out"]].map(([v,n])=>`<button data-v="${v}" aria-pressed="${o.effort===v}">${n}</button>`).join("")}</div>
       <label>How do you feel?</label><div class="seg" data-po="feel">${[["fresh","Fresh"],["ok","OK"],["tired","Tired"],["sore","Sore"]].map(([v,n])=>`<button data-v="${v}" aria-pressed="${o.feel===v}">${n}</button>`).join("")}</div>
       <p class="hint">${rec.h>0?`Based on your logs, you have about ${Math.round(rec.h)} hours of recovery left from ${esc(titleOf(rec.s))}.`:"Your logs say you're recovered."}</p>
@@ -3238,6 +3494,7 @@ function openPlanner(type){
       <div class="row"><button class="btn" id="pl-cancel">Cancel</button><button class="btn primary" id="pl-build">${plan?"Rebuild":"Build my workout"}</button></div>
       <div id="pl-out">${plan?planHTML(plan)+`<div class="row"><button class="btn" id="pl-again">Try another</button><button class="btn primary" id="pl-start">Start this workout</button></div><div class="row" style="margin-top:8px"><button class="btn" id="pl-save">Save as routine</button></div>`:""}</div>`);
     document.querySelectorAll("[data-po]").forEach(el=>el.querySelectorAll("button").forEach(b=>b.onclick=()=>{const k=el.dataset.po;o[k]=k==="mins"?+b.dataset.v:b.dataset.v;if(k==="feel")o.feelSet=true;el.querySelectorAll("button").forEach(z=>z.setAttribute("aria-pressed",z===b));if(k==="type"){plan=null;draw();}}));
+    $("pl-custom").onchange=()=>{const h=num($("pl-custom").value);if(h>0){o.mins=Math.round(h*60);document.querySelectorAll('[data-po="mins"] button').forEach(z=>z.setAttribute("aria-pressed","false"));}};
     $("pl-cancel").onclick=closeSheet;
     $("pl-build").onclick=()=>{plan=buildPlan(o);planPrefs={...o};const top=$("sheet").scrollTop;draw();setTimeout(()=>{const el=$("pl-out");if(el)el.scrollIntoView({behavior:"smooth",block:"start"});},60);};
     if($("pl-again"))$("pl-again").onclick=()=>{o.seed++;plan=buildPlan(o);draw();setTimeout(()=>$("pl-out").scrollIntoView({block:"start"}),60);};
@@ -3289,7 +3546,7 @@ function openActive(){
   $("act-del").onclick=()=>{const b=$("act-del");if(!b.dataset.armed){b.dataset.armed="1";b.textContent="Tap to confirm";return;}active=null;saveActive();closeSheet();render();toast("Workout discarded");};
   $("act-fin").onclick=()=>{
     const st=new Date(active.started),pl2=active.plan;
-    const preset={type:pl2.type,title:pl2.title,date:keyOf(st),time:pad(st.getHours())+":"+pad(st.getMinutes()),dur:Math.max(60,elapsedSec()),rpe:pl2.rpe,notes:`Planned: ${pl2.title}.`};
+    const preset={fromPlan:true,type:pl2.type,title:pl2.title,date:keyOf(st),time:pad(st.getHours())+":"+pad(st.getMinutes()),dur:Math.max(60,elapsedSec()),rpe:pl2.rpe,notes:`Planned: ${pl2.title}.`};
     if(pl2.type==="lift")preset.ex=active.ex.filter(e=>e.done>0).map(e=>({name:e.name,sets:e.done,reps:e.reps,w:e.w,mus:e.mus}));
     if(pl2.type==="climb"){preset.gs=pl2.gs;preset.placeId=pl2.placeId;}
     if(pl2.type==="hang"&&pl2.hangs)preset.hangs=JSON.parse(JSON.stringify(pl2.hangs));
@@ -3328,9 +3585,9 @@ function openGear(g){
     openSheet(`<h3>${isNew?"Add gear":"Edit gear"}</h3><p class="sub">${isNew?"":`${gearUsage(d).n} workouts so far.`}</p>
       <label for="gr-n">Name</label><input id="gr-n" type="text" maxlength="40" value="${esc(d.name)}" placeholder="e.g. Pegasus 41, La Sportiva Solutions">
       <label>Kind</label><div class="seg" id="gr-k">${Object.entries(GEAR_KINDS).map(([kk,v])=>`<button data-v="${kk}" aria-pressed="${d.kind===kk}">${v[1]}</button>`).join("")}</div><p class="hint">${k[0]}</p>
-      <label>Used for</label><div class="tchips" id="gr-t" style="--c:var(--ink)">${Object.entries(TYPES).map(([t,n])=>`<button class="tchip" data-t="${t}" aria-pressed="${d.types.includes(t)}">${n}</button>`).join("")}</div>
+      <label>Used for</label><div class="tchips" id="gr-t" style="--c:#F5F5F7;--ct:#000">${Object.entries(TYPES).map(([t,n])=>`<button class="tchip" data-t="${t}" aria-pressed="${d.types.includes(t)}">${n}</button>`).join("")}</div>
       <label for="gr-l">Replace after (${k[3]==="km"?dU():"sessions"}, optional)</label><input id="gr-l" type="number" inputmode="numeric" value="${d.limit?(k[3]==="km"?Math.round(toDispDist(d.limit)):d.limit):""}">
-      <div class="tchips" style="margin-top:12px;--c:var(--ink)"><button class="tchip" id="gr-def" aria-pressed="${!!d.def}">Default for these activities</button>${isNew?"":`<button class="tchip" id="gr-ret" aria-pressed="${!!d.retired}">Retired</button>`}</div>
+      <div class="tchips" style="margin-top:12px;--c:#F5F5F7;--ct:#000"><button class="tchip" id="gr-def" aria-pressed="${!!d.def}">Default for these activities</button>${isNew?"":`<button class="tchip" id="gr-ret" aria-pressed="${!!d.retired}">Retired</button>`}</div>
       <div class="err" id="gr-err"></div>
       <div class="row"><button class="btn" id="gr-c">Cancel</button><button class="btn primary" id="gr-s">${isNew?"Add gear":"Save"}</button></div>
       ${isNew?"":`<div class="row" style="margin-top:10px"><button class="btn danger" id="gr-del">Delete</button></div>`}`);
@@ -3637,7 +3894,7 @@ function openEventEditor(ev){
   const draw=()=>{
     openSheet(`<h3>${isNew?"Add an event":"Edit event"}</h3><p class="sub">A race, comp, trip, or test day. I'll build a plan that counts down to it.</p>
       <label for="ev-n">Name</label><input id="ev-n" type="text" maxlength="50" value="${esc(d.name)}" placeholder="e.g. Manila Marathon">
-      <label>Type</label><div class="tchips" id="ev-t" style="--c:var(--ink)">${Object.entries(EVENT_TYPES).map(([k,v])=>`<button class="tchip" data-v="${k}" aria-pressed="${d.type===k}">${v[1]} ${v[0]}</button>`).join("")}</div>
+      <label>Type</label><div class="tchips" id="ev-t" style="--c:#F5F5F7;--ct:#000">${Object.entries(EVENT_TYPES).map(([k,v])=>`<button class="tchip" data-v="${k}" aria-pressed="${d.type===k}">${v[1]} ${v[0]}</button>`).join("")}</div>
       <label for="ev-dt">Date</label><input id="ev-dt" type="date" value="${d.date}">
       ${d.type==="run"?`<label>Distance</label><div class="seg" id="ev-rd">${[[5,"5K"],[10,"10K"],[21.0975,"Half"],[42.195,"Marathon"]].map(([v,n])=>`<button data-v="${v}" aria-pressed="${+d.dist===v}">${n}</button>`).join("")}</div>
         <label for="ev-tm">Goal time (optional)</label><input id="ev-tm" type="text" inputmode="numeric" placeholder="e.g. 3:59:00" value="${d.time?fmtClock(d.time):""}">${(()=>{const pt=d.dist?predictTime(+d.dist*1000):null;return pt?`<p class="hint">Your current fitness predicts about ${fmtClock(pt)}.</p>`:"";})()}`:""}
@@ -3700,7 +3957,7 @@ function wrapCards(W){
   if(W.medals.length)cards.push({t:"Personal records",big:String(W.medals.filter(m=>m.rank===1).length),bigL:"new bests",prs:W.medals.slice(0,4),lines:[]});
   const ex=[];if(W.sends)ex.push(`${W.sends} boulder sends`+(W.topG?`, mostly ${W.topG[0]}`:""));if(W.vol)ex.push(`${Math.round(toDispWt(W.vol)).toLocaleString()} ${wU()} lifted`);if(W.summits)ex.push(`${W.summits} summit${W.summits===1?"":"s"}`);if(W.hang)ex.push(`${fmtDur(W.hang)} on the hangboard`);if(W.projs.length)ex.push(`${W.projs.length} project${W.projs.length===1?"":"s"} sent`);
   if(ex.length||W.fav)cards.push({t:"Highlights",big:W.fav?W.fav[0]:"",bigL:W.fav?`your top spot, ${W.fav[1]} visits`:"",lines:ex});
-  cards.push({t:"Level up",big:`${levelOf(W.xp0)} → ${levelOf(W.xp0+W.xpY)}`,bigL:`+${W.xpY.toLocaleString()} XP this year`,lines:[`${W.acc.length} accolade${W.acc.length===1?"":"s"} unlocked`,W.longest?`Longest session: ${fmtDur(W.longest.v)}`:null].filter(Boolean)});
+  cards.push({t:"Level up",big:`${levelAt(W.xp0,W.y+"-01-01")} → ${levelAt(W.xp0+W.xpY,W.y+"-12-31")}`,bigL:`+${W.xpY.toLocaleString()} XP this year`,lines:[`${W.acc.length} accolade${W.acc.length===1?"":"s"} unlocked`,W.longest?`Longest session: ${fmtDur(W.longest.v)}`:null].filter(Boolean)});
   return cards;
 }
 async function drawWrap(W,o){
@@ -3757,6 +4014,322 @@ if(window.STANDALONE){
   if("serviceWorker" in navigator&&location.protocol!=="file:")window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
 }
 
+/* ---------- fun facts ---------- */
+const SPEEDS=[[0.05,"a garden snail"],[0.27,"a sloth"],[0.4,"a giant tortoise"],[3.5,"a carabao plodding through a rice field"],[5,"a typical person walking"],[9,"a jeepney in rush-hour EDSA traffic"],[13,"a house mouse at full sprint"],[14,"a chicken running away from you"],[20,"a world-class marathoner's race pace"],[25,"an elephant charging"],[32,"a kangaroo hopping"],[40,"a tricycle on an open road"],[48,"a house cat at full speed"],[56,"a galloping horse"],[70,"a racing greyhound"],[100,"a cheetah"]];
+const HEIGHTS=[[30,"a Chocolate Hill (they're about 30–50 m tall)"],[93,"the Statue of Liberty"],[146,"the Great Pyramid of Giza"],[330,"the Eiffel Tower"],[828,"the Burj Khalifa"],[2954,"Mt. Apo, the country's highest peak"],[8849,"Mt. Everest"]];
+const LENGTHS=[[0.105,"a football pitch"],[0.4,"a running track lap"],[2.16,"San Juanico Bridge, the longest bridge in the Philippines"],[2.7,"the Golden Gate Bridge"],[4,"Boracay's White Beach"],[23.8,"EDSA, end to end"],[42.195,"a marathon"],[60,"the drive from Manila to Tagaytay"]];
+const WEIGHTS=[[25,"a sack of rice"],[40,"a whole lechon"],[450,"a grand piano"],[700,"a full-grown carabao"],[1500,"a small car"],[3500,"a jeepney"],[6000,"an African elephant"],[150000,"a blue whale"]];
+const FOODS=[[105,"bananas"],[120,"pieces of pandesal"],[200,"cups of rice"],[300,"pieces of fried chicken"],[400,"bowls of halo-halo"]];
+function pickRel(list,v){let lo=null,hi=null;for(const x of list){if(x[0]<=v)lo=x;else{hi=x;break;}}return {lo,hi};}
+function nice(n){return n>=10?Math.round(n).toLocaleString():round(n,1).toLocaleString();}
+function funFacts(s){
+  const f=[];
+  const kmh=s.dist&&s.dur&&s.type!=="lift"&&s.type!=="climb"&&s.type!=="hang"?s.dist/(s.dur/3600):null;
+  if(kmh){const {lo,hi}=pickRel(SPEEDS,kmh);
+    if(lo&&hi)f.push(`At ${round(kmh,1)} km/h on average, you were faster than ${lo[1]} (${lo[0]} km/h) but slower than ${hi[1]} (${hi[0]} km/h).`);
+    else if(lo)f.push(`At ${round(kmh,1)} km/h, you out-paced ${lo[1]}. Impressive.`);
+    const snail=(s.dur/3600)*0.05*1000;f.push(`A garden snail would have covered about ${nice(snail)} m in the time you took. You did ${nice(s.dist*1000)} m.`);}
+  if(s.dist&&s.type!=="lift"&&s.type!=="climb"){const {lo}=pickRel(LENGTHS,s.dist),big=LENGTHS.filter(x=>x[0]>s.dist)[0];
+    if(lo&&lo[0]>=0.4)f.push(`That's ${nice(s.dist/lo[0])}× the length of ${lo[1]}.`);
+    if(big&&s.dist>=big[0]*0.15)f.push(`You covered ${Math.round(s.dist/big[0]*100)}% of ${big[1]}.`);
+    if(s.dist>=0.8)f.push(`That's ${nice(s.dist/0.4)} laps of a 400 m track.`);}
+  if(s.elev&&s.type!=="lift"&&s.type!=="climb"){const {lo}=pickRel(HEIGHTS,s.elev),next=HEIGHTS.find(x=>x[0]>s.elev);
+    if(lo)f.push(`You climbed ${nice(s.elev/lo[0])}× the height of ${lo[1]}.`);
+    if(next)f.push(`You're ${Math.round(s.elev/next[0]*100)}% of the way up ${next[1]}.`);
+    f.push(`That's about ${nice(s.elev/3)} floors of stairs.`);}
+  if(s.maxEle>=500)f.push(`At ${Math.round(s.maxEle)} m, you were ${Math.round(s.maxEle/8849*100)}% of the way to Everest's summit.`);
+  const v=volume(s);
+  if(v){const {lo}=pickRel(WEIGHTS,v);if(lo)f.push(`You moved ${fmtVol(v)} in total, about ${nice(v/lo[0])}× the weight of ${lo[1]}.`);
+    f.push(`That's like carrying ${nice(v/25)} sacks of rice, one at a time.`);}
+  if(s.type==="climb"&&sends(s).length){const n=sends(s).length,m=n*4;f.push(`If each problem was about 4 m tall, you climbed roughly ${m} m, ${m>=30?`taller than a ${Math.round(m/3)}-story building`:m>=6?`about the height of a ${Math.round(m/3)}-story building`:"about as tall as a one-story house"}.`);
+    const att=(s.probs||[]).reduce((a,p)=>a+(p.att||1),0);if(att>=10)f.push(`${att} attempts means you pulled onto the wall more times than most people climb stairs in a day.`);}
+  if(s.type==="hang"){const t=hangTime(s);f.push(`You hung for ${fmtDur(t)} in total. A sloth can hang for hours without trying, so keep going.`);}
+  if(s.cal){const fo=FOODS[Math.floor(seeded(s.id+"f")()*FOODS.length)];f.push(`${Math.round(s.cal)} calories is about ${nice(s.cal/fo[0])} ${fo[1]}.`);}
+  if(s.hr&&s.dur){const beats=s.hr*s.dur/60;f.push(`Your heart beat about ${Math.round(beats).toLocaleString()} times. A hummingbird's heart, at up to 1,200 beats a minute, would do that in ${nice(beats/1200)} minutes.`);}
+  if(s.pw)f.push(`${s.pw} W is enough to run about ${Math.round(s.pw/50)} electric fans at the same time.`);
+  if(s.steps)f.push(`${Math.round(s.steps).toLocaleString()} steps is ${Math.round(s.steps/10000*100)}% of the classic 10,000-steps-a-day goal.`);
+  return [...new Set(f)];
+}
+
+/* ---------- history corner ---------- */
+const MARA=42.195;
+const fmtHM=sec=>{sec=Math.round(sec);const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),x=sec%60;return h?`${h}:${pad(m)}:${pad(x)}`:`${m}:${pad(x)}`;};
+const HIST=[
+  {w:s=>s.type==="run"&&s.dist,t:s=>`Legend says Pheidippides ran about 40 km from Marathon to Athens in 490 BC to announce a Greek victory, then collapsed. Today you covered ${Math.round(s.dist/40*100)}% of his run, and hopefully you're still standing.`},
+  {w:s=>s.type==="run"&&s.dist&&s.dur,t:s=>`Spyridon Louis, a Greek water carrier, won the first modern Olympic marathon in 1896 in 2:58:50. At today's pace, you'd cover a marathon in about ${fmtHM(s.dur/s.dist*MARA)}.`},
+  {w:s=>s.type==="run"&&s.dist&&s.dur,t:s=>`Eliud Kipchoge ran 42.2 km in 1:59:40 in Vienna in 2019, averaging 2:50 per km. He'd have finished your ${fmtDist(s.dist)} in about ${fmtHM(170*s.dist)}.`},
+  {w:s=>s.type==="run"&&s.dist,t:s=>`The marathon became 42.195 km at the 1908 London Olympics, reportedly so the race could start below the windows of Windsor Castle. You ran ${Math.round(s.dist/MARA*100)}% of that royal distance.`},
+  {w:s=>s.type==="run"&&s.dist&&s.dur,t:s=>`Abebe Bikila won the 1960 Rome Olympic marathon barefoot in 2:15:16. At his pace, your run would have taken him ${fmtHM(8116/MARA*s.dist)}. Shoes optional.`},
+  {w:s=>s.type==="run",t:s=>`In 1967, Kathrine Switzer became the first woman to run the Boston Marathon as an official entrant, and an official tried to shove her off the course. She finished anyway, and women's marathon running took off.`},
+  {w:s=>s.type==="run"&&s.efforts&&s.efforts["1609.34"],t:s=>`Roger Bannister ran the first sub-4-minute mile on May 6, 1954, in 3:59.4. Your best mile today was ${fmtClock(s.efforts["1609.34"])}, ${s.efforts["1609.34"]<300?"seriously quick":"so the record is safe for now"}.`},
+  {w:s=>s.type==="run"&&s.dist&&s.dur,t:s=>`Usain Bolt hit about 44.7 km/h during his 9.58-second 100 m in 2009. You averaged ${round(s.dist/(s.dur/3600),1)} km/h, which is ${Math.round(s.dist/(s.dur/3600)/44.7*100)}% of Bolt at full flight.`},
+  {w:s=>s.type==="run"&&s.dist>=5,t:s=>`Emil Zátopek won the 5,000 m, the 10,000 m, and the marathon at the 1952 Helsinki Olympics. The marathon was the first he'd ever raced.`},
+  {w:s=>s.type==="run",t:s=>`Lydia de Vega, "Asia's sprint queen," won 100 m gold at the 1982 Asian Games and became one of the Philippines' most celebrated athletes.`},
+  {w:s=>(s.type==="walk"||s.type==="hike")&&s.dist,t:s=>`In 1930, Gandhi walked about 390 km in 24 days on the Salt March, roughly 16 km a day. Today's ${fmtDist(s.dist)} is ${Math.round(s.dist/16*100)}% of his daily average.`},
+  {w:s=>(s.type==="walk"||s.type==="hike")&&s.dist,t:s=>`Roman legionaries were trained to march about 30 km in five hours while carrying their kit. You did ${Math.round(s.dist/30*100)}% of a legion's daily march.`},
+  {w:s=>s.type==="hike"&&s.elev,t:s=>`Edmund Hillary and Tenzing Norgay first reached Everest's summit on May 29, 1953, after weeks of climbing through the Khumbu Icefall and up the Lhotse Face. Today's ${fmtElev(s.elev)} is ${round(s.elev/8849*100,1)}% of Everest's full height.`},
+  {w:s=>s.type==="hike",t:s=>`Leo Oracion became the first Filipino to summit Mt. Everest on May 17, 2006. A year later, three Filipinas, Noelle Wenceslao, Carina Dayondon, and Janet Belarmino, followed.`},
+  {w:s=>s.type==="hike",t:s=>`Junko Tabei of Japan became the first woman to summit Everest in 1975, and later the first woman to climb the highest peak on every continent.`},
+  {w:s=>s.type==="hike"&&s.maxEle,t:s=>`Ötzi the Iceman died about 5,300 years ago at around 3,210 m in the Alps, wearing grass-lined shoes. You reached ${fmtElev(s.maxEle)}, ${s.maxEle>=3210?"higher than Ötzi ever made it":"in much better footwear"}.`},
+  {w:s=>s.type==="hike"&&s.elev,t:s=>`In 218 BC, Hannibal marched an army with war elephants over the Alps, crossing passes above 2,000 m. You hauled yourself up ${fmtElev(s.elev)}, no elephants required.`},
+  {w:s=>s.type==="hike"&&s.dist,t:s=>`Earl Shaffer completed the first recorded thru-hike of the 3,500 km Appalachian Trail in 1948. At today's distance per day, you'd finish it in about ${Math.round(3500/s.dist)} days.`},
+  {w:s=>s.type==="hike",t:s=>`Reinhold Messner and Peter Habeler reached Everest's summit in 1978 without bottled oxygen, which doctors had said might be impossible.`},
+  {w:s=>s.type==="ride"&&s.dist,t:s=>`The first Tour de France in 1903 covered 2,428 km in just six stages. Maurice Garin won it. Your ride was ${round(s.dist/2428*100,1)}% of that first race.`},
+  {w:s=>s.type==="ride"&&s.dist&&s.dur,t:s=>`Eddy Merckx set the hour record in 1972 by riding 49.431 km in 60 minutes. Filippo Ganna pushed it to 56.792 km in 2022. You averaged ${round(s.dist/(s.dur/3600),1)} km/h today.`},
+  {w:s=>s.type==="ride",t:s=>`In 1817, Karl Drais rode his "running machine," a wooden two-wheeler with no pedals, about 7 km in under an hour. It's the ancestor of every bike since.`},
+  {w:s=>s.type==="lift",t:s=>`Hidilyn Diaz won the Philippines' first Olympic gold at Tokyo 2020 (held in 2021), with a total of 224 kg: 97 kg snatch and 127 kg clean and jerk.${volume(s)?` Your session volume equals her winning total ${nice(volume(s)/224)} times over.`:""}`},
+  {w:s=>s.type==="lift",t:s=>`Legend says Milo of Croton, a 6th-century BC wrestler, carried a newborn calf every day until it grew into a bull. It's often called the first story of progressive overload.`},
+  {w:s=>s.type==="lift",t:s=>`Hafþór Björnsson deadlifted 501 kg in 2020, roughly the weight of a grand piano.${(s.ex||[]).some(e=>/deadlift/i.test(e.name||""))?" How did yours feel?":""}`},
+  {w:s=>s.type==="climb",t:s=>`Fontainebleau's sandstone boulders near Paris have been climbed since the late 1800s, and the Font grading scale was born there.`},
+  {w:s=>s.type==="climb",t:s=>`John Gill, a gymnast, pioneered modern bouldering in the 1950s and brought gymnastics chalk to climbing. Every chalk bag traces back to him.`},
+  {w:s=>s.type==="climb"&&sends(s).length,t:s=>`Alex Honnold free soloed El Capitan, about 900 m, in 3 hours 56 minutes in 2017, with no rope. At roughly 4 m per problem, today you climbed about ${sends(s).length*4} m, safely over pads.`},
+  {w:s=>s.type==="climb",t:s=>`In 1993, Lynn Hill became the first person to free climb The Nose on El Capitan. She said "It goes, boys!"`},
+  {w:s=>s.type==="climb",t:s=>`Sport climbing debuted at the Tokyo 2020 Olympics. Janja Garnbret and Alberto Ginés López won the first golds.`},
+  {w:s=>s.type==="climb"||s.type==="hang",t:s=>`Adam Ondra climbed "Silence" in Norway in 2017, the world's first route graded 9c and still among the hardest ever climbed.`},
+  {w:s=>s.type==="hang",t:s=>`Wolfgang Güllich built the first campus board in 1988 to train for "Action Directe," which became the world's first 9a in 1991.`},
+  {w:s=>s.type==="climb"&&sends(s).length,t:s=>`EJ Obiena became the first Asian pole vaulter to clear 6.00 m in 2023. At about 4 m per problem, today's climbing equals roughly ${Math.round(sends(s).length*4/6)} of his record vaults.`},
+  {w:s=>s.type==="hike"&&s.elev,t:s=>`EJ Obiena became the first Asian pole vaulter to clear 6.00 m in 2023. Your ${fmtElev(s.elev)} of climbing is about ${Math.round(s.elev/6)} of his record vaults stacked up.`},
+  // historic marches and journeys
+  {w:s=>["run","walk","hike"].includes(s.type)&&s.dist,t:s=>`In April 1942, tens of thousands of Filipino and American prisoners of war were forced to march roughly 100 km from Bataan to San Fernando, Pampanga, in brutal heat, with little food or water. Thousands died. Your ${fmtDist(s.dist)} is ${Math.round(s.dist)}% of that distance. Araw ng Kagitingan on April 9 honors them.`},
+  {w:s=>["run","walk","hike"].includes(s.type)&&s.dist,t:s=>`China's Long March of 1934–35 is traditionally said to have covered about 12,500 km in a year, though historians now estimate closer to 6,000 km. Even the lower figure is ${Math.round(6000/s.dist).toLocaleString()} of today's ${TYPES[s.type].toLowerCase()}s back to back.`},
+  {w:s=>s.type==="hike"&&s.elev,t:s=>`During the Long March, the Red Army crossed snowbound passes over 4,000 m high in thin clothing. Today you climbed ${fmtElev(s.elev)}, hopefully with a better jacket.`},
+  {w:s=>(s.type==="walk"||s.type==="run")&&s.dist,t:s=>`The 1965 Selma to Montgomery march for voting rights in the US covered 87 km in five days, about 17 km a day. Your ${fmtDist(s.dist)} is ${Math.round(s.dist/17*100)}% of a day on that march.`},
+  {w:s=>(s.type==="walk"||s.type==="hike")&&s.dist,t:s=>`In 1838–39, the Cherokee Nation was forced to walk about 2,000 km west on what became known as the Trail of Tears, and thousands died along the way. Today's ${fmtDist(s.dist)} is ${round(s.dist/2000*100,1)}% of that journey.`},
+  {w:s=>["run","walk","hike"].includes(s.type)&&s.dist,t:s=>`Napoleon's Grande Armée retreated about 1,000 km from Moscow in the winter of 1812. Of the roughly 600,000 soldiers who invaded Russia, only a small fraction made it out. You'd need ${Math.round(1000/s.dist)} ${TYPES[s.type].toLowerCase()}s like today's to match the retreat.`},
+  {w:s=>(s.type==="hike"||s.type==="ride")&&s.dist,t:s=>`Lewis and Clark's expedition of 1804–1806 travelled about 13,000 km across North America and back, much of it on foot. Today's ${fmtDist(s.dist)} is ${round(s.dist/13000*100,2)}% of their journey.`},
+  {w:s=>s.type==="ride"&&s.dist&&s.dur,t:s=>`Pony Express riders carried mail about 3,100 km from Missouri to California in roughly 10 days in 1860–61, swapping horses every 15–25 km and averaging around 13 km/h day and night. You averaged ${round(s.dist/(s.dur/3600),1)} km/h.`},
+  {w:s=>s.type==="ride"&&s.dist,t:s=>`Paul Revere's midnight ride in 1775, warning that British troops were coming, covered about 20 km on horseback. You rode ${round(s.dist/20,1)}× that distance.`},
+  {w:s=>s.type==="lift",t:s=>`Tomb paintings at Beni Hasan in Egypt, about 4,000 years old, show people lifting and swinging weighted bags. People have been training for strength for at least that long.`},
+  {w:s=>s.type==="other"&&s.dur,t:s=>`Ancient Greek athletes trained in the gymnasion, a word that meant "place to train naked." Today's ${fmtDur(s.dur)} session was hopefully a little more clothed.`}
+];
+function histFacts(s){
+  const pool=HIST.filter(h=>{try{return h.w(s);}catch(e){return false;}});
+  const rnd=seeded(s.id+"hist"),pick=pool.slice();for(let i=pick.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[pick[i],pick[j]]=[pick[j],pick[i]];}
+  return pick.slice(0,2).map(h=>h.t(s));
+}
+
+/* ---------- local corner: Davao & Metro Manila ---------- */
+const LOCAL=[
+  {w:s=>s.type==="run"&&s.dist,t:s=>`Your ${fmtDist(s.dist)} is about ${nice(s.dist/2.2)} laps of the UP Diliman Academic Oval in Quezon City, the roughly 2.2 km loop where runners and cyclists have trained for decades.`},
+  {w:s=>["run","walk","ride"].includes(s.type)&&s.dist,t:s=>`In February 1986, about two million people filled EDSA for four days during the People Power Revolution. EDSA runs about 23.8 km from Caloocan to Pasay, and your ${fmtDist(s.dist)} would take you ${Math.min(100,Math.round(s.dist/23.8*100))}% of the way along it${s.dist>23.8?", and then some":""}.`},
+  {w:s=>(s.type==="walk"||s.type==="run")&&s.dist,t:s=>`The stone walls of Intramuros in Manila, begun in the late 1500s, run for about 4.5 km. You covered ${nice(s.dist/4.5)}× that circuit today.`},
+  {w:s=>(s.type==="walk"||s.type==="run")&&s.dist&&s.dur,t:s=>`The Traslación of the Black Nazarene in Quiapo, Manila covers only about 6 km but has lasted more than 20 hours, so the crowd moves at under 0.4 km/h. At ${round(s.dist/(s.dur/3600),1)} km/h, you moved about ${Math.round(s.dist/(s.dur/3600)/0.35)}× faster.`},
+  {w:s=>(s.type==="run"||s.type==="ride")&&s.dist,t:s=>`The Pasig River flows about 25 km from Laguna de Bay through Pasig, Makati, and Manila into Manila Bay. Your ${fmtDist(s.dist)} is ${Math.round(s.dist/25*100)}% of its length.`},
+  {w:s=>(s.type==="run"||s.type==="ride")&&s.dist,t:s=>`The Manggahan Floodway in Pasig, about 10 km long, was built in the 1980s to divert Marikina River floodwater into Laguna de Bay. You covered ${nice(s.dist/10)}× its length.`},
+  {w:s=>s.type==="ride"&&s.dist,t:s=>`Manila to Baguio is about 250 km by road. At today's distance, it'd take ${Math.ceil(250/s.dist)} rides like this one to get up to the Summer Capital.`},
+  {w:s=>["ride","run"].includes(s.type)&&s.dist,t:s=>`Manila and Davao City are about 970 km apart in a straight line. You'd need ${Math.ceil(970/s.dist)} ${TYPES[s.type].toLowerCase()}s like today's to get from one to the other, not counting the sea.`},
+  {w:s=>["run","walk","ride"].includes(s.type),t:s=>`Bonifacio Global City in Taguig sits on part of Fort William McKinley, a US Army post founded in 1901 and renamed Fort Bonifacio in 1957. Its wide sidewalks and bike lanes now make it one of Metro Manila's favorite places to train.`},
+  {w:s=>["run","walk"].includes(s.type),t:s=>`Ayala Triangle Gardens in Makati sits on the site of Nielson Field, Manila's first international airport, which opened in 1937. Ayala Avenue and Paseo de Roxas follow its old runways, so Makati runners now loop where planes once took off.`},
+  {w:s=>["run","walk","ride"].includes(s.type),t:s=>`The CCP Complex and Mall of Asia in Pasay stand on land reclaimed from Manila Bay, so a sunset run along the bay there is literally on former seabed.`},
+  {w:s=>["run","walk","ride"].includes(s.type)&&s.dist,t:s=>`The Las Piñas–Parañaque wetlands became a protected Ramsar site in 2013. Migratory shorebirds rest there on journeys of more than 10,000 km along the East Asian–Australasian Flyway. Your ${fmtDist(s.dist)} is ${round(s.dist/10000*100,2)}% of one bird's trip.`},
+  {w:s=>s.type==="hike"&&s.elev,t:s=>`Mt. Apo, at 2,954 m the country's highest peak, rises above Davao City. Its first recorded ascent was in 1880, by an expedition led by Joaquín Rajal. You climbed ${Math.round(s.elev/2954*100)}% of its height today.`},
+  {w:s=>s.type==="hike",t:s=>`The Philippine Eagle Center in Malagos, Davao City breeds the national bird, one of the largest eagles in the world, with a wingspan of up to about 2 m. Keep an eye on the sky on your next hike.`},
+  {w:s=>(s.type==="climb"&&sends(s).length)||((s.type==="hike"||s.type==="run")&&s.elev),t:s=>{const m=s.type==="climb"?sends(s).length*4:s.elev;return `The Metrobank Center in BGC, about 318 m tall, became the tallest building in the Philippines in 2017, taking the title from Makati's 259 m PBCom Tower. Your ${Math.round(m)} m of climbing today is ${Math.round(m/318*100)}% of the Metrobank Center.`;}},
+  {w:s=>s.type==="lift",t:s=>`The Rizal Memorial Sports Complex in Malate, Manila was built for the 1934 Far Eastern Championship Games, and generations of Filipino athletes have trained there since.`},
+  {w:s=>s.type==="lift"&&volume(s),t:s=>`Your ${fmtVol(volume(s))} of total volume is about ${nice(volume(s)/3500)} jeepneys' worth of weight. That's a lot of EDSA traffic.`},
+  {w:s=>s.type==="hang"||s.type==="climb",t:s=>`The limestone crags of Rizal province, just east of Metro Manila, are a popular place for Filipino climbers to take their gym strength outdoors. Every hang and send gets you closer to real rock.`},
+];
+function localFacts(s){const pool=LOCAL.filter(h=>{try{return h.w(s);}catch(e){return false;}});const rnd=seeded(s.id+"local");for(let i=pool.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}return pool.slice(0,1).map(h=>h.t(s));}
+
+/* ================= fuel & hydration ================= */
+const FUEL_GROUP=t=>t==="walk"||t==="hike"?"foot":t;
+function sweatRateFor(type){
+  const g=FUEL_GROUP(type),since=keyOf(addDays(new Date(),-180));
+  const L=live().filter(s=>FUEL_GROUP(s.type)===g&&s.date>=since&&s.fuel&&s.fuel.pre&&s.fuel.post&&s.dur>=1800).sort(chrono).slice(-5);
+  const v=L.map(s=>((s.fuel.pre-s.fuel.post)*1000+(s.fuel.fl||0))/(s.dur/3600)).filter(x=>x>150&&x<3000).sort((a,b)=>a-b);
+  return v.length?v[Math.floor(v.length/2)]:null;
+}
+const r50=v=>Math.round(v/50)*50;
+function fuelPlan(type,mins,rpe){
+  if(!mins||mins<30)return null;
+  const wt=weightOn(keyOf(new Date()))||bio().weight||null,W=wt||65,clim=LT().climate||"hot",hrs=mins/60;
+  const inten=rpe>=7?2:rpe>=5?1:0,strength=type==="lift"||type==="hang",climbing=type==="climb";
+  let base=strength||climbing?[5,7]:[[6,8],[8,10],[9,12]][inten];
+  const cm={hot:1.25,mild:1,cool:0.8}[clim]||1.25;
+  let lo=W*base[0]*cm,hi=W*base[1]*cm;
+  const sr=strength?null:sweatRateFor(type);
+  if(sr){lo=sr*0.6;hi=sr*0.8;}
+  lo=r50(Math.max(250,Math.min(lo,900)));hi=r50(Math.max(lo+100,Math.min(hi,1000)));
+  const na=clim==="hot"?[500,900]:clim==="mild"?[300,600]:[200,500];
+  const needNa=strength?(mins>=90&&clim==="hot"):(mins>=75||(clim==="hot"&&mins>=60));
+  let cho=[0,0];
+  if(!strength){
+    if(climbing)cho=mins>=150?[30,60]:mins>=90?[20,40]:[0,0];
+    else if(type==="walk"||type==="hike")cho=mins>=150?[40,70]:mins>=90?[30,45]:[0,0];
+    else if(mins>=150)cho=[60,90];else if(mins>=90)cho=[30,60];else if(mins>=60)cho=inten>=1?[20,30]:[0,20];
+  }
+  const choMid=(cho[0]+cho[1])/2,fluidMid=(lo+hi)/2;
+  const totFluid=fluidMid*hrs/1000,totCho=Math.max(0,choMid*(hrs-0.4)),gels=Math.round(totCho/22);
+  return {W,hasW:!!wt,clim,lo,hi,sr,na,needNa,cho,gelsH:[Math.round(cho[0]/22),Math.round(cho[1]/22)],totFluid,gels,totNa:needNa?Math.round((na[0]+na[1])/2*hrs):0,mins,hrs,rpe,type,
+    pre:[r50(W*5),r50(W*7)],meal:mins>=90?[Math.round(W*1),Math.round(W*2)]:null,ultra:mins>=300};
+}
+function fuelHTML(fp){
+  if(!fp)return "";
+  const L=[],climName={hot:"hot and humid",mild:"mild",cool:"cool"}[fp.clim];
+  L.push(`<b>Before:</b> drink ${fp.pre[0]}–${fp.pre[1]} ml 2–4 hours before${fp.meal?`, with a carb-rich meal of about ${fp.meal[0]}–${fp.meal[1]} g carbs (rice and eggs, oats, or bread with banana)`:""}.`);
+  let during=`<b>Every hour:</b> ${fp.lo}–${fp.hi} ml of fluid (about ${r50(fp.lo/4)===r50(fp.hi/4)?r50(fp.lo/4):r50(fp.lo/4)+"–"+r50(fp.hi/4)} ml every 15 minutes)`;
+  if(fp.needNa)during+=`, ${fp.na[0]}–${fp.na[1]} mg sodium from electrolyte tabs or drink mix`;
+  if(fp.cho[1]>0&&fp.type==="climb")during+=`, and ${fp.cho[0]}–${fp.cho[1]} g carbs from snacks like bananas, bread, rice, or a gel or two`;
+  else if(fp.cho[1]>0)during+=`, and ${fp.cho[0]}–${fp.cho[1]} g carbs: about ${fp.gelsH[0]===fp.gelsH[1]?fp.gelsH[0]:fp.gelsH[0]+"–"+fp.gelsH[1]} gel${fp.gelsH[1]===1?"":"s"}${fp.cho[1]>=60?", or 2 gels plus 500 ml sports drink":""}`;
+  else during+=". Water is enough for carbs at this length";
+  L.push(during+". Start within the first 30–45 minutes and keep it steady.");
+  if(fp.ultra&&fp.type!=="climb")L.push(`<b>Real food:</b> past a few hours, gels get old. Mix in boiled saba, rice balls, pandesal, or salted boiled potatoes every hour or two, about 200–300 kcal an hour in total.`);
+  if(fp.type==="climb"&&fp.mins>=180)L.push(`<b>Climbing day:</b> eat a proper lunch in your midday break, and snack between sessions. Your skin and fingers fade faster when you're under-fueled.`);
+  const bring=[];if(fp.totFluid>=0.4)bring.push(`${round(fp.totFluid,1)} L of fluid`);if(fp.gels&&fp.type==="climb")bring.push(`snacks with about ${Math.round(fp.gels*22/10)*10} g of carbs in total`);else if(fp.gels)bring.push(`${fp.gels} gel${fp.gels===1?"":"s"} (or the same carbs from drink and food)`);if(fp.totNa)bring.push(`about ${(Math.round(fp.totNa/100)*100).toLocaleString()} mg of sodium`);
+  if(bring.length)L.push(`<b>Bring in total:</b> ${bring.join(", ")}.${fp.totFluid>2&&fp.type!=="climb"?` That's more than most vests or bottles hold, so plan refills about every ${Math.max(1,Math.floor(1.75/(((fp.lo+fp.hi)/2)/1000)))} hours. A sari-sari store stop counts.`:""}`);
+  L.push(`<b>After:</b> weigh yourself, then drink about 1.25–1.5 L for every kg lost. Within 1–2 hours, eat about ${Math.round(fp.W*1)} g carbs and ${Math.round(fp.W*0.3)} g protein.`);
+  if(fp.clim==="hot")L.push(`<b>Manila and Davao heat:</b> start before 7 am or after sunset when you can, slow down 10–20% on very humid days, and pour water over your head and neck. Stop and cool off if you get dizzy, confused, chills, or stop sweating.`);
+  L.push(`<b>Don't overdo it:</b> drinking much more than 1 L an hour, or gaining weight during a long session, can dangerously dilute your blood sodium.`);
+  return `<h4 style="margin:16px 0 6px">💧 Fuel and hydration</h4><div class="fb" style="background:var(--surface)">${L.map(t=>`<p>${t}</p>`).join("")}</div>
+    <p class="hint">${fp.sr?`Fluid is based on your measured sweat rate of about ${r50(fp.sr)} ml an hour.`:`Based on ${fp.hasW?"your weight of "+fmtWt(fp.W):"a 65 kg default (log your weight for a better estimate)"}, a ${climName} climate, and effort ${fp.rpe}/10. Log weight before and after, plus fluid drunk, on a workout to get your real sweat rate.`} General sports nutrition guidance: practice it in training and don't try anything new on race day.</p>`;
+}
+function openFuelCalc(){
+  const o={type:"run",mins:120,rpe:6};
+  const draw=()=>{
+    openSheet(`<h3>💧 Fuel calculator</h3><p class="sub">Fluid, sodium, and carbs for any session, based on your weight and climate.</p>
+      <label>Activity</label><div class="seg" data-fc="type">${[["run","Run"],["ride","Ride"],["hike","Hike"],["climb","Boulder"],["walk","Walk"]].map(([v,n])=>`<button data-v="${v}" aria-pressed="${o.type===v}">${n}</button>`).join("")}</div>
+      <label>Duration</label><div class="tchips" data-fc="mins" style="--c:#F5F5F7;--ct:#000">${TIME_OPTS.map(v=>`<button class="tchip" data-v="${v}" aria-pressed="${o.mins==v}">${timeLabel(v)}</button>`).join("")}</div>
+      <label>Effort</label><div class="seg" data-fc="rpe">${[[4,"Easy"],[6,"Moderate"],[8,"Hard"]].map(([v,n])=>`<button data-v="${v}" aria-pressed="${o.rpe==v}">${n}</button>`).join("")}</div>
+      ${fuelHTML(fuelPlan(o.type,o.mins,o.rpe))}
+      <div class="row"><button class="btn primary" id="fc-c">Close</button></div>`);
+    document.querySelectorAll("[data-fc]").forEach(el=>el.querySelectorAll("button").forEach(b=>b.onclick=()=>{const k=el.dataset.fc;o[k]=k==="type"?b.dataset.v:+b.dataset.v;const t=$("sheet").scrollTop;draw();$("sheet").scrollTop=t;}));
+    $("fc-c").onclick=closeSheet;
+  };
+  draw();
+}
+const TIME_OPTS=[20,30,45,60,90,120,180,240,300,360,480,600,720];
+const timeLabel=v=>v<120?v+" min":(v%60?round(v/60,1):v/60)+" h";
+
+function didYouKnow(s){
+  const pool=a=>a.filter(h=>{try{return h.w(s);}catch(e){return false;}}).map(h=>h.t(s));
+  const shuffle=(a,k)=>{const r=seeded(s.id+k),b=a.slice();for(let i=b.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;};
+  const stat=shuffle(funFacts(s),"f"),story=shuffle([...pool(HIST),...pool(LOCAL)],"h");
+  const KEYS=["EDSA","Pasig","Intramuros","Everest","Apo","Eiffel","Burj","Metrobank","PBCom","El Cap","San Juanico","Golden Gate","Boracay","Tagaytay","Baguio","Davao","track","Statue of Liberty","Chocolate","jeepney","marathon","snail"];
+  const toks=t=>new Set([...KEYS.filter(k=>t.toLowerCase().includes(k.toLowerCase())),...(t.match(/\d[\d.,]*\s?(?:m|km|%|km\/h)\b/g)||[])]);
+  if(stat.length&&story.length){const a=stat[0],ta=toks(a);const b=story.find(x=>![...toks(x)].some(k=>ta.has(k)));if(b)return [a,b];const a2=stat.find(x=>![...toks(x)].some(k=>toks(story[0]).has(k)));if(a2)return [a2,story[0]];return [a];}
+  return [...stat,...story].slice(0,2);
+}
+function dykHTML(s,style){const f=didYouKnow(s);return f.length?`<h4>🤓 Did you know?</h4><div class="fb"${style||""}>${f.map(t=>`<p>${esc(t)}</p>`).join("")}</div>`:"";}
+
+/* ================= repeatable XP helpers ================= */
+function formMetric(s){
+  if((s.type==="run"||s.type==="walk"||s.type==="hike")&&s.dist>=2&&s.dur)return s.dist/(s.dur/3600);
+  if(s.type==="ride"&&s.dist>=5&&s.dur)return s.dist/(s.dur/3600);
+  if(s.type==="lift"&&volume(s))return volume(s);
+  if(s.type==="climb"&&s.probs&&s.probs.length)return sends(s).length+flashes(s).length*0.5;
+  if(s.type==="hang"&&hangTime(s))return hangTime(s);
+  return null;
+}
+const QUESTS=[
+  {id:"m30",xp:30,t:"Move for at least 30 minutes",ok:L=>L.reduce((a,s)=>a+(s.dur||0),0)>=1800},
+  {id:"m60",xp:45,t:"Train for 60 minutes or more today",ok:L=>L.reduce((a,s)=>a+(s.dur||0),0)>=3600},
+  {id:"rate",xp:20,t:"Log a workout with an effort rating",ok:L=>L.some(s=>s.rpe)},
+  {id:"vary",xp:35,t:"Do a different activity than your last one",ok:(L,prev)=>!prev||L.some(s=>s.type!==prev.type)},
+  {id:"early",xp:35,t:"Start a workout before 8 am",ok:L=>L.some(s=>s.time&&s.time<"08:00")},
+  {id:"hard",xp:35,t:"Finish a session rated 8/10 or harder",ok:L=>L.some(s=>s.rpe>=8)},
+  {id:"detail",xp:20,t:"Add notes, a photo, or fueling to a workout",ok:L=>L.some(s=>s.notes||s.photo||s.fuel)},
+  {id:"d5",xp:35,t:"Cover 5 km or more",ok:L=>L.reduce((a,s)=>a+(DIST_TYPES.includes(s.type)?s.dist||0:0),0)>=5,need:"dist"},
+  {id:"s5",xp:35,t:"Send 5 boulder problems",ok:L=>L.reduce((a,s)=>a+(s.type==="climb"?sends(s).length:0),0)>=5,need:"climb"},
+  {id:"v5k",xp:35,t:"Lift 5,000 kg of total volume",ok:L=>L.reduce((a,s)=>a+volume(s),0)>=5000,need:"lift"},
+  {id:"easy",xp:25,t:"Do an easy recovery session rated 4/10 or lower",ok:L=>L.some(s=>s.rpe&&s.rpe<=4)}
+];
+function questFor(date,ctx){
+  const types=ctx?ctx.types:new Set(live().map(s=>s.type));
+  const pool=QUESTS.filter(q=>!q.need||(q.need==="dist"?[...types].some(t=>DIST_TYPES.includes(t)):types.has(q.need)));
+  if(!pool.length)return null;
+  return pool[Math.floor(seeded("quest"+date)()*pool.length)];
+}
+function questCard(){
+  if(viewer)return "";
+  const today=keyOf(new Date()),q=questFor(today,null);if(!q)return "";
+  const L=live().filter(s=>s.date===today),prev=live().filter(s=>s.date<today).sort(chrono).pop();
+  const done=L.length&&q.ok(L,prev);
+  return `<div class="ins" style="border:2px solid ${done?"var(--ride)":"var(--line)"}"><div class="row2"><div><h3>🎯 Daily quest</h3><div class="xpinfo">${esc(q.t)}</div></div><span class="xpchip" style="background:${done?"var(--ride)":"var(--xp)"}">${done?"Done ✓":"+"+q.xp+" XP"}</span></div><p class="hint">A new quest every day. ${getC().ctx.questsDone||0} completed so far.</p></div>`;
+}
+
+/* ================= service medals ================= */
+const SVC_COLORS=[["#E9EEF3","#9AA6B2","Silver"],["#BDEBFF","#4FB6F0","Sky"],["#8FB2FF","#2F5BFF","Blue"],["#D2A8FF","#8E44EC","Purple"],["#FFB3DD","#E0409F","Pink"],["#FF9C92","#E0352F","Red"],["#5A5A5A","#141414","Black"]];
+const svcList=()=>settings.service||[];
+function svcIndexInYear(i){const L=svcList(),y=L[i].year;return L.slice(0,i+1).filter(x=>x.year===y).length-1;}
+function levelAt(cum,date){const off=svcList().filter(x=>x.date<=date).map(x=>x.xp).pop()||0;return levelOf(Math.max(0,cum-off));}
+function serviceMedalSVG(year,ci,size){
+  const c=SVC_COLORS[Math.min(ci,SVC_COLORS.length-1)],v=year%5,id="m"+year+"_"+ci+"_"+Math.random().toString(36).slice(2,6);
+  const cx=50,cy=64;let frame="";
+  const poly=(n,r,rot)=>Array.from({length:n},(_,i)=>{const a=rot+i*2*Math.PI/n;return `${(cx+r*Math.cos(a)).toFixed(1)},${(cy+r*Math.sin(a)).toFixed(1)}`;}).join(" ");
+  if(v===0)frame=`<circle cx="${cx}" cy="${cy}" r="30" fill="url(#g${id})"/>${Array.from({length:24},(_,i)=>{const a=i*Math.PI/12;return `<line x1="${cx+27*Math.cos(a)}" y1="${cy+27*Math.sin(a)}" x2="${cx+31*Math.cos(a)}" y2="${cy+31*Math.sin(a)}" stroke="#7A5A10" stroke-width="1.4"/>`;}).join("")}`;
+  else if(v===1)frame=`<polygon points="${poly(6,32,-Math.PI/2)}" fill="url(#g${id})"/>`;
+  else if(v===2)frame=`<polygon points="${Array.from({length:32},(_,i)=>{const a=-Math.PI/2+i*Math.PI/16,r=i%2?27:34;return `${(cx+r*Math.cos(a)).toFixed(1)},${(cy+r*Math.sin(a)).toFixed(1)}`;}).join(" ")}" fill="url(#g${id})"/>`;
+  else if(v===3)frame=`<polygon points="${poly(5,33,-Math.PI/2)}" fill="url(#g${id})" stroke-linejoin="round"/>`;
+  else frame=`<polygon points="${Array.from({length:24},(_,i)=>{const a=-Math.PI/2+i*Math.PI/12,r=i%2?29:33;return `${(cx+r*Math.cos(a)).toFixed(1)},${(cy+r*Math.sin(a)).toFixed(1)}`;}).join(" ")}" fill="url(#g${id})"/>`;
+  return `<svg viewBox="0 0 100 100" width="${size}" height="${size}" aria-label="${year} service medal, ${c[2]}">
+    <defs><linearGradient id="g${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFE9A3"/><stop offset=".5" stop-color="#E2B33C"/><stop offset="1" stop-color="#A97A12"/></linearGradient>
+    <radialGradient id="e${id}" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="${c[0]}"/><stop offset="1" stop-color="${c[1]}"/></radialGradient></defs>
+    <path d="M30 2 L46 2 L56 40 L44 46 Z" fill="${c[1]}"/><path d="M70 2 L54 2 L44 40 L56 46 Z" fill="${c[1]}" opacity=".85"/>
+    <path d="M36 2 L40 2 L50 38 L48 40 Z" fill="#fff" opacity=".7"/><path d="M64 2 L60 2 L50 38 L52 40 Z" fill="#fff" opacity=".7"/>
+    ${frame}
+    <circle cx="${cx}" cy="${cy}" r="20" fill="url(#e${id})" stroke="#7A5A10" stroke-width="1.5"/>
+    <path d="M${cx} ${cy-12} l3.5 7.2 7.9 1.1 -5.7 5.6 1.4 7.9 -7.1 -3.8 -7.1 3.8 1.4 -7.9 -5.7 -5.6 7.9 -1.1z" fill="#fff" opacity=".92"/>
+    <text x="${cx}" y="${cy+30.5}" text-anchor="middle" font-size="8.5" font-weight="800" font-family="Barlow Condensed,Arial Narrow,sans-serif" fill="#5A3F05">${year}</text>
+  </svg>`;
+}
+function serviceShelf(size){return svcList().map((x,i)=>serviceMedalSVG(x.year,svcIndexInYear(i),size||44)).join("");}
+function openServiceClaim(){
+  const c=getC(),L=levelOf(c.xp),y=new Date().getFullYear(),ci=svcList().filter(x=>x.year===y).length;
+  if(L<40){toast("Service medals unlock at level 40");return;}
+  openSheet(`<div class="celeb"><div style="display:flex;justify-content:center">${serviceMedalSVG(y,ci,150)}</div>
+    <h3>Claim a ${y} service medal?</h3><p class="sub">Your level goes back to 1, and this medal goes on your profile for good. Your lifetime XP, trophies, and records all stay.${ci?` This is your ${ci+1}${["st","nd","rd"][ci]||"th"} medal this year, so it's ${SVC_COLORS[Math.min(ci,6)][2].toLowerCase()}.`:" Earn more this year and the color changes each time."}</p>
+    <div class="row"><button class="btn" id="sv-c">Not yet</button><button class="btn primary" id="sv-ok">Claim medal</button></div></div>`);
+  $("sv-c").onclick=closeSheet;
+  $("sv-ok").onclick=()=>{settings.service=[...svcList(),{date:keyOf(new Date()),year:y,xp:getC().xpTotal,level:L}];settings.updatedAt=Date.now();invalidate();saveLocal();pushSettings();render();closeSheet();toast(`${y} service medal earned! Back to level 1.`);if(navigator.vibrate)navigator.vibrate([40,80,40,80,120]);};
+}
+
+/* ================= rankings ================= */
+const RANK_NAMES=["Below average","Average","Intermediate","Advanced","Pro","GOAT"];
+const RANK_ICONS=["🌱","🙂","💪","🔥","🏆","🐐"];
+const RANK_COLS=["#9AA3B0","#5E9BD6","#10A36A","#E39B00","#8E44EC","#D4A017"];
+const RANK_XP=[0,0,50,150,450,1450];
+const FONT_TO_V=[-1,0,0,1,2,3,3,4,4,5,5,6,7,8,8,9,10,11,12,13,14,15,16,17];
+function rankMetrics(){
+  const f=bio().sex==="f",W=weightOn(keyOf(new Date()))||bio().weight||null,since=d=>keyOf(addDays(new Date(),-d));
+  const L=live(),out=[];
+  const add=(key,cat,name,val,th,lower,fmt,ex)=>{if(val==null||!isFinite(val)||val<=0)return;let t=0;for(let i=0;i<5;i++)if(lower?val<=th[i]:val>=th[i])t=i+1;const nxt=t<5?th[t]:null,prev=t>0?th[t-1]:null;
+    let prog=1;if(nxt!=null){const a=prev!=null?prev:(lower?th[0]*1.5:th[0]*0.5);prog=Math.max(0,Math.min(1,lower?(a-val)/(a-nxt):(val-a)/(nxt-a)));}
+    out.push({key,cat,name,val,t,prog,fmt,th,lower,ex});};
+  const p5=predictTime(5000);add("run5k","Running","5K time",p5,f?[2400,1860,1500,960,840]:[2100,1620,1320,870,755],true,fmtClock,"World records: 12:35 (Cheptegei) and 13:58 (Chebet)");
+  const wkRun=L.filter(s=>s.type==="run"&&s.date>=since(28)).reduce((a,s)=>a+(s.dist||0),0)/4;add("runvol","Running","Weekly running",wkRun,[10,25,50,140,200],false,v=>round(toDispDist(v),1)+" "+dU()+"/wk","Kipchoge has run around 200 km a week in heavy training");
+  const ftp=currentFTP();if(ftp&&W)add("wkg","Cycling","FTP per kg",ftp/W,f?[1.7,2.6,3.3,4.8,5.6]:[2.0,3.0,3.8,5.5,6.4],false,v=>v.toFixed(2)+" W/kg","Grand Tour winners hold around 6.3–6.5 W/kg on big climbs");
+  const wkRide=L.filter(s=>s.type==="ride"&&s.date>=since(28)).reduce((a,s)=>a+(s.dist||0),0)/4;add("ridevol","Cycling","Weekly riding",wkRide,[30,100,200,600,800],false,v=>round(toDispDist(v),0)+" "+dU()+"/wk","WorldTour pros often ride 600–900 km a week");
+  if(W){const m=f?[0.65,0.75,0.75]:[1,1,1];
+    const lifts=[["bench","Bench press",[0.75,1.0,1.5,2.0,3.0],0],["squat","Squat",[1.0,1.5,2.0,2.8,3.8],1],["deadlift","Deadlift",[1.25,1.75,2.5,3.0,4.0],2]];
+    for(const [k,n,th,i] of lifts){const rm=bestE1rm(k);if(rm)add("lift-"+k,"Lifting",n+" (× bodyweight)",rm/W,th.map(x=>round(x*m[i],2)),false,v=>v.toFixed(2)+"× ("+fmtWt(rm)+")","Elite lifters have pulled over 4× bodyweight");}}
+  let vmax=null;for(const s of L)if(s.type==="climb"&&s.date>=since(120)&&(s.gs==="v"||s.gs==="font")){const h=hardest(s);if(h){const v=s.gs==="v"?h.g-1:FONT_TO_V[h.g];if(vmax==null||v>vmax)vmax=v;}}
+  if(vmax!=null)add("boulder","Climbing","Hardest boulder",vmax+2,[4,6,8,13,19],false,v=>v<=1?"VB":"V"+(v-2),"V17 is the hardest grade climbed so far");
+  if(W){let best=null;for(const s of L)if(s.type==="hang"&&s.date>=since(180))for(const h of s.hangs||[])if((!h.edge||(h.edge>=15&&h.edge<=25))&&h.add!=null&&(best==null||h.add>best))best=h.add;
+    if(best!=null)add("hang","Climbing","Hang load (% bodyweight)",(W+best)/W*100,[100,115,140,170,200],false,v=>Math.round(v)+"%","Top boulderers hang around double bodyweight on 20 mm");}
+  const elevMax=Math.max(0,...L.filter(s=>s.type==="hike"&&s.date>=since(180)).map(s=>s.elev||0));add("hike","Hiking","Biggest day of climbing",elevMax,[300,800,1500,2500,4000],false,fmtElev,"Skyrunners climb 4,000 m+ in a single race");
+  const vo=vo2Now();if(vo)add("vo2","Fitness","VO2max",vo.v,f?[34,39,46,62,78]:[40,45,52,70,90],false,v=>Math.round(v)+" ml/kg/min","The highest values recorded are around 96–97, in cross-country skiers");
+  const wk=L.filter(s=>s.date>=since(28)).length/4;add("consist","Fitness","Workouts per week",wk,[1.5,3,5,9,12],false,v=>round(v,1)+"/wk","Pros often train twice a day");
+  return out;
+}
+function overallRank(M){if(!M.length)return null;const avg=M.reduce((a,m)=>a+m.t+m.prog*0.99,0)/M.length;return {t:Math.min(5,Math.floor(avg)),score:avg};}
+function rankHTML(){
+  const M=rankMetrics();
+  let h=`<h2 class="sec">Rankings</h2>`;
+  if(!M.length)return h+`<div class="empty">Log runs with best efforts, rides with power, lifts, V-scale climbs, hangs, or hikes, and you'll see how you stack up against average people all the way to GOAT-level athletes.</div>`;
+  const o=overallRank(M);
+  h+=`<div class="ins" style="border:2px solid ${RANK_COLS[o.t]}"><div class="row2"><div><h3>${RANK_ICONS[o.t]} Overall: ${RANK_NAMES[o.t]}</h3><div class="xpinfo">Across ${M.length} measure${M.length===1?"":"s"} of your output</div></div></div>
+    <div class="tchips" style="margin-top:8px">${RANK_NAMES.slice(1).map((n,i)=>`<span class="tchip" style="background:${o.t>=i+1?RANK_COLS[i+1]:"var(--chip)"};color:${o.t>=i+1?"#fff":"var(--muted)"}">${RANK_ICONS[i+1]} ${n}</span>`).join("")}</div></div>`;
+  const cats=[...new Set(M.map(m=>m.cat))];
+  for(const c of cats){h+=`<div class="tlist" style="margin-top:10px">`+M.filter(m=>m.cat===c).map(m=>`<div class="trow" style="align-items:flex-start"><span class="mdot" style="background:${RANK_COLS[m.t]};font-size:.95rem">${RANK_ICONS[m.t]}</span><div class="tx"><b style="white-space:normal">${esc(m.name)}: ${esc(m.fmt(m.val))}</b><span style="white-space:normal">${RANK_NAMES[m.t]}${m.t<5?`. Next: ${RANK_NAMES[m.t+1]} at ${esc(m.fmt(m.th[m.t]))}`:". You're up there with the greats."}</span><div class="mini" style="margin:6px 0 2px"><i style="width:${m.prog*100}%;background:${RANK_COLS[Math.min(5,m.t+1)]}"></i></div><span style="white-space:normal;font-size:.72rem">${esc(m.ex)}</span></div></div>`).join("")+`</div>`;}
+  return h+`<p class="hint">Benchmarks are rough guides drawn from typical recreational, club, and elite performances${bio().sex?" for your sex":""}. Reaching a new rank earns XP: 50 for Intermediate, 100 more for Advanced, 300 for Pro, and 1,000 for GOAT.</p>`;
+}
+function checkRanks(){
+  if(viewer)return;
+  const best={...(settings.rankBest||{})};let up=null;
+  for(const m of rankMetrics()){if(m.t>(best[m.key]||0)){if(m.t>=2&&(!up||m.t>up.t))up=m;best[m.key]=m.t;}}
+  if(JSON.stringify(best)!==JSON.stringify(settings.rankBest||{})){settings.rankBest=best;settings.updatedAt=Date.now();invalidate();saveLocal();pushSettings();if(up)toast(`${RANK_ICONS[up.t]} Rank up! ${up.name}: ${RANK_NAMES[up.t]}`);}
+}
+
 let tt;function toast(m){const t=$("toast");t.textContent=m;t.classList.add("show");clearTimeout(tt);tt=setTimeout(()=>t.classList.remove("show"),2600)}
 
 loadLocal();loadActive();render();
@@ -3767,7 +4340,7 @@ function maybePrompt(){
   const lt=LT();
   if(!lt.onboarded){openWizard("first");return;}
   if(lt.lastCheck&&Date.now()-lt.lastCheck>56*864e5){lt.lastCheck=Date.now();settings.updatedAt=Date.now();saveLocal();pushSettings();openWizard("checkin");return;}
-  checkLongGoals();
+  checkLongGoals();checkRanks();
 }
 initRemote().finally(()=>setTimeout(maybePrompt,400));
 setTimeout(maybePrompt,4000);
