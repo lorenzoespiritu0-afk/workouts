@@ -1,60 +1,75 @@
-# Workouts: GitHub Pages version
+# Workouts
 
-This is the offline version of your workout app. GitHub hosts it for free, it opens with no internet once installed, and routes show on real OpenStreetMap maps when you're online.
+A free, private workout tracker for running, riding, hiking, lifting, bouldering and hangboarding. It installs from the web like an app. There's no App Store, no account and no server, and it works offline once installed.
 
-Your workout data is never uploaded to GitHub. It stays on your phone, in the browser's storage for this site.
+**Open the app:** https://lorenzoespiritu0-afk.github.io/workouts/workouts-github/
 
-## 1. Unzip
+Your workouts are never uploaded anywhere. They stay on your own phone, in storage for this site only. Nobody else can see them, including whoever runs this repository.
 
-On iPhone, open the Files app and tap the zip file. A folder appears next to it with these files:
+---
 
-- index.html
-- manifest.webmanifest
-- sw.js
-- icon-180.png, icon-192.png, icon-512.png
-- README.md (this guide)
+## Install on iPhone
 
-## 2. Create a GitHub account
+1. Open the link above in **Safari**. Other browsers on iPhone can't install it.
+2. Tap the **Share** button, the square with an arrow pointing up.
+3. Scroll down and tap **Add to Home Screen**, then **Add**.
+4. Open Workouts from the new Home Screen icon. It runs full screen, like a normal app.
 
-Go to github.com in Safari and sign up. The free plan is all you need.
+Always open it from the Home Screen icon, not from Safari. Safari can clear data for websites you haven't visited in a while, but Home Screen apps keep their data.
 
-## 3. Make a repository
+## Install on Android
 
-1. Tap the + at the top, then **New repository**.
-2. Name it `workouts`.
-3. Set it to **Public**. GitHub Pages is free for public repositories. Only the app's code is public; your data is not in it.
-4. Tap **Create repository**.
+1. Open the link above in **Chrome**.
+2. Tap **Install app** if Chrome offers it. If it doesn't, tap the **⋮** menu at the top right, then **Add to Home screen** or **Install app**.
+3. Tap **Install**.
+4. Open Workouts from the new icon on your home screen or in your app drawer.
 
-## 4. Upload the files
+Samsung Internet works too: open the menu, then tap **Add page to**, then **Home screen**.
 
-1. On the new repository page, tap **uploading an existing file**. If you don't see it, use **Add file**, then **Upload files**. On iPhone you may need to switch Safari to the desktop site with the "aA" menu.
-2. Select all the files from the unzipped folder.
+## First time you open it
+
+- The app asks about your goals and how you train. You can skip this and do it later from **Coach**.
+- Open **Settings** (the gear icon) and fill in your weight, height, age and max heart rate. Pace zones, watts per kg, VO2max and the fuel and hydration advice all use these.
+- Add your gyms, crags and running routes under **Places**. Climbing gyms can each have their own color circuit.
+
+## Using it
+
+- **Log a workout:** tap **+**. You can type in stats from your watch or another app, or import a **GPX** or **TCX** file to get the map, splits and best efforts.
+- **Start a workout:** tap **+**, then **Start a workout**. Pick your time, effort and how you feel, and it builds today's session. It then runs a live timer and checklist.
+- **Chase a target:** tap **+**, then **🎯 Chase a target**. Set a finish time, pace, PR, lift, grade or hang. The app says how realistic the target is and builds a pacing plan for the attempt.
+- **Events:** add a race or trip in **Coach**, then **Goals**, and you get a day-by-day plan up to race day.
+- **Share images:** open any workout, then tap **Share as image**. You get a transparent PNG for Instagram Stories, with your choice of colors (Strava orange included), and the route and text can be different colors.
+
+## Back up your data (important)
+
+Your data lives only on your phone. If you delete the app, clear browser data or lose the phone, it's gone unless you have a backup.
+
+- **Settings → Save backup file** every week or two. Keep the file in iCloud Drive, Google Drive or Files.
+- To restore, or to move to a new phone: **Settings → Load file**.
+- **Export CSV** gives you a spreadsheet of all your workouts.
+
+The app reminds you when your last backup is more than two weeks old.
+
+## Getting updates
+
+When a new version is uploaded, close the app completely and open it again. Do this twice: the first time downloads the update, and the second time loads it. Your workouts stay where they are.
+
+- **iPhone:** swipe up from the bottom and hold, then swipe the app away.
+- **Android:** open recent apps and swipe it away.
+
+## Troubleshooting
+
+- **The app shows an old version:** close it and reopen it twice. If that doesn't work, wait 5 minutes, because GitHub can take a moment to publish.
+- **The map isn't showing:** maps need an internet connection. Routes still draw as a line when you're offline.
+- **The data disappeared on iPhone:** this happens if you opened the app in Safari instead of from the Home Screen icon. Each one keeps its own separate storage. Use the icon, and restore from your backup file.
+- **Sharing an image does nothing:** press and hold the preview image, then choose **Save to Photos** (iPhone) or **Download image** (Android).
+
+---
+
+### For the maintainer: updating the app
+
+1. Go to **Add file**, then **Upload files**, in the `workouts-github` folder.
+2. Drag in the new `index.html` and `sw.js`.
 3. Tap **Commit changes**.
 
-## 5. Turn on GitHub Pages
-
-1. In the repository, open **Settings**, then **Pages**.
-2. Under **Source**, choose **Deploy from a branch**.
-3. Pick the branch **main** and the folder **/ (root)**, then **Save**.
-4. Wait a minute or two. The page shows your link, which looks like `https://YOUR-USERNAME.github.io/workouts/`.
-
-## 6. Install it on your iPhone
-
-1. Open your link in **Safari**.
-2. Tap **Share**, then **Add to Home Screen**.
-3. Always open the app from the Home Screen icon. Safari can clear storage for websites you don't visit for a while, but Home Screen apps are kept.
-
-## 7. Move your data over
-
-1. In the claude.ai version, open **Settings**, then **Copy backup**.
-2. In the new app, open **Settings**, paste into the backup box, and tap **Restore**.
-
-Workouts, places, segments, goals, events, plans, gear, routines, and settings all come across. Photos stay on the device and version they were added in.
-
-## Keeping your data safe
-
-There's no cloud sync in this version, so copy a backup from Settings into Notes every week or two. **Export CSV** is there too if you want a spreadsheet.
-
-## Updating later
-
-When you get a new version, upload the new `index.html` to the repository and replace the old one. If the app still shows the old version, close it fully and open it again twice.
+Each update bumps the version number in `sw.js`, which is what tells phones to download the new version.
