@@ -2985,6 +2985,51 @@ function openShare(s){
 }
 
 /* ---------- settings ---------- */
+/* ---------- CSV import (this app's export, or Strava's activities.csv) ---------- */
+function parseCSVText(t){
+  const rows=[];let row=[],f="",q=false;t=t.replace(/^﻿/,"");
+  for(let i=0;i<t.length;i++){const c=t[i];
+    if(q){if(c==='"'){if(t[i+1]==='"'){f+='"';i++;}else q=false;}else f+=c;}
+    else if(c==='"')q=true;else if(c===","){row.push(f);f="";}else if(c==="\n"||c==="\r"){if(c==="\r"&&t[i+1]==="\n")i++;row.push(f);f="";if(row.some(x=>x.trim()!==""))rows.push(row);row=[];}else f+=c;}
+  row.push(f);if(row.some(x=>x.trim()!==""))rows.push(row);return rows;
+}
+function csvType(v){v=String(v||"").toLowerCase();if(TYPES[v])return v;if(/trail ?run|run/.test(v))return "run";if(/hike/.test(v))return "hike";if(/walk/.test(v))return "walk";if(/ride|cycl|bike|spin/.test(v))return "ride";if(/weight|lift|strength|crossfit/.test(v))return "lift";if(/boulder|climb/.test(v))return "climb";if(/hang/.test(v))return "hang";return "other";}
+function csvDate(v){v=String(v||"").trim();let m=v.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{1,2}):(\d{2}))?/);if(m)return {date:`${m[1]}-${m[2]}-${m[3]}`,time:m[4]?pad(+m[4])+":"+m[5]:""};
+  m=v.match(/^([A-Za-z]{3})[a-z]*\.? (\d{1,2}),? (\d{4}),?\s*(\d{1,2}):(\d{2})(?::\d{2})?\s*([AP]M)?/i);
+  if(m){const mo=["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"].indexOf(m[1].toLowerCase());if(mo<0)return null;let h=+m[4];if(m[6]){const pm=/p/i.test(m[6]);if(pm&&h<12)h+=12;if(!pm&&h===12)h=0;}return {date:`${m[3]}-${pad(mo+1)}-${pad(+m[2])}`,time:pad(h)+":"+m[5]};}
+  const dt=new Date(v);if(!isNaN(dt))return {date:keyOf(dt),time:pad(dt.getHours())+":"+pad(dt.getMinutes())};return null;}
+function importCSV(text){
+  const rows=parseCSVText(text);if(rows.length<2)throw new Error("empty");
+  const H=rows[0].map(h=>h.trim().toLowerCase());
+  const col=(...names)=>{for(const n of names){const i=H.indexOf(n);if(i>=0)return i;}return -1;};
+  const C={date:col("date","activity date","start date","start_date"),time:col("time","start time"),type:col("type","activity type","sport"),title:col("title","activity name","name"),place:col("place","location"),
+    durMin:col("duration_min","duration (min)"),moving:col("moving time","moving_time"),elapsed:col("elapsed time","elapsed_time","duration"),dist:col("distance_km","distance"),elev:col("elevation_m","elevation gain","total elevation gain"),
+    hr:col("avg_hr","average heart rate","avg heart rate"),pw:col("avg_power_w","average watts","average power"),rpe:col("effort","perceived exertion"),vol:col("volume_kg"),sends:col("sends"),hang:col("hang_time_s"),notes:col("notes","activity description","description"),cal:col("calories")};
+  if(C.date<0)throw new Error("nodate");
+  const strava=H.includes("activity date");const have=new Set(live().map(s=>[s.date,s.time,s.type,Math.round((s.dur||0)/60)].join("|")));
+  const v=(r,i)=>i>=0&&r[i]!=null?String(r[i]).trim():"";const nm=(r,i)=>{const x=parseFloat(v(r,i).replace(/,/g,""));return isFinite(x)?x:null;};
+  let n=0,skipped=0;const now=Date.now();
+  for(const r of rows.slice(1)){
+    const dt=csvDate(v(r,C.date));if(!dt){skipped++;continue;}
+    if(C.time>=0&&v(r,C.time)&&!strava)dt.time=v(r,C.time).slice(0,5);
+    const type=csvType(v(r,C.type));
+    let dur=C.durMin>=0&&nm(r,C.durMin)!=null?nm(r,C.durMin)*60:C.moving>=0&&nm(r,C.moving)!=null?nm(r,C.moving):C.elapsed>=0&&nm(r,C.elapsed)!=null?nm(r,C.elapsed):0;
+    if(!strava&&C.durMin<0&&C.elapsed>=0&&/:/.test(v(r,C.elapsed))){const t=parseClock(v(r,C.elapsed));if(t)dur=t;}
+    const s={id:uid(),type,title:v(r,C.title),date:dt.date,time:dt.time,dur:Math.round(dur||0),ex:[],probs:[],efforts:{},track:null,notes:v(r,C.notes),created:now,updatedAt:now};
+    const d=nm(r,C.dist);if(d!=null&&d>0&&type!=="lift"&&type!=="climb"&&type!=="hang")s.dist=round(d,3);
+    const e=nm(r,C.elev);if(e!=null&&e>0)s.elev=Math.round(e);
+    const hr=nm(r,C.hr);if(hr)s.hr=Math.round(hr);const pw=nm(r,C.pw);if(pw&&type==="ride")s.pw=Math.round(pw);
+    const rp=nm(r,C.rpe);if(rp&&rp>=1&&rp<=10)s.rpe=Math.round(rp);const cal=nm(r,C.cal);if(cal)s.cal=Math.round(cal);
+    const vol=nm(r,C.vol);if(vol&&type==="lift")s.vol=vol;
+    const extra=[];const sn=nm(r,C.sends);if(sn&&type==="climb")extra.push(`${sn} send${sn===1?"":"s"}`);const hg=nm(r,C.hang);if(hg&&type==="hang")extra.push(`${fmtDur(hg)} hang time`);
+    if(extra.length)s.notes=(s.notes?s.notes+" ":"")+"("+extra.join(", ")+" from CSV)";
+    const pl=v(r,C.place);if(pl){const p=places().find(x=>x.name.toLowerCase()===pl.toLowerCase());if(p){s.placeId=p.id;s.placeName=p.name;}else s.placeName=pl;}
+    if(!s.dur&&!s.dist){skipped++;continue;}
+    const k=[s.date,s.time,s.type,Math.round(s.dur/60)].join("|");if(have.has(k)){skipped++;continue;}have.add(k);
+    sessions[s.id]=s;pushSession(s);n++;
+  }
+  invalidate();saveLocal();render();return {n,skipped};
+}
 function openSettings(){
   const b=bio(),imp=dU()==="mi";
   let circuit=JSON.parse(JSON.stringify(settings.circuit&&settings.circuit.length?settings.circuit:DEF_CIRCUIT));
@@ -3028,7 +3073,7 @@ function openSettings(){
     <p class="hint">Copy this into Notes to keep a backup or move to another version of the app. Restoring adds to what's already here.</p>
     <div class="row"><button class="btn" id="bcopy">Copy backup</button><button class="btn" id="brestore">Restore</button><button class="btn" id="bload">Load file</button></div>
     <div class="row" style="margin-top:8px"><button class="btn primary" id="bfile">Save backup file</button><button class="btn" id="bcsv">Export CSV</button></div>
-    <p class="hint">${settings.lastBackup?`Last backup: ${fmtDate(keyOf(new Date(settings.lastBackup)))}.`:"No backup saved yet."} A backup file is the safest way to keep your data, or to move it to a new phone.</p>
+    <p class="hint">${settings.lastBackup?`Last backup: ${fmtDate(keyOf(new Date(settings.lastBackup)))}.`:"No backup saved yet."} A backup file is the safest way to keep your data, or to move it to a new phone. Load file takes a backup file or a CSV, either this app's export or Strava's activities.csv. A CSV brings in the main numbers only, not routes, exercises, or problems.</p>
     <div class="err" id="berr"></div>`);
   let sex=b.sex||"";
   $("b-sex").querySelectorAll("button").forEach(x=>x.onclick=()=>{sex=sex===x.dataset.v?"":x.dataset.v;$("b-sex").querySelectorAll("button").forEach(z=>z.setAttribute("aria-pressed",z.dataset.v===sex));});
@@ -3061,7 +3106,10 @@ function openSettings(){
   };
   $("bcsv").onclick=()=>exportCSV();
   $("bfile").onclick=()=>saveBackupFile();
-  $("bload").onclick=()=>{const fi=$("gpxfile");fi.value="";fi.accept=".json,application/json";fi.onchange=async()=>{const f=fi.files&&fi.files[0];fi.accept="";if(!f)return;$("bk").value=await f.text();$("brestore").click();};fi.click();};
+  const tryCSV=t=>{try{const r=importCSV(t);closeSheet();toast(r.n?`${r.n} workout${r.n===1?"":"s"} imported from CSV${r.skipped?`, ${r.skipped} skipped (already here or empty)`:""}`:"Nothing new in that CSV. Those workouts are already here.");return true;}catch(e){$("berr").textContent="That CSV couldn't be read. Use the CSV this app exports, or Strava's activities.csv.";return false;}};
+  $("bload").onclick=()=>{const fi=$("gpxfile");fi.value="";fi.accept="";fi.onchange=async()=>{const f=fi.files&&fi.files[0];if(!f)return;const t=await f.text();
+    if(/\.csv$/i.test(f.name)||!/^\s*[\[{]/.test(t)){tryCSV(t);return;}
+    $("bk").value=t;$("brestore").click();};fi.click();};
   $("bcopy").onclick=async()=>{markBackedUp();
     const ta=$("bk");ta.focus();ta.select();
     try{await navigator.clipboard.writeText(ta.value);toast("Backup copied")}
@@ -3081,7 +3129,7 @@ function openSettings(){
       if(o.settings&&typeof o.settings==="object"){const keep=settings.share;settings={...settings,...o.settings,share:keep,updatedAt:now};pushSettings();}
       if(Array.isArray(o.places)){const have=new Set(places().map(x=>x.id));const add=o.places.filter(x=>x&&x.id&&x.name&&!have.has(x.id));if(add.length){settings.places=[...places(),...add];settings.updatedAt=now;pushSettings();}}
       invalidate();saveLocal();render();closeSheet();toast(n+" workout"+(n===1?"":"s")+" restored");
-    }catch(e){$("berr").textContent="That text isn't a valid backup. Paste the whole thing, from the first { to the last }.";}
+    }catch(e){const t=$("bk").value;if(!/^\s*[\[{]/.test(t)&&/,/.test(t.split("\n")[0]||"")){tryCSV(t);return;}$("berr").textContent="That text isn't a valid backup. Paste the whole thing, from the first { to the last }.";}
   };
 }
 
