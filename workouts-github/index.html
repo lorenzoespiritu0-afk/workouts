@@ -662,7 +662,7 @@ h2.sec{font-family:var(--display);font-weight:700;letter-spacing:-.015em}
 .chip{background:var(--surface);color:var(--ink);font-weight:500}
 .chip[aria-pressed=true]{background:var(--ink);color:#000;font-weight:600}
 /* lists: inset grouped with hairlines */
-.tlist{border-radius:16px;overflow:hidden}
+.tlist{border-radius:16px}
 .tlist>.trow{border-bottom:0}
 .tlist>.trow+.trow{box-shadow:inset 0 1px 0 var(--line)}
 /* buttons */
@@ -2310,7 +2310,7 @@ function renderLongGoals(){
 function openSheet(html){const sh=$("sheet"),was=$("scrim").classList.contains("open"),k=html.replace(/\s+/g," ").slice(0,90);const anim=was&&sh.dataset.k!==k;sh.dataset.k=k;sh.style.transform="";sh.innerHTML=anim?`<div class="swap">${html}</div>`:html;sh.scrollTop=0;clearTimeout(closeT);$("scrim").classList.remove("closing");$("scrim").classList.add("open");document.body.style.overflow="hidden";}
 /* drag the sheet down from its top to dismiss; release velocity decides */
 (()=>{const sh=$("sheet");let y0=0,dy=0,on=false,arm=false,hist=[];
-  sh.addEventListener("touchstart",e=>{if(e.touches.length!==1)return;arm=sh.scrollTop<=0;on=false;y0=e.touches[0].clientY;dy=0;hist=[[y0,e.timeStamp]];},{passive:true});
+  sh.addEventListener("touchstart",e=>{if(e.touches.length!==1)return;y0=e.touches[0].clientY;arm=sh.scrollTop<=0&&(y0-sh.getBoundingClientRect().top)<64;on=false;dy=0;hist=[[y0,e.timeStamp]];},{passive:true});
   sh.addEventListener("touchmove",e=>{if(!arm)return;const y=e.touches[0].clientY,d=y-y0;
     if(!on){if(d>8&&sh.scrollTop<=0){on=true;y0=y;sh.classList.add("dragging");}else if(d<-4){arm=false;return;}else return;}
     dy=Math.max(0,y-y0);if(y-y0<0)dy=-(Math.sqrt(-(y-y0))*2);sh.style.transform=`translate3d(0,${dy}px,0)`;hist.push([y,e.timeStamp]);if(hist.length>6)hist.shift();if(e.cancelable)e.preventDefault();},{passive:false});
