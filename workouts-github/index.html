@@ -143,7 +143,7 @@ nav .plus{background:var(--ink);color:var(--surface);font-weight:700;width:50px;
 
 .scrim{position:fixed;inset:0;background:rgba(8,10,16,.5);display:none;align-items:flex-end;justify-content:center;z-index:10}
 .scrim.open{display:flex}
-.sheet{background:var(--surface);width:100%;max-width:620px;max-height:94%;overflow:auto;border-radius:22px 22px 0 0;padding:22px 20px calc(26px + env(safe-area-inset-bottom,0px));animation:up .22s ease;-webkit-overflow-scrolling:touch}
+.sheet{background:var(--surface);width:100%;max-width:620px;max-height:94%;overflow:auto;border-radius:22px 22px 0 0;padding:22px 20px calc(26px + env(safe-area-inset-bottom,0px));animation:up .22s ease;}
 @keyframes up{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
 @keyframes pop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.08);opacity:1}100%{transform:scale(1)}}
 @media (prefers-reduced-motion:reduce){.sheet,.celeb .big{animation:none!important}.xpbar span{transition:none}}
@@ -399,10 +399,18 @@ button,summary,.tchip,.chip,label{touch-action:manipulation;-webkit-user-select:
 .card:active,.plc:active,button.trow:active,button.ins:active,.rec:active,.liftrow:active{transform:scale(.982)}
 nav .plus:active{transform:scale(.9)}
 /* sheet: slides up from the bottom, leaves the same way, can be dragged down */
-.scrim{display:flex!important;visibility:hidden;opacity:0;transition:opacity .26s ease,visibility 0s linear .3s}
-.scrim.open{visibility:visible;opacity:1;transition:opacity .32s ease}
-.sheet{animation:none;transform:translate3d(0,105%,0);transition:transform .28s var(--ease-in);overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#3A3A3F transparent;box-shadow:0 -20px 60px rgba(0,0,0,.5)}
-.scrim.open .sheet{transform:none;transition:transform .52s var(--ease-out)}
+/* sheet motion uses keyframes that leave no transform behind, so iOS keeps scrolling and painting the sheet normally */
+.scrim{display:none!important;background:rgba(0,0,0,.62)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+.scrim.open,.scrim.closing{display:flex!important}
+.scrim.open{animation:scrimIn .3s ease}
+.scrim.closing{animation:scrimOut .26s ease forwards;pointer-events:none}
+.sheet{animation:none;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#3A3A3F transparent;box-shadow:0 -20px 60px rgba(0,0,0,.5)}
+.scrim.open .sheet{animation:sheetIn .48s var(--ease-out)}
+.scrim.closing .sheet{animation:sheetOut .26s var(--ease-in) forwards}
+@keyframes scrimIn{from{background-color:rgba(0,0,0,0)}}
+@keyframes scrimOut{to{background-color:rgba(0,0,0,0)}}
+@keyframes sheetIn{from{transform:translate3d(0,100%,0)}}
+@keyframes sheetOut{to{transform:translate3d(0,105%,0)}}
 .sheet.dragging{transition:none!important}
 .sheet::before{width:40px;height:5px;background:#48484D;margin:0 auto 14px;transition:background .2s,width .2s}
 .sheet.dragging::before{background:#8E8E93;width:52px}
@@ -489,7 +497,7 @@ nav .plus:active{transform:translateY(-6px) scale(.9)}
 .chico{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:10px;margin-right:8px;vertical-align:-6px;background:rgba(255,255,255,.08)}
 .chico svg{width:18px;height:18px}
 @media (prefers-reduced-motion:reduce){
-  .sheet,.scrim.open .sheet{transform:none!important;transition:opacity .2s ease!important}
+  .scrim.open .sheet,.scrim.closing .sheet{animation:none!important}
   #app.enter,.sheet .swap,.bump{animation:none}
   .toast{transform:translate(-50%,0)}
 }
@@ -2299,7 +2307,7 @@ function renderLongGoals(){
   return h;
 }
 /* ================= sheets ================= */
-function openSheet(html){const sh=$("sheet"),was=$("scrim").classList.contains("open"),k=html.replace(/\s+/g," ").slice(0,90);const anim=was&&sh.dataset.k!==k;sh.dataset.k=k;sh.style.transform="";sh.innerHTML=anim?`<div class="swap">${html}</div>`:html;sh.scrollTop=0;$("scrim").classList.add("open");document.body.style.overflow="hidden";}
+function openSheet(html){const sh=$("sheet"),was=$("scrim").classList.contains("open"),k=html.replace(/\s+/g," ").slice(0,90);const anim=was&&sh.dataset.k!==k;sh.dataset.k=k;sh.style.transform="";sh.innerHTML=anim?`<div class="swap">${html}</div>`:html;sh.scrollTop=0;clearTimeout(closeT);$("scrim").classList.remove("closing");$("scrim").classList.add("open");document.body.style.overflow="hidden";}
 /* drag the sheet down from its top to dismiss; release velocity decides */
 (()=>{const sh=$("sheet");let y0=0,dy=0,on=false,arm=false,hist=[];
   sh.addEventListener("touchstart",e=>{if(e.touches.length!==1)return;arm=sh.scrollTop<=0;on=false;y0=e.touches[0].clientY;dy=0;hist=[[y0,e.timeStamp]];},{passive:true});
@@ -2309,11 +2317,12 @@ function openSheet(html){const sh=$("sheet"),was=$("scrim").classList.contains("
   const end=()=>{if(!on){arm=false;return;}on=false;arm=false;sh.classList.remove("dragging");
     const a=hist[0],b=hist[hist.length-1],v=b&&a&&b[1]>a[1]?(b[0]-a[0])/(b[1]-a[1]):0; /* px per ms */
     const projected=dy+v*1000*0.998/(1-0.998)/1000*0.6;
-    if(dy>140||v>0.55||projected>sh.offsetHeight*0.45){closeSheet();requestAnimationFrame(()=>{sh.style.transform="";});}
-    else{sh.style.transform="";}};
+    if(dy>140||v>0.55||projected>sh.offsetHeight*0.45){closeSheet();}
+    else{sh.style.transition="transform .35s cubic-bezier(.16,1,.3,1)";sh.style.transform="";setTimeout(()=>{sh.style.transition="";},380);}};
   sh.addEventListener("touchend",end);sh.addEventListener("touchcancel",end);
 })();
-function closeSheet(){if(!$("scrim").classList.contains("open"))return;$("scrim").classList.remove("open");document.body.style.overflow="";if(typeof pendingGoalCheck!=="undefined"&&pendingGoalCheck){pendingGoalCheck=false;setTimeout(checkLongGoals,250);}}
+let closeT=null;
+function closeSheet(){const sc=$("scrim");if(!sc.classList.contains("open"))return;sc.classList.remove("open");sc.classList.add("closing");clearTimeout(closeT);closeT=setTimeout(()=>{sc.classList.remove("closing");$("sheet").style.transform="";},270);document.body.style.overflow="";if(typeof pendingGoalCheck!=="undefined"&&pendingGoalCheck){pendingGoalCheck=false;setTimeout(checkLongGoals,250);}}
 $("scrim").addEventListener("click",e=>{if(e.target===$("scrim"))closeSheet()});
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeSheet()});
 
