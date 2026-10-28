@@ -3,8 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Workouts</title>
-<link rel="manifest" href="manifest.webmanifest">
+<title>Workouts</title><link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#000000">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -721,6 +720,20 @@ h2.sec{font-family:var(--display);font-weight:700;letter-spacing:-.015em}
 .pcgo{color:var(--muted)}.pcgo svg{width:18px;height:18px}
 .pmoves{margin-bottom:6px}
 @media (prefers-reduced-motion:reduce){.exlib{transition:none}}
+
+/* climbing grade marks */
+.gm{display:block;width:100%;height:100%;overflow:visible}
+.cdot.gmk{background:none!important;border:0;padding:3px;width:42px;height:42px;border-radius:14px;box-shadow:none}
+.cdot.gmk[aria-pressed=true]{box-shadow:0 0 0 2px var(--ink)}
+.cdot.gmk:not([aria-pressed=true]){opacity:.92}
+.pdot{background:none!important;box-shadow:none!important;width:22px;height:22px}
+.mdot.gmd{background:none!important;box-shadow:none!important;padding:0}
+.mdot.gmd .gm{width:30px;height:30px}
+.gm-sm{width:20px!important;height:20px!important;display:inline-block}
+.gm-xs{width:13px!important;height:13px!important;display:inline-block}
+.gm-inl{width:18px!important;height:18px!important;display:inline-block;vertical-align:-4px}
+.cdots{gap:4px;align-items:center}
+.tlab .gm{flex:none}
 @media (prefers-reduced-transparency:reduce){nav,#mini,.toast,.scrim{-webkit-backdrop-filter:none;backdrop-filter:none}nav,#mini{background:#0A0A0C}}
 </style>
 </head>
@@ -2273,7 +2286,7 @@ function renderClimbRecords(all){
     climbs.filter(s=>sysKey(s)===k).forEach(s=>sends(s).forEach(p=>{if(counts[p.g]!=null)counts[p.g]++;}));
     const max=Math.max(...counts);if(!max)continue;
     const rows=list.map((g,i)=>({g,n:counts[i]})).filter(x=>x.n).reverse();
-    html+=`<div class="chart"><div class="l" style="font-size:.82rem;color:var(--muted);margin:0 0 8px 4px">Grade pyramid, ${esc(sysName(smp))}</div><div class="pyr">${rows.map(r=>`<div><span style="font-weight:700">${r.g.color?`<span class="mdot" style="width:16px;height:16px;background:${r.g.color};box-shadow:0 0 0 1px var(--line);vertical-align:-3px"></span> `:""}${esc(r.g.label)}</span><i style="width:${r.n/max*100}%"></i><em>${r.n}</em></div>`).join("")}</div></div>`;
+    html+=`<div class="chart"><div class="l" style="font-size:.82rem;color:var(--muted);margin:0 0 8px 4px">Grade pyramid, ${esc(sysName(smp))}</div><div class="pyr">${rows.map(r=>`<div><span style="font-weight:700">${r.g.color?`${gm(r.g.label,r.g.color,"gm-inl")} `:""}${esc(r.g.label)}</span><i style="width:${r.n/max*100}%"></i><em>${r.n}</em></div>`).join("")}</div></div>`;
   }
   return html;
 }
@@ -2402,6 +2415,7 @@ function openForm(existing,preset){
   if(!d.hangs||!d.hangs.length)d.hangs=[{grip:"Half crimp",edge:20,add:0,hang:7,rest:3,reps:6,sets:4}];
   let gearTouched=!!existing;if(!existing&&!d.gearId)d.gearId=defaultGearFor(d.type);
   if(!existing)d.placeId=defaultPlaceFor(d.type);
+  if(!existing&&d.type==="climb"&&!(preset&&preset.gs)){const pl=placeById(d.placeId);if(pl&&pl.circuit&&pl.circuit.length)d.gs="color";}
   let placeTouched=!!existing,addingPlace=false,makeDefault=!!(settings.defPlace&&d.placeId&&settings.defPlace[d.type]===d.placeId);
   const newProb=()=>{const last=d.probs[d.probs.length-1];return {g:last?last.g:Math.min(2,gradeList(d.gs,d.placeId).length-1),res:"send",att:1,style:last?last.style:null,holds:[],name:""};};
   const DKEY="workouts-climb-draft";
@@ -2415,7 +2429,7 @@ function openForm(existing,preset){
     if(list.length>10&&!tallyAll){const hd=Math.max(hardestIn(d.gs,d.placeId),...d.probs.map(p=>p.g),2);lo=Math.max(0,hd-5);hi=Math.min(list.length-1,lo+7);lo=Math.max(0,hi-7);}
     const tot=cnt.reduce((a,b)=>a+b,0);
     return `<div class="tally"><div class="tally-h"><b>Send counter</b><span>${tot?`${tot} send${tot===1?"":"s"}`:"Tap + every time you top out"}</span></div>
-      <div class="tgrid">${list.slice(lo,hi+1).map((g,k)=>{const gi=lo+k,n=cnt[gi];return `<div class="tcell${n?" on":""}"${g.color?` style="--g:${g.color}"`:""}><div class="tlab">${g.color?`<i style="background:${g.color}"></i>`:""}<span>${esc(g.label)}</span></div><b class="tn" id="tn${gi}">${n}</b><div class="tbtns"><button type="button" data-tl="${gi}:-1" aria-label="Remove a ${esc(g.label)} send"${n?"":" disabled"}>−</button><button type="button" data-tl="${gi}:1" aria-label="Add a ${esc(g.label)} send">+</button></div></div>`;}).join("")}</div>
+      <div class="tgrid">${list.slice(lo,hi+1).map((g,k)=>{const gi=lo+k,n=cnt[gi];return `<div class="tcell${n?" on":""}"${g.color?` style="--g:${g.color}"`:""}><div class="tlab">${g.color?gm(g.label,g.color,"gm-sm"):""}<span>${esc(g.label.replace(/ chip$/i,""))}</span></div><b class="tn" id="tn${gi}">${n}</b><div class="tbtns"><button type="button" data-tl="${gi}:-1" aria-label="Remove a ${esc(g.label)} send"${n?"":" disabled"}>−</button><button type="button" data-tl="${gi}:1" aria-label="Add a ${esc(g.label)} send">+</button></div></div>`;}).join("")}</div>
       ${list.length>10?`<button class="link" id="tallyall">${tallyAll?"Show fewer grades":"Show all grades"}</button>`:""}</div>`;
   };
   const v=x=>x==null?"":x;
@@ -2445,8 +2459,8 @@ function openForm(existing,preset){
       ${d.gs==="color"?`<p class="hint">${placeById(d.placeId)&&placeById(d.placeId).circuit?`Using ${esc(placeById(d.placeId).name)}'s circuit. Edit it from the Places tab.`:`Using your default circuit. To give ${placeById(d.placeId)?esc(placeById(d.placeId).name):"a gym"} its own colors, edit the place in the Places tab.`}</p>`:d.gs==="custom"?`<p class="hint">Edit your custom grades in Settings, from easiest to hardest.</p>`:""}
       ${tallyHTML(list)}
       <label>Problems</label><p class="hint" id="csum" style="margin:-2px 0 8px"></p><div id="plist">${d.probs.length?"":`<p class="hint" style="margin:0 0 8px">Tap a grade above each time you send, or add a problem to log attempts, style and holds.</p>`}${d.probs.map((p,i)=>{const L=list[p.g],det=!!(p.name||p.proj||p.style||(p.holds&&p.holds.length))||openProbs.has(i);return `<div class="prob" style="--c:var(--climb)" data-res="${p.res}">
-        <div class="ph"><span class="pgrade">${L&&L.color?`<i class="pdot" style="background:${L.color}"></i>`:""}<b id="ph${i}">${esc(L?L.label:"?")}</b><span class="pnum">#${i+1}</span></span><div><button class="x" data-pdup="${i}" aria-label="Duplicate problem">⧉</button><button class="x" data-prm="${i}" aria-label="Remove problem">×</button></div></div>
-        <div class="gchips">${list.map((g,gi)=>g.color?`<button class="cdot" style="background:${g.color}" data-pg="${i}:${gi}" aria-label="${esc(g.label)}" aria-pressed="${p.g===gi}"></button>`:`<button class="gchip" data-pg="${i}:${gi}" aria-pressed="${p.g===gi}">${esc(g.label)}</button>`).join("")}</div>
+        <div class="ph"><span class="pgrade">${L&&L.color?`<i class="pdot">${gm(L.label,L.color)}</i>`:""}<b id="ph${i}">${esc(L?L.label:"?")}</b><span class="pnum">#${i+1}</span></span><div><button class="x" data-pdup="${i}" aria-label="Duplicate problem">⧉</button><button class="x" data-prm="${i}" aria-label="Remove problem">×</button></div></div>
+        <div class="gchips">${list.map((g,gi)=>g.color?`<button class="cdot gmk" data-pg="${i}:${gi}" aria-label="${esc(g.label)}" title="${esc(g.label)}" aria-pressed="${p.g===gi}">${gm(g.label,g.color)}</button>`:`<button class="gchip" data-pg="${i}:${gi}" aria-pressed="${p.g===gi}">${esc(g.label)}</button>`).join("")}</div>
         <div class="pctl"><div class="seg pres">${Object.entries(RESULTS).map(([k,t])=>`<button data-pr="${i}:${k}" aria-pressed="${p.res===k}">${t}</button>`).join("")}</div>
           <div class="stepper" role="group" aria-label="Attempts"><button type="button" data-pa="${i}:-1" aria-label="One less attempt"${(p.att||1)<=1?" disabled":""}>−</button><output id="pa${i}" aria-live="polite"><b>${p.att||1}</b><small>${(p.att||1)===1?"try":"tries"}</small></output><button type="button" data-pa="${i}:1" aria-label="One more attempt">+</button></div></div>
         <details class="pmore"${det?" open":""} data-pm="${i}"><summary>Name, project, style, holds${p.style||(p.holds&&p.holds.length)?`<span>${esc([p.style,...(p.holds||[])].filter(Boolean).join(", "))}</span>`:""}</summary>
@@ -2557,7 +2571,7 @@ function openForm(existing,preset){
       read();const v=$("f-place").value;
       if(v==="__new"){addingPlace=true;draw();setTimeout(()=>$("np-name")&&$("np-name").focus(),50);return;}
       d.placeId=v;placeTouched=true;makeDefault=!!(settings.defPlace&&v&&settings.defPlace[d.type]===v);
-      if(d.type==="climb"){const L=gradeList(d.gs,d.placeId).length;d.probs.forEach(p=>p.g=Math.min(p.g,L-1));}
+      if(d.type==="climb"){const pl=placeById(d.placeId);if(pl&&pl.circuit&&pl.circuit.length&&!d.probs.some(q=>q.res!=="attempt"&&d.gs!=="color")){d.gs="color";}const L=gradeList(d.gs,d.placeId).length;d.probs.forEach(p=>p.g=Math.min(p.g,L-1));}
       draw();
     };
     if($("f-defplace"))$("f-defplace").onclick=()=>{makeDefault=!makeDefault;$("f-defplace").setAttribute("aria-pressed",makeDefault);};
@@ -2602,7 +2616,7 @@ function openForm(existing,preset){
       const sh=$("sheet");
       const press=(sel,b,on)=>{if(on===undefined){sh.querySelectorAll(sel).forEach(z=>z.setAttribute("aria-pressed",z===b));}else b.setAttribute("aria-pressed",on);};
       sh.querySelectorAll("[data-gs]").forEach(b=>b.onclick=()=>{read();d.gs=b.dataset.gs;const L=gradeList(d.gs,d.placeId).length;d.probs.forEach(p=>p.g=Math.min(p.g,L-1));draw();});
-      sh.querySelectorAll("[data-pg]").forEach(b=>b.onclick=()=>{const [i,g]=b.dataset.pg.split(":").map(Number);d.probs[i].g=g;press(`[data-pg^="${i}:"]`,b);$("ph"+i).textContent=list[g].label;const dt=sh.querySelectorAll(".prob")[i].querySelector(".pdot");if(dt)dt.style.background=list[g].color||"";sum();saveDraft();});
+      sh.querySelectorAll("[data-pg]").forEach(b=>b.onclick=()=>{const [i,g]=b.dataset.pg.split(":").map(Number);d.probs[i].g=g;press(`[data-pg^="${i}:"]`,b);$("ph"+i).textContent=list[g].label;const dt=sh.querySelectorAll(".prob")[i].querySelector(".pdot");if(dt&&list[g].color)dt.innerHTML=gm(list[g].label,list[g].color);sum();saveDraft();});
       sh.querySelectorAll("[data-pr]").forEach(b=>b.onclick=()=>{const [i,r]=b.dataset.pr.split(":");d.probs[+i].res=r;press(`[data-pr^="${i}:"]`,b);if(r==="flash")setAtt(+i,1);sh.querySelectorAll(".prob")[+i].dataset.res=r;sum();saveDraft();});
       const setAtt=(i,n)=>{const p=d.probs[i];p.att=Math.max(1,n);const o=$("pa"+i);if(o){o.innerHTML=`<b>${p.att}</b><small>${p.att===1?"try":"tries"}</small>`;o.classList.remove("bump");void o.offsetWidth;o.classList.add("bump");}const m=sh.querySelector(`[data-pa="${i}:-1"]`);if(m)m.disabled=p.att<=1;};
       sh.querySelectorAll("[data-pa]").forEach(b=>b.onclick=()=>{const [i,dl]=b.dataset.pa.split(":").map(Number);const p=d.probs[i];setAtt(i,(p.att||1)+dl);if(p.att>1&&p.res==="flash"){p.res="send";press(`[data-pr^="${i}:"]`,sh.querySelector(`[data-pr="${i}:send"]`));sh.querySelectorAll(".prob")[i].dataset.res="send";}haptic("light");sum();saveDraft();});
@@ -2772,7 +2786,7 @@ function openDetail(s){
   const segRows=liveSegs().map(g=>{const t=segTime(g,s);if(!t)return null;const ef=segEfforts(g);const rank=ef.findIndex(x=>x.s.id===s.id)+1;return {g,t,rank,n:ef.length};}).filter(Boolean);
   if(segRows.length)html+=`<h4>Segments</h4><div class="tlist">${segRows.map(x=>`<button class="trow" data-seg2="${x.g.id}">${x.rank<=3?`<span class="mdot m${x.rank}">${x.rank}</span>`:`<span class="mdot" style="background:var(--chip);color:var(--muted)">${x.rank}</span>`}<div class="tx"><b>${esc(x.g.name)}</b><span>Ranked ${x.rank} of ${x.n} all-time</span></div><span class="tv">${fmtClock(x.t)}</span></button>`).join("")}</div>`;
   if(s.type==="lift"&&s.ex&&s.ex.length)html+=`<h4>Exercises</h4><table><thead><tr><th>Exercise</th><th>Sets × reps</th><th>Weight</th><th>Est. 1RM</th></tr></thead><tbody>${s.ex.map(e=>`<tr><td>${esc(e.name||"Exercise")}${e.mus&&e.mus.length?`<br><small style="color:var(--muted)">${esc(e.mus.join(", "))}</small>`:""}</td><td>${e.sets||"–"} × ${e.reps||"–"}</td><td>${e.w!=null?fmtWt(e.w):"–"}</td><td>${e1rm(e)?fmtWt(e1rm(e)):"–"}</td></tr>`).join("")}</tbody></table>`;
-  if(s.type==="climb"&&s.probs&&s.probs.length)html+=`<h4>Problems</h4><div class="tlist">${s.probs.map((p,i)=>`<div class="trow">${p.gc?`<span class="mdot" style="background:${p.gc};box-shadow:0 0 0 1px var(--line)"></span>`:`<span class="mdot" style="background:var(--climb);font-size:.8rem;width:auto;min-width:28px;padding:0 6px;border-radius:8px">${esc(p.gl)}</span>`}<div class="tx"><b>${p.proj?"🎯 ":""}${esc(p.name||(p.gc?p.gl+" problem":"Problem "+(i+1)))}</b><span>${[p.style,(p.holds||[]).join(", ")].filter(Boolean).map(esc).join(". ")||"No style noted"}</span></div><span class="tv" style="font-size:1rem;text-align:right">${RESULTS[p.res]}<br><small style="color:var(--muted);font-family:var(--font);font-weight:500;font-size:.75rem">${p.att||1} ${(p.att||1)===1?"try":"tries"}</small></span></div>`).join("")}</div>`;
+  if(s.type==="climb"&&s.probs&&s.probs.length)html+=`<h4>Problems</h4><div class="tlist">${s.probs.map((p,i)=>`<div class="trow">${p.gc?`<span class="mdot gmd">${gm(p.gl,p.gc)}</span>`:`<span class="mdot" style="background:var(--climb);font-size:.8rem;width:auto;min-width:28px;padding:0 6px;border-radius:8px">${esc(p.gl)}</span>`}<div class="tx"><b>${p.proj?"🎯 ":""}${esc(p.name||(p.gc?p.gl+" problem":"Problem "+(i+1)))}</b><span>${[p.style,(p.holds||[]).join(", ")].filter(Boolean).map(esc).join(". ")||"No style noted"}</span></div><span class="tv" style="font-size:1rem;text-align:right">${RESULTS[p.res]}<br><small style="color:var(--muted);font-family:var(--font);font-weight:500;font-size:.75rem">${p.att||1} ${(p.att||1)===1?"try":"tries"}</small></span></div>`).join("")}</div>`;
   if(s.notes)html+=`<div class="notes">${esc(s.notes)}</div>`;
   html+=`<h4>Feedback</h4><div class="fb">${feedback(s).map(t=>`<p>${esc(t)}</p>`).join("")}</div>`;
   html+=dykHTML(s);
@@ -2933,6 +2947,7 @@ async function drawShare(s,o){
       y+=32+vs+4;
     }
   }
+  if(o.sends&&s.type==="climb"){const G=sendGroups(s).slice(0,8);if(G.length){const cols=Math.min(4,G.length),rows=Math.ceil(G.length/cols),cellH=210;y+=60;ops.push({sends:1,y,G,cols,cellH});y+=rows*cellH;}}
   if(o.prs){const r=getC().by[s.id];const ent=r?[...r.medals,...(r.ymedals||[])].sort((a,b)=>a.rank-b.rank).slice(0,4):[];if(ent.length){y+=70;const h=prBlockHeight(ent.length);ops.push({prblock:1,y,h,ent});y+=h;}}
   const extra=[];
   if(o.level)extra.push("Level "+levelOf(getC().xp));
@@ -2959,6 +2974,13 @@ async function drawShare(s,o){
       for(let dx=P+lw+22;dx<W-P-vw-18;dx+=17){x.beginPath();x.arc(dx,off+op.y-12,3.2,0,Math.PI*2);x.fill();}
       x.restore();continue;
     }
+    if(op.sends){x.save();x.shadowColor="transparent";const cw=Math.min(240,maxW/op.cols);
+      op.G.forEach((g,i)=>{const row=Math.floor(i/op.cols),inRow=Math.min(op.cols,op.G.length-row*op.cols),col=i%op.cols;
+        const x0=left?P+cw*col+cw/2:W/2-(inRow*cw)/2+cw*col+cw/2,top=off+op.y+row*op.cellH;
+        if(g.gc)drawGM(x,g.gl,g.gc,x0,top+44,40);else{x.font=fnt(F.num,52);x.textAlign="center";x.fillStyle=ink;const tw=Math.max(80,x.measureText(g.gl).width+36);x.beginPath();if(x.roundRect)x.roundRect(x0-tw/2,top+8,tw,72,36);else x.rect(x0-tw/2,top+8,tw,72);x.globalAlpha=.16;x.fill();x.globalAlpha=1;x.fillText(g.gl,x0,top+62);}
+        x.textAlign="center";x.fillStyle=ink;x.font=fnt(F.num,64*F.k/1);x.fillText("×"+g.n,x0,top+150);
+        x.globalAlpha=.8;x.font=fnt(F.label,28);let lab=g.gc?g.gl:"";if(g.fl)lab=(lab?lab+" · ":"")+g.fl+" flash"+(g.fl===1?"":"ed");x.fillText(lab,x0,top+190,cw-10);x.globalAlpha=1;});
+      x.textAlign=left?"left":"center";x.restore();continue;}
     if(op.prblock){x.save();x.shadowColor="transparent";const bw=Math.min(maxW,880);drawPRBlock(x,left?P:(W-bw)/2,off+op.y,bw,op.ent,{style:"glass",radius:28});x.restore();continue;}
     if(op.route){
       const box=Math.min(maxW,op.h*1.25),ox=left?P:(W-box)/2;
@@ -2980,13 +3002,13 @@ async function drawShare(s,o){
 let shareDl=null;
 function openShare(s){
   const hasRoute=!!(s.track&&s.track.length>1);
-  const o={layout:"stack",size:"fit",color:"#FFFFFF",font:"sport",align:"center",bg:"none",title:true,date:true,place:false,route:hasRoute,trophies:false,level:false,shadow:false,outline:false,rcolor:"same",stats:defaultStats(s)};
+  const o={layout:"stack",size:"fit",color:"#FFFFFF",font:"sport",align:"center",bg:"none",title:true,date:true,place:false,route:hasRoute,trophies:false,level:false,shadow:false,outline:false,rcolor:"same",sends:s.type==="climb"&&sendGroups(s).length>0,stats:defaultStats(s)};
   let blob=null,busy=false,again=false;
   const swatches=[...new Set(["#FFFFFF","#121212",STRAVA,TYPE_HEX[s.type],"#FFD23F","#FF6FB5","#7CF2C0"])];
   const swName=h=>h===STRAVA?"Strava orange":h==="#FFFFFF"?"White":h==="#121212"?"Black":"Color "+h;
   const segH=(id,key,opts)=>`<div class="seg" id="${id}">${opts.map(([v,t])=>`<button data-v="${v}" aria-pressed="${o[key]===v}">${t}</button>`).join("")}</div>`;
   const rr=getC().by[s.id],hasPR=!!(rr&&(rr.medals.length||(rr.ymedals||[]).length));
-  const toggles=[["title","Title"],["date","Date and time"],...(placeName(s)?[["place","Place"]]:[]),...(s.notes?[["notes","Notes"]]:[]),...(hasPR?[["prs","PR card"]]:[]),...(hasRoute?[["route","Route"]]:[]),["trophies","Medals"],["level","Level"],["shadow","Shadow"],["outline","Outline"]];
+  const toggles=[["title","Title"],["date","Date and time"],...(placeName(s)?[["place","Place"]]:[]),...(s.notes?[["notes","Notes"]]:[]),...(hasPR?[["prs","PR card"]]:[]),...(s.type==="climb"&&sendGroups(s).length?[["sends","Sends by grade"]]:[]),...(hasRoute?[["route","Route"]]:[]),["trophies","Medals"],["level","Level"],["shadow","Shadow"],["outline","Outline"]];
   openSheet(`<h3>Share as image</h3><p class="sub">Transparent PNG unless you pick a background. Put it over a photo in Instagram Stories or any photo editor.</p>
     <div class="preview" id="pv"><span style="color:#fff">Drawing…</span></div>
     <div class="row"><button class="btn primary" id="ssave">Save image</button><button class="btn" id="scopy">Copy image</button></div>
@@ -3197,7 +3219,7 @@ function renderPlaces(){
   for(const {p,ss,last} of withStats){
     const k=PLACE_KINDS[p.kind]||PLACE_KINDS.other;
     html+=`<button class="plc" data-place="${p.id}"><div class="pic">${k[1]}</div><div style="min-width:0"><b>${esc(p.name)}</b><span>${k[0]}${last?`, last visit ${fmtDate(last.date,{month:"short",day:"numeric"})}`:""}</span>
-      ${p.circuit&&p.circuit.length?`<div class="cdots">${p.circuit.map(c=>`<i style="background:${c.color}"></i>`).join("")}</div>`:""}</div>
+      ${p.circuit&&p.circuit.length?`<div class="cdots">${p.circuit.map(c=>gm(c.name,c.color,"gm-xs")).join("")}</div>`:""}</div>
       <div class="cn">${ss.length}<small>${ss.length===1?"visit":"visits"}</small></div></button>`;
   }
   const untagged=live().filter(s=>!placeById(s.placeId)).length;
@@ -3222,7 +3244,7 @@ function openPlace(p){
       grp.forEach(s=>sends(s).forEach(q=>{if(counts[q.g]!=null)counts[q.g]++;}));
       const max=Math.max(...counts);if(!max)continue;
       const rows=list.map((g,i)=>({g,n:counts[i]})).filter(x=>x.n).reverse();
-      html+=`<div class="chart" style="background:var(--bg)"><div style="font-size:.82rem;color:var(--muted);margin:0 0 8px 4px">${esc(sysName(smp))}</div><div class="pyr">${rows.map(r=>`<div><span style="font-weight:700">${r.g.color?`<span class="mdot" style="width:16px;height:16px;background:${r.g.color};box-shadow:0 0 0 1px var(--line);vertical-align:-3px"></span> `:""}${esc(r.g.label)}</span><i style="width:${r.n/max*100}%"></i><em>${r.n}</em></div>`).join("")}</div></div>`;
+      html+=`<div class="chart" style="background:var(--bg)"><div style="font-size:.82rem;color:var(--muted);margin:0 0 8px 4px">${esc(sysName(smp))}</div><div class="pyr">${rows.map(r=>`<div><span style="font-weight:700">${r.g.color?`${gm(r.g.label,r.g.color,"gm-inl")} `:""}${esc(r.g.label)}</span><i style="width:${r.n/max*100}%"></i><em>${r.n}</em></div>`).join("")}</div></div>`;
     }
   }
   const runs=ss.filter(s=>s.type==="run"&&s.dist>=1&&s.dur);
@@ -3567,7 +3589,7 @@ function openPRShare(s){
 function renderProjects(){
   const P=projects().filter(p=>!p.archived),withS=P.map(p=>({p,st:projStats(p)}));
   const act=withS.filter(x=>!x.st.sent),done=withS.filter(x=>x.st.sent).sort((a,b)=>b.st.sent.s.date.localeCompare(a.st.sent.s.date));
-  const chip=p=>p.gc?`<span class="mdot" style="background:${p.gc};box-shadow:0 0 0 1px var(--line)"></span>`:`<span class="mdot" style="background:var(--climb);font-size:.8rem;width:auto;min-width:32px;padding:0 6px;border-radius:8px">${esc(p.gl)}</span>`;
+  const chip=p=>p.gc?`<span class="mdot gmd">${gm(p.gl,p.gc)}</span>`:`<span class="mdot" style="background:var(--climb);font-size:.8rem;width:auto;min-width:32px;padding:0 6px;border-radius:8px">${esc(p.gl)}</span>`;
   let html=`<div class="top"><h1>Projects</h1><div class="headbtns"><button class="chip" data-go="places">Places</button><button class="chip" data-newproj="">+ New</button></div></div>`;
   if(!P.length)return html+`<div class="empty"><strong>No projects yet</strong>A project is a problem you're working on across sessions. Create one here, or pick "Save this as a new project" on any problem when logging a bouldering session. Every attempt adds up, and sending it earns bonus XP.</div>`;
   html+=`<h2 class="sec" style="--c:var(--climb)"><i></i>Working on</h2>`;
@@ -3602,7 +3624,7 @@ function openProjectEditor(){
       <label for="np2-name">Name</label><input id="np2-name" type="text" maxlength="50" value="${esc(d.name)}" placeholder="e.g. The pink overhang in the cave">
       <label for="np2-place">Place</label><select id="np2-place"><option value="">No place</option>${cg.map(p=>`<option value="${p.id}"${d.placeId===p.id?" selected":""}>${esc(p.name)}</option>`).join("")}</select>
       <label>Grade system</label><div class="seg" id="np2-gs">${Object.entries(GSYS).map(([k,t])=>`<button data-gs="${k}" aria-pressed="${d.gs===k}">${t}</button>`).join("")}</div>
-      <label>Grade</label><div class="gchips">${L.map((g,gi)=>g.color?`<button class="cdot" style="background:${g.color}" data-g="${gi}" aria-label="${esc(g.label)}" aria-pressed="${d.g===gi}"></button>`:`<button class="gchip" data-g="${gi}" aria-pressed="${d.g===gi}">${esc(g.label)}</button>`).join("")}</div>
+      <label>Grade</label><div class="gchips">${L.map((g,gi)=>g.color?`<button class="cdot gmk" data-g="${gi}" aria-label="${esc(g.label)}" title="${esc(g.label)}" aria-pressed="${d.g===gi}">${gm(g.label,g.color)}</button>`:`<button class="gchip" data-g="${gi}" aria-pressed="${d.g===gi}">${esc(g.label)}</button>`).join("")}</div>
       <label for="np2-notes">Beta and notes</label><textarea id="np2-notes">${esc(d.notes)}</textarea>
       <div class="err" id="np2-err"></div>
       <div class="row"><button class="btn" id="np2-cancel">Cancel</button><button class="btn primary" id="np2-save">Create project</button></div>`);
@@ -3810,7 +3832,12 @@ function genLift(o){
   let splits=SPLITS.map(sp=>{const sc=sp.m.reduce((a,m)=>a+Math.min(mh[m],96),0)/sp.m.length+(g&&guessMuscles(g.ex).some(m=>sp.m.includes(m))?18:0);return {...sp,sc};});
   if(o.feel==="sore")splits=splits.filter(x=>x.n==="Full body");
   splits.sort((a,b)=>b.sc-a.sc);
-  const sp=splits.length>1&&splits[1].sc>splits[0].sc-8&&o.seed%2?splits[1]:splits[0];
+  let sp=splits.length>1&&splits[1].sc>splits[0].sc-8&&o.seed%2?splits[1]:splits[0];
+  const tg=Array.isArray(o.target)&&o.target.length?o.target:o.target==="any"?"any":null;
+  if(tg==="any"){sp=SPLITS.find(x=>x.n==="Full body");why.push("Full body, as you asked: one move for each main muscle group.");}
+  else if(tg){const m=[...new Set(tg.flatMap(t=>t==="Arms"?["Biceps","Triceps"]:[t]))];sp={n:tg.join(" + ")+" day",m};
+    const sore=m.filter(x=>mh[x]<36);if(sore.length)why.push(`Heads up: ${sore.join(", ").toLowerCase()} ${sore.length===1?"was":"were"} trained ${agoText(Math.min(...sore.map(x=>mh[x])))}. Keep a rep or two in reserve on those.`);else why.push(`Built around what you picked: ${tg.join(", ").toLowerCase()}.`);}
+  else why.push(`Muscles picked from your recent training: ${sp.m.join(", ").toLowerCase()} have had the most rest.`);
   const fresh=sp.m.filter(m=>mh[m]>=48),tired=MUSCLES.filter(m=>m!=="Full body"&&mh[m]<36&&!sp.m.includes(m));
   if(fresh.length)why.push(`${fresh.join(", ")} ${fresh.length===1?"is":"are"} fresh (${agoText(Math.min(...fresh.map(m=>mh[m])))}).`);
   if(tired.length)why.push(`${tired.slice(0,3).join(", ")} still recovering, so ${tired.length===1?"it's":"they're"} left out today.`);
@@ -4028,7 +4055,7 @@ function planHTML(pl){
 let planPrefs=null;
 function openPlanner(type){
   const lt=LT();
-  const o=planPrefs?{...planPrefs}:{type:"lift",mins:lt.mins||60,effort:"moderate",feel:FEEL_DEF(),focus:"auto",equip:"gym",seed:0};
+  const o=planPrefs?{...planPrefs}:{type:"lift",mins:lt.mins||60,effort:"moderate",feel:FEEL_DEF(),focus:"auto",equip:"gym",target:"auto",seed:0};
   if(type)o.type=type;o.feel=planPrefs&&planPrefs.feelSet?o.feel:FEEL_DEF();
   let plan=null;
   const FOCUS={lift:[["auto","Auto"],["strength","Strength"],["muscle","Muscle"],["endurance","Endurance"],["power","Power"]]};
@@ -4042,12 +4069,15 @@ function openPlanner(type){
       <label>Effort goal</label><div class="seg" data-po="effort">${[["easy","Easy"],["moderate","Moderate"],["hard","Hard"],["max","All out"]].map(([v,n])=>`<button data-v="${v}" aria-pressed="${o.effort===v}">${n}</button>`).join("")}</div>
       <label>How do you feel?</label><div class="seg" data-po="feel">${[["fresh","Fresh"],["ok","OK"],["tired","Tired"],["sore","Sore"]].map(([v,n])=>`<button data-v="${v}" aria-pressed="${o.feel===v}">${n}</button>`).join("")}</div>
       <p class="hint">${rec.h>0?`Based on your logs, you have about ${Math.round(rec.h)} hours of recovery left from ${esc(titleOf(rec.s))}.`:"Your logs say you're recovered."}</p>
-      ${o.type==="lift"?`<label>Focus</label><div class="seg" data-po="focus">${FOCUS.lift.map(([v,n])=>`<button data-v="${v}" aria-pressed="${o.focus===v}">${n}</button>`).join("")}</div>
+      ${o.type==="lift"?`<label>Target muscles</label><div class="tchips" id="pl-tg" style="--c:#F5F5F7;--ct:#000">${[["auto","Auto (recent training)"],["any","Any / full body"]].map(([v,n])=>`<button class="tchip" data-tg2="${v}" aria-pressed="${(o.target||"auto")===v}">${n}</button>`).join("")}${["Chest","Back","Shoulders","Arms","Legs","Glutes","Core"].map(m=>`<button class="tchip" data-tg2="${m}" aria-pressed="${Array.isArray(o.target)&&o.target.includes(m)}">${m}</button>`).join("")}</div>
+      <p class="hint" style="margin-top:6px">${Array.isArray(o.target)&&o.target.length?`Session built around ${o.target.join(", ").toLowerCase()}.`:o.target==="any"?"A full-body session.":"Picks whatever has had the most rest since your recent lifts, climbs, and runs."}</p>
+      <label>Focus</label><div class="seg" data-po="focus">${FOCUS.lift.map(([v,n])=>`<button data-v="${v}" aria-pressed="${o.focus===v}">${n}</button>`).join("")}</div>
       <label>Equipment</label><div class="seg" data-po="equip">${[["gym","Full gym"],["db","Dumbbells"],["bw","Bodyweight"]].map(([v,n])=>`<button data-v="${v}" aria-pressed="${o.equip===v}">${n}</button>`).join("")}</div>`:""}
       ${g?`<p class="hint">Working toward: ${esc(ltTitle(g))}. Suggestions lean toward this goal.</p>`:longGoals().length?"":`<p class="hint">Set a long-term goal in Coach for more targeted workouts.</p>`}
       <div class="row"><button class="btn" id="pl-cancel">Cancel</button><button class="btn primary" id="pl-build">${plan?"Rebuild":"Build my workout"}</button></div>
       <div id="pl-out">${plan?planHTML(plan)+`<div class="row"><button class="btn" id="pl-again">Try another</button><button class="btn go" id="pl-start">Start this workout</button></div><div class="row" style="margin-top:8px"><button class="btn" id="pl-save">Save as routine</button></div>`:""}</div>`);
     document.querySelectorAll("[data-po]").forEach(el=>el.querySelectorAll("button").forEach(b=>b.onclick=()=>{const k=el.dataset.po;o[k]=k==="mins"?+b.dataset.v:b.dataset.v;if(k==="feel")o.feelSet=true;el.querySelectorAll("button").forEach(z=>z.setAttribute("aria-pressed",z===b));if(k==="type"){plan=null;draw();}}));
+    document.querySelectorAll("[data-tg2]").forEach(b=>b.onclick=()=>{const v=b.dataset.tg2;if(v==="auto"||v==="any")o.target=v;else{let a=Array.isArray(o.target)?[...o.target]:[];const i=a.indexOf(v);if(i>=0)a.splice(i,1);else a.push(v);o.target=a.length?a:"auto";}haptic("light");const t=$("sheet").scrollTop;draw();$("sheet").scrollTop=t;});
     $("pl-custom").onchange=()=>{const h=num($("pl-custom").value);if(h>0){o.mins=Math.round(h*60);document.querySelectorAll('[data-po="mins"] button').forEach(z=>z.setAttribute("aria-pressed","false"));}};
     $("pl-cancel").onclick=closeSheet;
     $("pl-build").onclick=()=>{plan=buildPlan(o);planPrefs={...o};const top=$("sheet").scrollTop;draw();setTimeout(()=>{const el=$("pl-out");if(el)el.scrollIntoView({behavior:"smooth",block:"start"});},60);};
@@ -5120,7 +5150,7 @@ function openTargetBuilder(pre){
       <div class="grid2" style="margin-top:14px"><div><label>Weight (${wU()})</label><input data-ti="w" type="number" inputmode="decimal" step="any" value="${esc(d.w)}"></div><div><label>Reps</label><input data-ti="reps" type="number" inputmode="numeric" min="1" value="${esc(d.reps)}"></div></div>`;
     if(d.type==="climb"){const L=gradeList(d.gs,d.placeId);if(d.g>=L.length)d.g=L.length-1;
       h+=`<label>Grade system</label>${seg("gs",Object.entries(GSYS))}${d.gs==="color"?`<label>Gym</label><select data-ts="placeId"><option value="">Default circuit</option>${places().map(p=>`<option value="${p.id}"${d.placeId===p.id?" selected":""}>${esc(p.name)}</option>`).join("")}</select>`:""}
-        <label>Grade to send</label><div class="gchips">${L.map((g,i)=>g.color?`<button class="cdot" style="background:${g.color}" data-tg="${i}" aria-pressed="${d.g===i}" aria-label="${esc(g.label)}"></button>`:`<button class="gchip" data-tg="${i}" aria-pressed="${d.g===i}">${esc(g.label)}</button>`).join("")}</div>`;}
+        <label>Grade to send</label><div class="gchips">${L.map((g,i)=>g.color?`<button class="cdot gmk" data-tg="${i}" aria-pressed="${d.g===i}" aria-label="${esc(g.label)}" title="${esc(g.label)}">${gm(g.label,g.color)}</button>`:`<button class="gchip" data-tg="${i}" aria-pressed="${d.g===i}">${esc(g.label)}</button>`).join("")}</div>`;}
     if(d.type==="hang")h+=`<label>Grip</label><select data-ts="grip">${GRIPS.map(g=>`<option${d.grip===g?" selected":""}>${g}</option>`).join("")}</select>
       <div class="grid3" style="margin-top:14px"><div><label>Edge (mm)</label><input data-ti="edge" type="number" inputmode="numeric" value="${esc(d.edge)}"></div><div><label>Added (${wU()})</label><input data-ti="add" type="number" inputmode="decimal" step="any" value="${esc(d.add)}"></div><div><label>Seconds</label><input data-ti="hang" type="number" inputmode="numeric" value="${esc(d.hang)}"></div></div>`;
     const t=build(),ok=typeof t==="object";
@@ -5146,6 +5176,55 @@ function openTargetBuilder(pre){
   draw();
 }
 
+/* ================= climbing grade marks: colour holds, poker chips, bars, pies ================= */
+const HOLD={green:"#2DB45A",red:"#E5383B",black:"#17171A",blue:"#2F7BF5",pink:"#FF5FA2",teal:"#14B8A6",purple:"#8B5CF6",yellow:"#F5C531",orange:"#FF8A1F",indigo:"#4F46E5",white:"#F2F2F2"};
+const RAMP8=["#5BD27E","#A6D94A","#E8CF3A","#F7A93B","#F57F31","#EC5537","#D93556","#A62A6E"];
+const RAMP6=["#5BD27E","#C7D93F","#F5B93A","#F57F31","#E5453B","#B32A62"];
+const GYM_SEED=[
+ {name:"Bouldering Hive Circuit",circuit:["Green","Red","Black","Blue","Pink","Teal","Purple"].map(n=>({name:n,color:HOLD[n.toLowerCase()]}))},
+ {name:"Bouldering Hive Greenhills",circuit:["Green","Red","Black","Blue","Pink","Teal","Purple"].map(n=>({name:n,color:HOLD[n.toLowerCase()]}))},
+ {name:"Boulder24",circuit:["Yellow","Orange","Green","Blue","Purple","Black"].map(n=>({name:n,color:HOLD[n.toLowerCase()]}))},
+ {name:"Boulder World",circuit:RAMP8.map((c,i)=>({name:`${i+1} Bar`,color:c}))},
+ {name:"Flowstate",circuit:["Red","Orange","Yellow","Green","Blue","Indigo"].map(n=>({name:`${n} chip`,color:HOLD[n.toLowerCase()]}))},
+ {name:"Climb Central Manila",circuit:RAMP6.map((c,i)=>({name:`${i+1} Pie`,color:c}))}
+];
+function seedGyms(){
+  if(viewer)return false;const ps=places().slice();let ch=false;
+  for(const g of GYM_SEED){const ex=ps.find(p=>p.name.trim().toLowerCase()===g.name.toLowerCase());
+    if(!ex){ps.push({id:uid(),name:g.name,kind:"climbgym",circuit:JSON.parse(JSON.stringify(g.circuit))});ch=true;}
+    else if(!(settings.gymsSeeded>=1)&&(!ex.circuit||!ex.circuit.length)){ex.circuit=JSON.parse(JSON.stringify(g.circuit));ex.kind=ex.kind||"climbgym";ch=true;}}
+  if(ch||!(settings.gymsSeeded>=1)){settings.places=ps;settings.gymsSeeded=1;settings.updatedAt=Date.now();saveLocal();try{pushSettings();}catch(e){}}
+  return ch;
+}
+/* the mark itself: one drawing per grading style, used everywhere a grade is shown */
+function gradeKind(label){const l=String(label||"");let m;
+  if((m=l.match(/^(\d+)\s*bars?$/i)))return {k:"bar",n:+m[1]};
+  if((m=l.match(/^(\d+)\s*pies?$/i)))return {k:"pie",n:+m[1],of:6};
+  if(/\bchip$/i.test(l))return {k:"chip"};
+  return {k:"dot"};}
+function gm(label,color,cls){
+  const c=color||"#8E8E93",g=gradeKind(label),dark=/^#(1|2)/.test(c)&&c.length===7&&parseInt(c.slice(1,3),16)<0x40;
+  const o=`<svg class="gm${cls?" "+cls:""}" viewBox="0 0 24 24" aria-hidden="true">`;
+  if(g.k==="bar"){const n=Math.min(8,g.n),w=1.7,gap=1.05,tot=n*w+(n-1)*gap,x0=12-tot/2;
+    return o+`<rect x="1" y="1" width="22" height="22" rx="7" fill="${c}"/>${[...Array(n)].map((_,i)=>`<rect x="${(x0+i*(w+gap)).toFixed(2)}" y="6.5" width="${w}" height="11" rx=".85" fill="#fff" fill-opacity=".95"/>`).join("")}</svg>`;}
+  if(g.k==="pie"){const of=g.of||6,n=Math.min(of,g.n),a=n/of*Math.PI*2,x=12+9*Math.sin(a),y=12-9*Math.cos(a);
+    const wedge=n>=of?`<circle cx="12" cy="12" r="9" fill="${c}"/>`:`<path d="M12 12L12 3A9 9 0 ${a>Math.PI?1:0} 1 ${x.toFixed(2)} ${y.toFixed(2)}Z" fill="${c}"/>`;
+    return o+`<circle cx="12" cy="12" r="10.6" fill="#1C1C1E"/><circle cx="12" cy="12" r="9" fill="none" stroke="${c}" stroke-opacity=".35" stroke-width="1.2"/>${wedge}${[...Array(of)].map((_,i)=>{const t=i/of*Math.PI*2;return `<line x1="12" y1="12" x2="${(12+9*Math.sin(t)).toFixed(2)}" y2="${(12-9*Math.cos(t)).toFixed(2)}" stroke="#1C1C1E" stroke-width=".9"/>`;}).join("")}</svg>`;}
+  if(g.k==="chip")return o+`<circle cx="12" cy="12" r="11" fill="${c}"/><circle cx="12" cy="12" r="8.4" fill="none" stroke="#fff" stroke-width="2.4" stroke-dasharray="3.3 3.3" stroke-opacity=".9"/><circle cx="12" cy="12" r="5.2" fill="${c}" stroke="#fff" stroke-opacity=".55" stroke-width=".8"/></svg>`;
+  return o+`<circle cx="12" cy="12" r="10.5" fill="${c}"${dark?` stroke="#5A5A60" stroke-width="1.2"`:""}/><circle cx="9" cy="8.5" r="3.2" fill="#fff" fill-opacity=".18"/></svg>`;
+}
+/* the same marks on canvas, for share images */
+function drawGM(x,label,color,cx,cy,r){
+  const c=color||"#8E8E93",g=gradeKind(label),s=r/12;x.save();x.translate(cx-12*s,cy-12*s);x.scale(s,s);
+  const rr=(X,Y,W,H,R)=>{x.beginPath();x.moveTo(X+R,Y);x.arcTo(X+W,Y,X+W,Y+H,R);x.arcTo(X+W,Y+H,X,Y+H,R);x.arcTo(X,Y+H,X,Y,R);x.arcTo(X,Y,X+W,Y,R);x.closePath();};
+  if(g.k==="bar"){rr(1,1,22,22,7);x.fillStyle=c;x.fill();const n=Math.min(8,g.n),w=1.7,gap=1.05,tot=n*w+(n-1)*gap,x0=12-tot/2;x.fillStyle="rgba(255,255,255,.95)";for(let i=0;i<n;i++){rr(x0+i*(w+gap),6.5,w,11,.85);x.fill();}}
+  else if(g.k==="pie"){const of=g.of||6,n=Math.min(of,g.n);x.beginPath();x.arc(12,12,10.6,0,Math.PI*2);x.fillStyle="#1C1C1E";x.fill();x.beginPath();x.moveTo(12,12);x.arc(12,12,9,-Math.PI/2,-Math.PI/2+n/of*Math.PI*2);x.closePath();x.fillStyle=c;x.fill();x.strokeStyle="#1C1C1E";x.lineWidth=.9;for(let i=0;i<of;i++){const t=i/of*Math.PI*2;x.beginPath();x.moveTo(12,12);x.lineTo(12+9*Math.sin(t),12-9*Math.cos(t));x.stroke();}x.beginPath();x.arc(12,12,9,0,Math.PI*2);x.strokeStyle=c;x.globalAlpha=.4;x.lineWidth=1.2;x.stroke();x.globalAlpha=1;}
+  else if(g.k==="chip"){x.beginPath();x.arc(12,12,11,0,Math.PI*2);x.fillStyle=c;x.fill();x.setLineDash([3.3,3.3]);x.beginPath();x.arc(12,12,8.4,0,Math.PI*2);x.strokeStyle="rgba(255,255,255,.9)";x.lineWidth=2.4;x.stroke();x.setLineDash([]);x.beginPath();x.arc(12,12,5.2,0,Math.PI*2);x.fillStyle=c;x.fill();x.strokeStyle="rgba(255,255,255,.55)";x.lineWidth=.8;x.stroke();}
+  else{x.beginPath();x.arc(12,12,10.5,0,Math.PI*2);x.fillStyle=c;x.fill();if(parseInt(c.slice(1,3),16)<0x40&&parseInt(c.slice(3,5),16)<0x40){x.strokeStyle="#5A5A60";x.lineWidth=1.2;x.stroke();}}
+  x.restore();
+}
+/* sends grouped by grade, hardest first, for share images */
+function sendGroups(s){const m=new Map();for(const p of (s.probs||[]).filter(p=>p.res!=="attempt")){const k=p.g+"|"+p.gl;const e=m.get(k)||{g:p.g,gl:p.gl,gc:p.gc,n:0,fl:0};e.n++;if(p.res==="flash")e.fl++;m.set(k,e);}return [...m.values()].sort((a,b)=>b.g-a.g);}
 /* ================= exercise library (grouped by muscle) ================= */
 const EQ={bb:"Barbell",db:"Dumbbell",mc:"Machine",cb:"Cable",bw:"Bodyweight",kb:"Kettlebell"};
 const EXLIB_GROUPS=["Chest","Back","Shoulders","Biceps","Triceps","Legs","Glutes","Core","Calves","Full body"];
@@ -5375,7 +5454,7 @@ function hangCfg(h,name){const R=Math.max(1,h.reps||1);return {key:"repeaters",n
 let tt;function toast(m){const t=$("toast");t.textContent=m;t.classList.add("show");clearTimeout(tt);tt=setTimeout(()=>t.classList.remove("show"),2600)}
 
 symObs.observe(document.body,{childList:true,subtree:true,characterData:true});symbolize(document.body);
-loadLocal();loadActive();render();
+loadLocal();loadActive();seedGyms();render();
 let onboardChecked=false;
 function maybePrompt(){
   if(onboardChecked||viewer)return;onboardChecked=true;
@@ -5385,7 +5464,7 @@ function maybePrompt(){
   if(lt.lastCheck&&Date.now()-lt.lastCheck>56*864e5){lt.lastCheck=Date.now();settings.updatedAt=Date.now();saveLocal();pushSettings();openWizard("checkin");return;}
   checkLongGoals();checkRanks();
 }
-initRemote().finally(()=>{backfillEfforts();setTimeout(maybePrompt,400);});
+initRemote().finally(()=>{if(seedGyms())render();backfillEfforts();setTimeout(maybePrompt,400);});
 setTimeout(maybePrompt,4000);
 })();
 </script>
