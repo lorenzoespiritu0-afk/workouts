@@ -1,5 +1,5 @@
 // Offline support: the app shell is cached, so it opens with no connection.
-const VERSION = "workouts-v22";
+const VERSION = "workouts-v23";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-180.png"];
 
 self.addEventListener("install", (e) => {
