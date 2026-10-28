@@ -721,7 +721,10 @@ function symbolize(root){
   root.querySelectorAll&&root.querySelectorAll("option").forEach(o=>{EMO_RE.lastIndex=0;if(EMO_RE.test(o.textContent)){EMO_RE.lastIndex=0;o.textContent=o.textContent.replace(EMO_RE,"").trim();}});
 }
 function symText(n){const p=n.parentNode;if(!p||SKIP_TAGS[p.nodeName]||p.nodeName==="OPTION"||(p.closest&&p.closest("svg")))return;const t=n.nodeValue;EMO_RE.lastIndex=0;if(!EMO_RE.test(t))return;EMO_RE.lastIndex=0;
-  const span=document.createElement("span");span.className="symw";span.innerHTML=t.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])).replace(EMO_RE,m=>symHTML(m));
+  if(p.closest&&p.closest(".leaflet-container"))return;
+  const out=t.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])).replace(EMO_RE,m=>symHTML(m));EMO_RE.lastIndex=0;
+  if(out.indexOf("<svg")<0)return; /* only characters we leave as text (©, ®, ™): nothing to swap, and swapping would loop forever */
+  const span=document.createElement("span");span.className="symw";span.innerHTML=out;
   const frag=document.createDocumentFragment();while(span.firstChild)frag.appendChild(span.firstChild);p.replaceChild(frag,n);}
 const symObs=new MutationObserver(ms=>{for(const m of ms){if(m.type==="characterData")symText(m.target);else m.addedNodes.forEach(symbolize);}});
 /* haptics: Vibration API on Android; on iOS 18+ a hidden switch toggled inside the tap gives a system tick */
