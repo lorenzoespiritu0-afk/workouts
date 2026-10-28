@@ -1,5 +1,5 @@
 // Offline support: the app shell is cached, so it opens with no connection.
-const VERSION = "workouts-v24";
+const VERSION = "workouts-v25";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-180.png"];
 
 self.addEventListener("install", (e) => {
@@ -21,7 +21,7 @@ self.addEventListener("fetch", (e) => {
   // The app itself: try the network first so updates arrive, fall back to the cache offline.
   if (url.origin === location.origin) {
     e.respondWith(
-      fetch(req).then((res) => {
+      fetch(req, { cache: "no-cache" }).then((res) => {
         const copy = res.clone();
         caches.open(VERSION).then((c) => c.put(req, copy));
         return res;
