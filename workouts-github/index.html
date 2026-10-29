@@ -3401,6 +3401,7 @@ async function drawShare(s,o){
   else{H=Math.ceil(contentH+2*P);off=P;}
   c.width=W;c.height=Math.ceil(H);
   if(o.bg==="photo"){const u=await photoURL(s.id);if(u){const img=await new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.onerror=()=>r(null);i.src=u;});if(img){const sc=Math.max(W/img.width,c.height/img.height),iw=img.width*sc,ih=img.height*sc;x.drawImage(img,(W-iw)/2,(c.height-ih)/2,iw,ih);x.fillStyle="rgba(0,0,0,.35)";x.fillRect(0,0,W,c.height);}}}
+  else if(o.bg==="glass"){const gx=Math.round(P*.42),gy=Math.max(0,off-Math.round(P*.6)),gw=W-2*gx,gh=Math.min(c.height-gy,contentH+Math.round(P*1.2));x.save();x.fillStyle="rgba(0,0,0,.58)";x.beginPath();if(x.roundRect)x.roundRect(gx,gy,gw,gh,44);else x.rect(gx,gy,gw,gh);x.fill();x.restore();}
   else if(o.bg!=="none"){x.fillStyle=o.bg==="dark"?"#14171F":o.bg==="light"?"#F4F5F7":TYPE_HEX[s.type];x.fillRect(0,0,W,c.height);}
   x.textAlign=left?"left":"center";x.textBaseline="alphabetic";x.fillStyle=ink;x.strokeStyle=ink;x.lineJoin="round";
   const lum=h=>{const n=parseInt(h.slice(1),16);return ((n>>16)*0.299+((n>>8)&255)*0.587+(n&255)*0.114)/255;};
@@ -3468,7 +3469,7 @@ function openShare(s){
       ${hasRoute||(s.type==="lift"&&s.ex&&s.ex.length)?`<div class="plabel">${hasRoute?"Route color":"Highlight color"}</div><div class="swrow" id="o-rcolor"><button class="sw sw-same" data-v="same" aria-label="Same as text" title="Same as text" aria-pressed="${o.rcolor==="same"}">=</button>${swatches.map(h=>`<button class="sw" style="--sw:${h}" data-v="${h}" aria-label="${swName(h)}" title="${swName(h)}" aria-pressed="${o.rcolor===h}"></button>`).join("")}</div>`:""}
       <div class="plabel">Font</div>${segH("o-font","font",[["sport","Sport"],["clean","Clean"],["classic","Classic"],["mono","Mono"]])}
       <div class="plabel">Alignment</div>${segH("o-align","align",[["center","Center"],["left","Left"]])}
-      <div class="plabel">Background</div>${segH("o-bg","bg",[["none","None"],["dark","Dark"],["light","Light"],["color","Color"],...(s.photo?[["photo","Photo"]]:[])])}
+      <div class="plabel">Background</div>${segH("o-bg","bg",[["none","None"],["glass","Glass"],["dark","Dark"],["light","Light"],["color","Color"],...(s.photo?[["photo","Photo"]]:[])])}
     </div>
     <div class="row" style="margin-top:16px"><button class="btn" id="sback">Back</button></div>`);
   const redraw=async()=>{
