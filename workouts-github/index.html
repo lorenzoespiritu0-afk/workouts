@@ -996,6 +996,10 @@ const GSYS={v:"V scale",font:"Font",color:"Color circuit",custom:"Custom"};
 const STYLES=["Slab","Vertical","Overhang","Roof","Arête","Corner","Traverse","Comp style"];
 const HOLDS=["Jugs","Crimps","Slopers","Pinches","Pockets","Edges","Underclings","Volumes","Jibs"];
 const RESULTS={flash:"Flash",send:"Send",attempt:"Attempt"};
+const TERRAIN={flat:["Flat","Track, road or flat park"],rolling:["Rolling","Gentle ups and downs"],hilly:["Hilly","Regular climbs of 5 to 10%"],steep:["Steep","Long or sharp grades over 10%"]};
+const TERRAIN_SLOW={flat:1,rolling:1.06,hilly:1.16,steep:1.32};
+const runPlaces=()=>places().filter(p=>!["climbgym","gym","pool"].includes(p.kind));
+const CLIMB_KINDS=["climbgym","crag","other"];
 const PLACE_KINDS={climbgym:["Climbing gym","🧗"],mountain:["Mountain","⛰️"],gym:["Gym","🏋️"],crag:["Crag or boulders","🪨"],track:["Track","🏟️"],park:["Park","🌳"],trail:["Trail","🥾"],road:["Road route","🛣️"],pool:["Pool","🏊"],home:["Home","🏠"],other:["Other","📍"]};
 const places=()=>settings.places||[];
 const placeById=id=>id?places().find(p=>p.id===id):null;
@@ -1794,7 +1798,8 @@ function effortOf(s){
   if(s.rpe)return {v:s.rpe,est:false};
   const mh=maxHR(),rh=bio().rhr;
   if(s.hr&&mh&&rh&&mh>rh){const p=(s.hr-rh)/(mh-rh);return {v:Math.max(1,Math.min(10,Math.round(p*10))),est:true};}
-  return {v:{lift:6,climb:6,hang:7,run:5,ride:5,walk:3,hike:5,other:5}[s.type]||5,est:true};
+  const pt=s.placeId&&typeof placeById==="function"&&placeById(s.placeId);
+  return {v:({lift:6,climb:6,hang:7,run:5,ride:5,walk:3,hike:5,other:5}[s.type]||5)+(pt&&pt.terrain==="steep"&&(s.type==="run"||s.type==="walk")?1:0),est:true};
 }
 const loadOf=s=>effortOf(s).v*(s.dur||0)/60;
 const recoveryHours=s=>Math.max(4,Math.min(72,12+(loadOf(s)-150)/12));
@@ -2059,6 +2064,7 @@ function feedback(s){
     if(fp&&s.fuel.fl!=null){const rate=s.fuel.fl/h;out.push(rate<fp.lo*0.7?`You drank about ${Math.round(rate)} ml an hour. In this heat, aim for ${fp.lo}–${fp.hi} ml an hour next time.`:rate>1000?`You drank about ${Math.round(rate)} ml an hour, which is on the high side. More than about 1 L an hour can dilute your sodium.`:`Your fluid intake of about ${Math.round(rate)} ml an hour was in a good range.`);}
     if(fp&&fp.cho[1]>=30&&s.fuel.gels!=null){const g=s.fuel.gels*22/h;if(g<fp.cho[0]*0.6)out.push(`About ${Math.round(g)} g of carbs an hour from gels is low for a session this long. Try ${fp.cho[0]}–${fp.cho[1]} g an hour.`);}
     if(s.fuel.pre&&s.fuel.post){const pct=(s.fuel.pre-s.fuel.post)/s.fuel.pre*100;if(pct>2)out.push(`You lost ${round(pct,1)}% of your body weight. Losses over about 2% start to hurt performance, especially in the heat.`);else if(pct<-0.5)out.push("You gained weight during the session, which usually means drinking more than you sweat. Ease back a little next time.");}}
+  {const pt=s.placeId&&placeById(s.placeId);if(pt&&(pt.terrain==="steep"||pt.terrain==="hilly")&&(s.type==="run"||s.type==="walk"))out.push(`${pt.name} is ${pt.terrain}, so this pace isn't comparable with flat runs. Judge it by effort and time${s.elev?`: you climbed ${fmtElev(s.elev)}`:""}.`);}
   const e=effortOf(s),hrs=Math.round(recoveryHours(s));
   if((s.dur||0)>=120)out.push(`${e.est?"Estimated effort":"Effort"} ${e.v}/10 for ${fmtDur(s.dur||0)} gives a training load of ${Math.round(loadOf(s))}. Allow about ${hrs} hours before your next hard session.`);
   return out;
@@ -2659,9 +2665,9 @@ function openForm(existing,preset){
   if(!d.probs)d.probs=[];if(!d.gs)d.gs="v";
   if(!d.hangs||!d.hangs.length)d.hangs=[{grip:"Half crimp",edge:20,add:0,hang:7,rest:3,reps:6,sets:4}];
   let gearTouched=!!existing;if(!existing&&!d.gearId)d.gearId=defaultGearFor(d.type);
-  if(!existing)d.placeId=defaultPlaceFor(d.type);
+  if(!existing&&!(preset&&preset.placeId&&placeById(preset.placeId)))d.placeId=defaultPlaceFor(d.type);
   if(!existing&&d.type==="climb"&&!(preset&&preset.gs)){const pl=placeById(d.placeId);if(pl&&pl.circuit&&pl.circuit.length)d.gs="color";}
-  let placeTouched=!!existing,addingPlace=false,makeDefault=!!(settings.defPlace&&d.placeId&&settings.defPlace[d.type]===d.placeId);
+  let placeTouched=!!existing||!!(preset&&preset.placeId),addingPlace=false,makeDefault=!!(settings.defPlace&&d.placeId&&settings.defPlace[d.type]===d.placeId);
   const newProb=()=>{const last=d.probs[d.probs.length-1];return {g:last?last.g:Math.min(2,gradeList(d.gs,d.placeId).length-1),res:"send",att:1,style:last?last.style:null,holds:[],name:""};};
   const DKEY="workouts-climb-draft";
   const fromDraft=!!(preset&&preset._resume);if(fromDraft){const dr=climbDraft();delete d._resume;if(dr)Object.assign(d,dr.d);}
@@ -3640,7 +3646,7 @@ function renderPlaces(){
   const withStats=ps.map(p=>{const ss=placeSessions(p);return {p,ss,last:ss[0]};}).sort((a,b)=>(b.last?b.last.date:"").localeCompare(a.last?a.last.date:""));
   for(const {p,ss,last} of withStats){
     const k=PLACE_KINDS[p.kind]||PLACE_KINDS.other;
-    html+=`<button class="plc" data-place="${p.id}"><div class="pic">${k[1]}</div><div style="min-width:0"><b>${esc(p.name)}</b><span>${k[0]}${last?`, last visit ${fmtDate(last.date,{month:"short",day:"numeric"})}`:""}</span>
+    html+=`<button class="plc" data-place="${p.id}"><div class="pic">${k[1]}</div><div style="min-width:0"><b>${esc(p.name)}</b><span>${k[0]}${p.terrain&&TERRAIN[p.terrain]?", "+TERRAIN[p.terrain][0].toLowerCase():""}${last?`, last visit ${fmtDate(last.date,{month:"short",day:"numeric"})}`:""}</span>
       ${p.circuit&&p.circuit.length?`<div class="cdots">${p.circuit.map(c=>gm(c.name,c.color,"gm-xs")).join("")}</div>`:""}</div>
       <div class="cn">${ss.length}<small>${ss.length===1?"visit":"visits"}</small></div></button>`;
   }
@@ -3692,9 +3698,10 @@ function openPlaceEditor(p,after){
     openSheet(`<h3>${isNew?"Add place":"Edit place"}</h3><p class="sub">Gyms, crags, parks, tracks, or routes you train at.</p>
       <label for="pl-name">Name</label><input id="pl-name" type="text" maxlength="40" value="${esc(d.name)}" placeholder="e.g. Boulder Hub Makati">
       <label for="pl-kind">Kind of place</label><select id="pl-kind">${Object.entries(PLACE_KINDS).map(([k,[n,i]])=>`<option value="${k}"${d.kind===k?" selected":""}>${i} ${n}</option>`).join("")}</select>
-      <label>Color circuit</label>
+      ${CLIMB_KINDS.includes(d.kind)||circ?`<label>Color circuit</label>
       ${circ?`<div id="pcirc">${cHTML()}</div><button class="addex" id="pl-addc">+ Add color</button><p class="hint">Easiest first. Tap a swatch to change its color. Grades already logged here keep the colors they were saved with.</p><button class="link" id="pl-nocirc">Use my default circuit instead</button>`
-        :`<p class="hint" style="margin-top:0">This place uses your default circuit from Settings.</p><button class="addex" id="pl-circ">Give this place its own circuit</button>`}
+        :`<p class="hint" style="margin-top:0">This place uses your default circuit from Settings.</p><button class="addex" id="pl-circ">Give this place its own circuit</button>`}`:""}
+      ${["climbgym","gym","pool"].includes(d.kind)?"":`<label>Terrain</label><div class="seg seg-wrap" id="pl-ter">${Object.entries(TERRAIN).map(([k,[n]])=>`<button data-v="${k}" aria-pressed="${(d.terrain||"")===k}">${n}</button>`).join("")}</div><p class="hint">${d.terrain?esc(TERRAIN[d.terrain][1])+". ":""}Runs planned here adjust their targets to the grade.</p>`}
       <label>Default place for</label><div class="tchips" id="pl-defs" style="--c:#F5F5F7;--ct:#000">${Object.entries(TYPES).map(([t,n])=>`<button class="tchip" data-t="${t}" aria-pressed="${defs[t]===d.id}">${n}</button>`).join("")}</div>
       <p class="hint">New workouts of these types start with this place selected. Otherwise it remembers the last place you used.</p>
       <div class="err" id="pl-err"></div>
@@ -3703,9 +3710,11 @@ function openPlaceEditor(p,after){
     wire();
   };
   const dsel=new Set(Object.entries(defs).filter(([,v])=>v===d.id).map(([t])=>t));
-  const readAll=()=>{d.name=$("pl-name").value.trim();d.kind=$("pl-kind").value;if(circ){document.querySelectorAll("[data-ci]").forEach(i=>circ[+i.dataset.ci].color=i.value);document.querySelectorAll("[data-cn]").forEach(i=>circ[+i.dataset.cn].name=i.value.trim()||"Color");}};
+  const readAll=()=>{d.name=$("pl-name").value.trim();d.kind=$("pl-kind").value;{const t=document.querySelector('#pl-ter [aria-pressed="true"]');if(t)d.terrain=t.dataset.v;}if(circ){document.querySelectorAll("[data-ci]").forEach(i=>circ[+i.dataset.ci].color=i.value);document.querySelectorAll("[data-cn]").forEach(i=>circ[+i.dataset.cn].name=i.value.trim()||"Color");}};
   const wire=()=>{
     document.querySelectorAll("#pl-defs [data-t]").forEach(b=>{b.setAttribute("aria-pressed",dsel.has(b.dataset.t));b.onclick=()=>{const t=b.dataset.t;if(dsel.has(t))dsel.delete(t);else dsel.add(t);b.setAttribute("aria-pressed",dsel.has(t));};});
+    $("pl-kind").onchange=()=>{readAll();draw();};
+    document.querySelectorAll("#pl-ter button").forEach(b=>b.onclick=()=>{document.querySelectorAll("#pl-ter button").forEach(z=>z.setAttribute("aria-pressed",z===b));readAll();haptic("light");const t=$("sheet").scrollTop;draw();$("sheet").scrollTop=t;});
     if($("pl-circ"))$("pl-circ").onclick=()=>{readAll();circ=JSON.parse(JSON.stringify(circuitFor(null)));draw();};
     if($("pl-nocirc"))$("pl-nocirc").onclick=()=>{readAll();circ=null;draw();};
     if($("pl-addc"))$("pl-addc").onclick=()=>{readAll();circ.push({name:"New color",color:"#888888"});draw();};
@@ -4299,23 +4308,28 @@ function genRun(o){
   const why=[],b=runBase(),g=goalFor("run"),caut=cautionsNow();
   const P=k=>b?b*{easyLo:1.24,easyHi:1.34,mar:1.13,thr:1.07,int:0.98,rep:0.94}[k]:null;
   const pr=(lo,hi)=>b?`${fmtPace(P(lo)).replace(/ \/.*/,"")}–${fmtPace(P(hi))}`:null;
-  const easy=b?`at ${pr("easyLo","easyHi")}, fully conversational`:"at a conversational pace, able to talk in full sentences";
-  const thr=b?`at ${fmtPace(P("thr"))}, comfortably hard`:"at comfortably hard effort, 3–4 word answers";
-  const intp=b?`at ${fmtPace(P("int"))}`:"hard, only 2–3 words possible";
-  if(!b)why.push("Log runs with best efforts and I'll give you exact paces.");
-  else why.push(`Paces are based on your current 5K fitness, about ${fmtClock(b*5)}.`);
+  const T=o.terrain||"flat",hillsy=T==="hilly"||T==="steep",tp=o.placeId&&placeById(o.placeId);
+  const easy=hillsy?"at conversational effort, not pace":b?`at ${pr("easyLo","easyHi")}, fully conversational`:"at a conversational pace, able to talk in full sentences";
+  const thr=hillsy?"at comfortably hard effort (3–4 word answers), letting pace rise and fall with the grade":b?`at ${fmtPace(P("thr"))}, comfortably hard`:"at comfortably hard effort, 3–4 word answers";
+  const intp=hillsy?"hard, only 2–3 words possible":b?`at ${fmtPace(P("int"))}`:"hard, only 2–3 words possible";
+  if(hillsy)why.push(`${tp?tp.name+" is":"This route is"} ${T}, so targets are by effort and time, not pace.${b?` On the flat your easy pace is about ${pr("easyLo","easyHi")}; expect ${T==="steep"?"1 to 3 min/km slower on the climbs":"30 to 60 s/km slower on the climbs"}.`:""}`);
+  else if(!b)why.push("Log runs with best efforts and I'll give you exact paces.");
+  else why.push(`Paces are based on your current 5K fitness, about ${fmtClock(b*5)}.${T==="rolling"?" On rolling ground, hold the effort and let pace drift on the ups and downs.":""}`);
   let kind;const raceG=g&&g.kind==="race"?g:null;
   if(o.feel==="sore")kind="recovery";
   else if(o.effort==="easy")kind=o.feel==="tired"?"recovery":"easy";
   else if(o.effort==="moderate")kind=o.mins>=70?"long":["strides","fartlek"][o.seed%2];
   else if(o.effort==="hard")kind=o.mins<35?"tempo":raceG&&(+raceG.dist>=21)?["tempo","cruise"][o.seed%2]:["tempo","intervals","hills","cruise"][o.seed%4];
   else kind=o.mins<35?"tempo":["intervals","reps"][o.seed%2];
-  if(kind==="hills"&&(caut.includes("Knees")||caut.includes("Ankles")))kind="cruise";
+  if(kind==="hills"&&(caut.includes("Knees")||caut.includes("Ankles"))&&!hillsy)kind="cruise";
+  if(hillsy&&(kind==="intervals"||kind==="reps"))kind="hills";
+  if(T==="steep"&&(kind==="tempo"||kind==="cruise"))kind="climb_tempo";
+  if(T==="steep"&&kind==="fartlek")kind="terrain_fartlek";
   if(o.mins>=150&&o.feel!=="sore")kind="ultra_"+(o.effort==="max"?"hard":o.effort);
   if(raceG){const D=RACE_D[raceG.dist][1];why.push(`Built toward your ${RACE_D[raceG.dist][0]}${raceG.time?` goal pace of ${fmtPace(raceG.time/(D/1000))}`:""}, ${Math.max(0,Math.ceil((parseDate(raceG.date)-Date.now())/6048e5))} weeks out.`);}
   if(caut.includes("Knees")||caut.includes("Ankles"))why.push("Choose soft surfaces or a track to go easy on your joints.");
   const M=o.mins;let title,blocks,rpe;
-  const wu=m=>({n:"Warm-up",items:[{text:`${m} minutes easy ${easy}`},{text:"4 × 20-second strides, walking back between"}]});
+  const wu=m=>({n:"Warm-up",items:[{text:`${m} minutes easy ${easy}`},{text:hillsy?"4 × 20-second strides on the flattest stretch you can find, walking back between":"4 × 20-second strides, walking back between"}]});
   const cd=m=>({n:"Cool-down",items:[{text:`${m} minutes easy jog, then light stretching`}]});
   if(kind.startsWith("ultra")){
     const H=round(M/60,1),climbs=!(caut.includes("Knees")||caut.includes("Ankles"));
@@ -4331,12 +4345,21 @@ function genRun(o){
   else if(kind==="fartlek"){const n=Math.max(4,Math.min(10,Math.floor((M-20)/3)));title="Fartlek";rpe=6;blocks=[wu(10),{n:"Main set",items:[{text:`${n} × 1 minute ${thr}, 2 minutes easy between`}]},cd(Math.max(5,M-10-n*3))];}
   else if(kind==="tempo"){const t=Math.max(10,Math.min(30,M-20));title="Tempo run";rpe=7;blocks=[wu(10),{n:"Main set",items:[{text:`${t} minutes continuous ${thr}`}]},cd(Math.max(5,M-10-t))];}
   else if(kind==="cruise"){const n=Math.max(2,Math.min(5,Math.floor((M-22)/10)));title="Cruise intervals";rpe=7;blocks=[wu(12),{n:"Main set",items:[{text:`${n} × 8 minutes ${thr}, 2 minutes easy jog between`}]},cd(8)];}
-  else if(kind==="hills"){const n=Math.max(5,Math.min(10,Math.floor((M-22)/3)));title="Hill repeats";rpe=8;blocks=[wu(12),{n:"Main set",items:[{text:`${n} × 60 seconds uphill at hard effort, jog back down to recover`},{text:"Drive the knees and stay tall. Pick a 4–8% grade."}]},cd(8)];}
+  else if(kind==="hills"){const n=Math.max(5,Math.min(10,Math.floor((M-22)/3)));title="Hill repeats";rpe=8;blocks=[wu(12),{n:"Main set",items:[{text:T==="steep"?`${n} × 45–60 seconds uphill at hard effort on a 6–12% section, walk back down`:`${n} × 60 seconds uphill at hard effort, jog back down to recover`},{text:T==="steep"?"If your street is steeper than that, keep reps to 30–45 seconds or power-hike them hard. Walking down is part of the recovery, not cheating.":"Drive the knees and stay tall. Pick a 4–8% grade."}]},cd(8)];}
+  else if(kind==="climb_tempo"){const n=Math.max(2,Math.min(4,Math.floor((M-20)/12)));title="Uphill tempo";rpe=7;blocks=[wu(10),{n:"Main set",items:[{text:`${n} × 8–10 minutes of climbing ${thr}. Run what you can, power-hike the steepest bits without letting effort drop`},{text:"Walk or jog very easy back down between reps"}]},cd(Math.max(5,M-10-n*16))];}
+  else if(kind==="terrain_fartlek"){title="Hill fartlek";rpe=6;blocks=[wu(10),{n:"Main set",items:[{text:`${Math.max(15,M-20)} minutes over your hilly loop: push every uphill for up to 90 seconds at hard effort, run easy on the flats`},{text:"Walk the steepest descents. The point is strong climbing, not fast downhills"}]},cd(8)];}
   else if(kind==="intervals"){const rep=b?P("int")*0.8:210;const n=Math.max(3,Math.min(8,Math.floor((M-22)*60/(rep+120))));title="VO2max intervals";rpe=8;blocks=[wu(12),{n:"Main set",items:[{text:`${n} × 800 m ${intp}${b?` (${fmtClock(rep)} each)`:""}, 2 minutes easy jog between`}]},cd(8)];}
   else {const rep=b?P("rep")*0.4:85;const n=Math.max(6,Math.min(12,Math.floor((M-22)*60/(rep+90))));title="400 m repeats";rpe=9;blocks=[wu(12),{n:"Main set",items:[{text:`${n} × 400 m ${b?`at ${fmtPace(P("rep"))} (${fmtClock(rep)} each)`:"fast and controlled"}, 90 seconds walk or jog between`}]},cd(8)];}
+  if(hillsy&&!kind.startsWith("ultra")){const items=[];
+    if(T==="steep")items.push({text:"Power-hike any grade you can't run at easy effort, usually over 12–15%. Short steps, hands on thighs. It still counts, and it's how trail and ultra runners climb."});
+    else items.push({text:"Hold the effort on climbs and let your pace drop. Chasing your flat pace uphill turns an easy run into a hard one."});
+    items.push({text:`Downhills: short, quick steps with your feet under your hips and eyes 3–4 m ahead.${T==="steep"?" Steep descents are what make your quads sore tomorrow, so walk the steepest ones until your legs adapt.":""}`});
+    if(caut.includes("Knees")||caut.includes("Ankles"))items.push({text:"With your knee or ankle flagged, walk every steep downhill today."});
+    if(kind==="recovery"||kind==="easy")items.push({text:T==="steep"?"For a true easy day, run the flattest loop you can find nearby, or walk the climbs and run only the gentle parts.":"Pick the gentlest loop you have."});
+    blocks.push({n:"On these hills",items});}
   const est=kind==="recovery"?Math.min(M,35):M;
-  const dist=b?(est*60)/(b*({recovery:1.36,easy:1.29,long:1.27,ultra_easy:1.6,ultra_moderate:1.5,ultra_hard:1.4}[kind]||1.18)):null;
-  return {type:"run",title,why,rpe,est,blocks,distEst:dist};
+  const dist=b?(est*60)/(b*({recovery:1.36,easy:1.29,long:1.27,ultra_easy:1.6,ultra_moderate:1.5,ultra_hard:1.4}[kind]||1.18)*(TERRAIN_SLOW[T]||1)):null;
+  return {type:"run",title,why,rpe,est,blocks,distEst:dist,placeId:o.placeId||undefined};
 }
 function genRide(o){
   const why=[],f=currentFTP(),g=goalFor("ride");
@@ -4495,6 +4518,9 @@ function openPlanner(type){
       <div style="display:flex;gap:8px;align-items:center;margin-top:8px"><span class="hint" style="margin:0;white-space:nowrap">Or custom:</span><input id="pl-custom" type="number" inputmode="decimal" step="0.25" min="0.25" max="24" placeholder="hours, e.g. 5.5" value="${TIME_OPTS.includes(o.mins)?"":round(o.mins/60,2)}" style="max-width:150px"></div>
       <label>Effort goal</label><div class="seg" data-po="effort">${[["easy","Easy"],["moderate","Moderate"],["hard","Hard"],["max","All out"]].map(([v,n])=>`<button data-v="${v}" aria-pressed="${o.effort===v}">${n}</button>`).join("")}</div>
       <label>How do you feel?</label><div class="seg" data-po="feel">${[["fresh","Fresh"],["ok","OK"],["tired","Tired"],["sore","Sore"]].map(([v,n])=>`<button data-v="${v}" aria-pressed="${o.feel===v}">${n}</button>`).join("")}</div>
+      ${o.type==="run"?(()=>{const rp=runPlaces();return `<label>Where</label><div class="tchips" id="pl-where" style="--c:#F5F5F7;--ct:#000"><button class="tchip" data-pw="" aria-pressed="${!o.placeId}">Anywhere</button>${rp.map(p=>`<button class="tchip" data-pw="${p.id}" aria-pressed="${o.placeId===p.id}">${esc(p.name)}</button>`).join("")}</div>
+      <label>Terrain</label><div class="seg" data-po="terrain">${Object.entries(TERRAIN).map(([v,[n]])=>`<button data-v="${v}" aria-pressed="${(o.terrain||"flat")===v}">${n}</button>`).join("")}</div>
+      <p class="hint" style="margin-top:6px">${esc(TERRAIN[o.terrain||"flat"][1])}.${o.terrain==="steep"||o.terrain==="hilly"?" Targets switch from pace to effort, with walking and downhill cues.":""}</p>`;})():""}
       <p class="hint">${rec.h>0?`Based on your logs, you have about ${Math.round(rec.h)} hours of recovery left from ${esc(titleOf(rec.s))}.`:"Your logs say you're recovered."}</p>
       ${o.type==="lift"?`<label>Target muscles</label><div class="tchips" id="pl-tg" style="--c:#F5F5F7;--ct:#000">${[["auto","Auto (recent training)"],["any","Any / full body"]].map(([v,n])=>`<button class="tchip" data-tg2="${v}" aria-pressed="${(o.target||"auto")===v}">${n}</button>`).join("")}${["Chest","Back","Shoulders","Arms","Legs","Glutes","Core"].map(m=>`<button class="tchip" data-tg2="${m}" aria-pressed="${Array.isArray(o.target)&&o.target.includes(m)}">${m}</button>`).join("")}</div>
       <p class="hint" style="margin-top:6px">${Array.isArray(o.target)&&o.target.length?`Session built around ${o.target.join(", ").toLowerCase()}.`:o.target==="any"?"A full-body session.":"Picks whatever has had the most rest since your recent lifts, climbs, and runs."}</p>
@@ -4504,6 +4530,8 @@ function openPlanner(type){
       <div class="row"><button class="btn" id="pl-cancel">Cancel</button><button class="btn primary" id="pl-build">${plan?"Rebuild":"Build my workout"}</button></div>
       <div id="pl-out">${plan?planHTML(plan)+`<div class="row"><button class="btn" id="pl-again">Try another</button><button class="btn go" id="pl-start">Start this workout</button></div><div class="row" style="margin-top:8px"><button class="btn" id="pl-save">Save as routine</button></div>`:""}</div>`);
     document.querySelectorAll("[data-po]").forEach(el=>el.querySelectorAll("button").forEach(b=>b.onclick=()=>{const k=el.dataset.po;o[k]=k==="mins"?+b.dataset.v:b.dataset.v;if(k==="feel")o.feelSet=true;el.querySelectorAll("button").forEach(z=>z.setAttribute("aria-pressed",z===b));if(k==="type"){plan=null;draw();}}));
+    document.querySelectorAll("[data-pw]").forEach(b=>b.onclick=()=>{o.placeId=b.dataset.pw||null;const pl=o.placeId&&placeById(o.placeId);if(pl&&pl.terrain)o.terrain=pl.terrain;haptic("light");const t=$("sheet").scrollTop;draw();$("sheet").scrollTop=t;});
+    document.querySelectorAll('[data-po="terrain"] button').forEach(b=>{const f=b.onclick;b.onclick=()=>{f();const t=$("sheet").scrollTop;draw();$("sheet").scrollTop=t;};});
     document.querySelectorAll("[data-tg2]").forEach(b=>b.onclick=()=>{const v=b.dataset.tg2;if(v==="auto"||v==="any")o.target=v;else{let a=Array.isArray(o.target)?[...o.target]:[];const i=a.indexOf(v);if(i>=0)a.splice(i,1);else a.push(v);o.target=a.length?a:"auto";}haptic("light");const t=$("sheet").scrollTop;draw();$("sheet").scrollTop=t;});
     $("pl-custom").onchange=()=>{const h=num($("pl-custom").value);if(h>0){o.mins=Math.round(h*60);document.querySelectorAll('[data-po="mins"] button').forEach(z=>z.setAttribute("aria-pressed","false"));}};
     $("pl-cancel").onclick=closeSheet;
@@ -4564,6 +4592,7 @@ function openActive(){
     const preset={fromPlan:true,type:pl2.type,title:pl2.title,date:keyOf(st),time:pad(st.getHours())+":"+pad(st.getMinutes()),dur:Math.max(60,elapsedSec()),rpe:pl2.rpe,notes:`Planned: ${pl2.title}.`};
     if(pl2.type==="lift")preset.ex=active.ex.filter(e=>e.done>0).map(e=>({name:e.name,sets:e.done,reps:e.reps,w:e.w,mus:e.mus}));
     if(pl2.type==="climb"){preset.gs=pl2.gs;preset.placeId=pl2.placeId;}
+    else if(pl2.placeId)preset.placeId=pl2.placeId;
     if(pl2.targetId)preset.targetId=pl2.targetId;
     if(pl2.type==="hang"&&pl2.hangs)preset.hangs=JSON.parse(JSON.stringify(pl2.hangs));
     active=null;saveActive();openForm(null,preset);toast("Add any final details, then save");
@@ -5654,7 +5683,8 @@ function seedGyms(){
   for(const g of GYM_SEED){const ex=ps.find(p=>p.name.trim().toLowerCase()===g.name.toLowerCase());
     if(!ex){ps.push({id:uid(),name:g.name,kind:"climbgym",circuit:JSON.parse(JSON.stringify(g.circuit))});ch=true;}
     else if(!(settings.gymsSeeded>=1)&&(!ex.circuit||!ex.circuit.length)){ex.circuit=JSON.parse(JSON.stringify(g.circuit));ex.kind=ex.kind||"climbgym";ch=true;}}
-  if(ch||!(settings.gymsSeeded>=1)){settings.places=ps;settings.gymsSeeded=1;settings.updatedAt=Date.now();saveLocal();try{pushSettings();}catch(e){}}
+  if(!(settings.homeSeeded>=1)){if(!ps.some(p=>p.name.trim().toLowerCase()==="home base"))ps.push({id:uid(),name:"Home Base",kind:"home",terrain:"steep",circuit:null});ch=true;}
+  if(ch||!(settings.gymsSeeded>=1)){settings.places=ps;settings.gymsSeeded=1;settings.homeSeeded=1;settings.updatedAt=Date.now();saveLocal();try{pushSettings();}catch(e){}}
   return ch;
 }
 /* the mark itself: one drawing per grading style, used everywhere a grade is shown */
