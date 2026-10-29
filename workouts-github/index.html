@@ -3093,7 +3093,8 @@ function openDetail(s){
     st.push(["Hang time",fmtDur(hangTime(s))]);if(maxAdd(s)!=null)st.push(["Max load",fmtAdd(maxAdd(s))]);st.push(["Sets",hangSets(s)]);st.push(["Session",fmtDur(s.dur)]);
   }else if(s.type==="hike"){
     if(s.dist)st.push(["Distance",fmtDist(s.dist)]);
-    if(s.elev)st.push(["Elev gain",fmtElev(s.elev)]);
+    if(elevOf(s))st.push(["Elev gain",fmtElev(elevOf(s))]);
+    {const tc=trackClimb(s);if(tc&&tc.maxGrade>=1)st.push(["Max grade",gradeTxt(tc.maxGrade)]);}
     if(s.eloss)st.push(["Elev loss",fmtElev(s.eloss)]);
     if(s.maxEle!=null)st.push(["Highest point",fmtElev(s.maxEle)]);
     st.push(["Moving time",fmtDur(s.dur)]);
@@ -3120,7 +3121,8 @@ function openDetail(s){
     if(rideIF(s)&&s.type==="ride")st.push(["Intensity",rideIF(s).toFixed(2)]);
     if(rideTSS(s)&&s.type==="ride")st.push(["Training stress",Math.round(rideTSS(s))]);
     if(s.elapsed&&s.elapsed-s.dur>60)st.push(["Elapsed",fmtDur(s.elapsed)]);
-    if(s.elev)st.push(["Elevation",fmtElev(s.elev)]);
+    if(elevOf(s))st.push(["Elevation",fmtElev(elevOf(s))]);
+    {const tc=trackClimb(s);if(tc&&tc.maxGrade>=1)st.push(["Max grade",gradeTxt(tc.maxGrade)]);}
     if(s.maxEle!=null)st.push(["Max elevation",fmtElev(s.maxEle)]);
   }
   if(s.hr)st.push(["Avg HR",Math.round(s.hr)+" bpm"]);
@@ -3296,6 +3298,21 @@ const FONTS={
   classic:{num:'700 {s}px Georgia,"Times New Roman",serif',label:'italic 400 {s}px Georgia,"Times New Roman",serif',title:'italic 700 {s}px Georgia,"Times New Roman",serif',k:.8},
   mono:{num:'700 {s}px ui-monospace,Menlo,Consolas,monospace',label:'500 {s}px ui-monospace,Menlo,Consolas,monospace',title:'700 {s}px ui-monospace,Menlo,Consolas,monospace',k:.66}
 };
+/* Climbing numbers from an imported route: smoothed elevation gain and the steepest grade held over at least 100 m */
+const climbCache=new Map();
+function trackClimb(s){
+  const t=s&&s.track;if(!Array.isArray(t)||t.length<5)return null;
+  const ck=s.id+"|"+t.length+"|"+(t[t.length-1]||[]).join(",");if(climbCache.has(ck))return climbCache.get(ck);
+  const pts=t.filter(p=>p[2]!=null);if(pts.length<5){climbCache.set(ck,null);return null;}
+  const raw=pts.map(p=>p[2]),ele=raw.map((_,i)=>{let a=0,n=0;for(let k=Math.max(0,i-2);k<=Math.min(raw.length-1,i+2);k++){a+=raw[k];n++;}return a/n;});
+  const cum=[0];for(let i=1;i<pts.length;i++)cum.push(cum[i-1]+hav(pts[i-1][0],pts[i-1][1],pts[i][0],pts[i][1]));
+  let gain=0,ref=ele[0];for(const e of ele){if(e-ref>=2){gain+=e-ref;ref=e;}else if(ref-e>=2)ref=e;}
+  const W=cum[cum.length-1]<600?50:100;let maxG=0,j=0;
+  for(let i=0;i<pts.length;i++){if(j<i)j=i;while(j<pts.length-1&&cum[j]-cum[i]<W)j++;const d=cum[j]-cum[i];if(d<W*.9)break;const g=(ele[j]-ele[i])/d*100;if(g>maxG)maxG=g;}
+  const out={gain:Math.round(gain),maxGrade:Math.min(45,maxG),win:W};climbCache.set(ck,out);return out;
+}
+const elevOf=s=>s.elev||(trackClimb(s)||{}).gain||0;
+const gradeTxt=g=>(g>=10?Math.round(g):Math.round(g*10)/10)+"%";
 function allStats(s){
   const o=[],r=getC().by[s.id];
   if(s.type==="lift"){const v=volume(s);if(v)o.push({k:"vol",l:"Volume",v:fmtVol(v)});const n=totalSets(s);if(n)o.push({k:"sets",l:"Sets",v:String(n)});if(s.ex&&s.ex.length)o.push({k:"exn",l:"Exercises",v:String(s.ex.length)});}
@@ -3307,7 +3324,8 @@ function allStats(s){
   if(s.pw)o.push({k:"pw",l:"Avg power",v:s.pw+" W"});
   if(wkg(s))o.push({k:"wkg",l:"W/kg",v:wkg(s).toFixed(2)});
   if(s.np)o.push({k:"np",l:"Normalized",v:s.np+" W"});
-  if(s.elev&&s.type!=="lift"&&s.type!=="climb")o.push({k:"elev",l:"Elev gain",v:fmtElev(s.elev)});
+  if(elevOf(s)&&s.type!=="lift"&&s.type!=="climb")o.push({k:"elev",l:"Elev gain",v:fmtElev(elevOf(s))});
+  {const tc=trackClimb(s);if(tc&&tc.maxGrade>=1&&s.type!=="lift"&&s.type!=="climb")o.push({k:"grade",l:"Max grade",v:gradeTxt(tc.maxGrade)});}
   if(s.type==="hang"){o.push({k:"htime",l:"Hang time",v:fmtDur(hangTime(s))});if(maxAdd(s)!=null)o.push({k:"hload",l:"Max load",v:fmtAdd(maxAdd(s))});o.push({k:"hsets",l:"Sets",v:String(hangSets(s))});}
   if(s.eloss)o.push({k:"eloss",l:"Elev loss",v:fmtElev(s.eloss)});
   if(s.type==="hike"&&s.maxEle!=null)o.push({k:"maxele",l:"Highest point",v:fmtElev(s.maxEle)});
