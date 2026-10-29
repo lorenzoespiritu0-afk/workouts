@@ -9,8 +9,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Workouts">
-<link rel="apple-touch-icon" href="icon-180.png">
-<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png?v=2">
+<link rel="icon" type="image/png" href="icon-192.png?v=2">
 <script>window.STANDALONE=true;</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -839,6 +839,12 @@ h2.sec{font-family:var(--display);font-weight:700;letter-spacing:-.015em}
 .wk-h{flex-wrap:wrap;gap:2px 10px}
 
 .probs-long:not(.open) .pmore{display:none}
+
+.musbox{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:14px;align-items:center;background:var(--surface);border-radius:14px;padding:14px}
+.musmap{display:block;width:100%;height:auto;color:var(--ink)}
+.muslist{display:grid;gap:8px}
+.muslist div{display:flex;justify-content:space-between;gap:8px;font-size:.9rem}
+.muslist span{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -3135,6 +3141,7 @@ function openDetail(s){
   }
   const segRows=liveSegs().map(g=>{const t=segTime(g,s);if(!t)return null;const ef=segEfforts(g);const rank=ef.findIndex(x=>x.s.id===s.id)+1;return {g,t,rank,n:ef.length};}).filter(Boolean);
   if(segRows.length)html+=`<h4>Segments</h4><div class="tlist">${segRows.map(x=>`<button class="trow" data-seg2="${x.g.id}">${x.rank<=3?`<span class="mdot m${x.rank}">${x.rank}</span>`:`<span class="mdot" style="background:var(--chip);color:var(--muted)">${x.rank}</span>`}<div class="tx"><b>${esc(x.g.name)}</b><span>Ranked ${x.rank} of ${x.n} all-time</span></div><span class="tv">${fmtClock(x.t)}</span></button>`).join("")}</div>`;
+  if(s.type==="lift"&&s.ex&&s.ex.length){const mv=musLoad(s),mt=musTop(mv,6);if(mt.length)html+=`<h4>Muscles worked</h4><div class="musbox">${muscleSVG(mv)}<div class="muslist">${mt.map(([m,n])=>`<div><b>${esc(m)}</b><span>${Math.round(n)} set${Math.round(n)===1?"":"s"}</span></div>`).join("")}</div></div>`;}
   if(s.type==="lift"&&s.ex&&s.ex.length)html+=`<h4>Exercises</h4><table><thead><tr><th>Exercise</th><th>Sets × reps</th><th>Weight</th><th>Est. 1RM</th></tr></thead><tbody>${s.ex.map(e=>`<tr><td>${esc(e.name||"Exercise")}${e.mus&&e.mus.length?`<br><small style="color:var(--muted)">${esc(e.mus.join(", "))}</small>`:""}</td><td>${e.sets||"–"} × ${e.reps||"–"}</td><td>${isBW(e)||e.w===0?(e.w>0?"BW + "+fmtWt(e.w):"Body&shy;weight"):e.w!=null?fmtWt(e.w):"–"}</td><td>${!isBW(e)&&e1rm(e)?fmtWt(e1rm(e)):"–"}</td></tr>`).join("")}</tbody></table>`;
   if(s.type==="climb"&&s.probs&&s.probs.length)html+=`<h4>Problems${s.probs.length>24?` <span class="hint" style="font-weight:500">${s.probs.length}</span>`:""}</h4><div class="tlist${s.probs.length>24?" probs-long":""}">${s.probs.map((p,i)=>`<div class="trow${i>=24?" pmore":""}">${p.gc?`<span class="mdot gmd">${gm(p.gl,p.gc)}</span>`:`<span class="mdot" style="background:var(--climb);font-size:.8rem;width:auto;min-width:28px;padding:0 6px;border-radius:8px">${esc(p.gl)}</span>`}<div class="tx"><b>${p.proj?"🎯 ":""}${esc(p.name||(p.gc?p.gl+" problem":"Problem "+(i+1)))}</b>${[p.style,(p.holds||[]).join(", ")].filter(Boolean).length?`<span>${[p.style,(p.holds||[]).join(", ")].filter(Boolean).map(esc).join(". ")}</span>`:""}</div><span class="tv" style="font-size:1rem;text-align:right">${RESULTS[p.res]}<br><small style="color:var(--muted);font-family:var(--font);font-weight:500;font-size:.75rem">${p.att||1} ${(p.att||1)===1?"try":"tries"}</small></span></div>`).join("")}</div>${s.probs.length>24?`<button class="btn" id="pmore" style="width:100%;margin-top:10px">Show all ${s.probs.length} problems</button>`:""}`;
   if(s.notes)html+=`<div class="notes">${esc(s.notes)}</div>`;
@@ -3219,6 +3226,62 @@ function openAccolade(id){
 }
 
 /* ---------- share image ---------- */
+/* ================= muscle map (front + back body, segmented) ================= */
+/* Left-side shapes on a 200 x 410 canvas; every shape with m:"" is body base, x<100 shapes are mirrored. */
+const rrP=(x,y,w,h,r)=>`M${x+r} ${y}H${x+w-r}Q${x+w} ${y} ${x+w} ${y+r}V${y+h-r}Q${x+w} ${y+h} ${x+w-r} ${y+h}H${x+r}Q${x} ${y+h} ${x} ${y+h-r}V${y+r}Q${x} ${y} ${x+r} ${y}Z`;
+const BODY_COMMON=[
+  {m:"",d:"M100 8C112 8 119 18 119 31C119 45 111 54 100 54C89 54 81 45 81 31C81 18 88 8 100 8Z",c:1},
+  {m:"",d:"M91 55L109 55L111 64L89 64Z",c:1},
+  {m:"Shoulders",d:"M75 66C63 64 54 70 51 82C49 92 50 101 53 108C60 103 66 96 71 89C75 83 77 74 75 66Z"},
+  {m:"",d:"M49 166C55 164 60 166 61 172L57 213C55 219 48 219 45 213C42 199 42 182 44 172C45 168 47 167 49 166Z"},
+  {m:"",d:"M48 221C53 221 56 226 55 231C54 237 49 239 45 236C41 232 42 223 48 221Z"},
+  {m:"",d:"M84 312C89 312 92 315 92 318C92 321 89 323 84 323C79 323 76 321 76 318C76 315 79 312 84 312Z"},
+  {m:"",d:"M76 395L91 395C95 395 97 399 95 403L74 403C72 399 73 396 76 395Z"},
+];
+const BODY={
+  front:[...BODY_COMMON,
+    {m:"Chest",d:"M79 67C88 65 96 66 98 69L98 105C92 111 82 112 74 107C70 101 70 92 73 84C75 78 77 72 79 67Z"},
+    {m:"Biceps",d:"M52 113C58 111 64 115 65 123L64 149C62 157 56 161 50 159C46 149 46 131 48 121C49 116 50 114 52 113Z"},
+    {m:"Core",d:"M76 116C80 114 83 116 84 120L84 178C80 186 75 184 73 176C71 158 71 134 73 122C74 119 75 117 76 116Z"},
+    {m:"Core",d:rrP(87,113,11,21,4)},{m:"Core",d:rrP(87,137,11,21,4)},{m:"Core",d:rrP(87,161,11,24,4)},
+    {m:"",d:"M75 190C84 195 92 198 98 199L98 209C88 209 80 205 75 200Z"},
+    {m:"Legs",d:"M73 206C82 210 92 214 97 216L96 268C95 290 92 304 86 308C79 308 74 300 72 286C69 262 69 230 73 206Z"},
+    {m:"Calves",d:"M74 327C80 323 90 323 94 329L92 372C91 384 86 390 82 390C77 390 74 382 73 370C71 354 71 337 74 327Z"},
+  ],
+  back:[...BODY_COMMON,
+    {m:"Back",d:"M100 57L100 112C94 104 86 92 79 81C76 75 74 70 77 67C85 65 93 61 100 57Z"},
+    {m:"Back",d:"M77 86C84 97 92 108 97 116L97 148C91 158 84 166 78 171C74 159 72 140 72 118C72 105 73 94 77 86Z"},
+    {m:"Back",d:"M99 154L99 193C93 193 85 191 81 186C84 177 91 166 99 154Z"},
+    {m:"Triceps",d:"M52 113C58 111 64 115 65 123L64 149C62 157 56 161 50 159C46 149 46 131 48 121C49 116 50 114 52 113Z"},
+    {m:"Glutes",d:"M75 197C83 197 92 199 98 201L98 236C92 244 82 246 76 240C70 232 70 210 75 197Z"},
+    {m:"Legs",d:"M73 250C80 252 90 254 96 254L95 296C93 306 88 310 84 310C78 310 74 302 72 290C70 276 70 262 73 250Z"},
+    {m:"Calves",d:"M73 325C78 321 90 321 95 327C97 342 95 357 90 367L86 386C84 390 80 390 78 386L76 367C71 357 70 342 73 325Z"},
+  ]
+};
+/* Sets per muscle group for one lift session: the first listed muscle gets the full sets, helpers get half. */
+function musLoad(s){
+  const v={};const add=(m,n)=>{if(m==="Full body"){for(const k of ["Chest","Back","Shoulders","Legs","Glutes","Core"])v[k]=(v[k]||0)+n*.4;return;}v[m]=(v[m]||0)+n;};
+  for(const e of s.ex||[]){const n=+e.sets||1,ms=e.mus&&e.mus.length?e.mus:guessMuscles(e.name);ms.forEach((m,i)=>add(m,i?n*.5:n));}
+  return v;
+}
+function musTop(v,n=4){return Object.entries(v).filter(([,x])=>x>0).sort((a,b)=>b[1]-a[1]).slice(0,n);}
+/* In-app SVG version */
+function muscleSVG(v,o={}){
+  const max=Math.max(1,...Object.values(v)),hi=o.color||"var(--accent)";
+  const fig=(k,dx)=>BODY[k].map(p=>{const a=p.m&&v[p.m]?.35+.65*Math.min(1,v[p.m]/max):0;const fill=a?`fill="${hi}" fill-opacity="${a.toFixed(2)}"`:`fill="currentColor" fill-opacity="${p.m?.13:.08}"`;
+    return `<path d="${p.d}" ${fill} transform="translate(${dx} 0)"/>`+(p.c?"":`<path d="${p.d}" ${fill} transform="translate(${dx+200} 0) scale(-1 1)"/>`);}).join("");
+  return `<svg class="musmap" viewBox="0 0 430 412" role="img" aria-label="Muscles worked: ${esc(musTop(v,6).map(([m])=>m).join(", ")||"none")}">${fig("front",0)}${fig("back",230)}</svg>`;
+}
+/* Canvas version for share images. h = figure height in px. */
+function drawMuscleMap(x,cx,top,h,v,ink,hi){
+  const k=h/412,w=430*k,ox=cx-w/2,max=Math.max(1,...Object.values(v));
+  const draw=(key,dx)=>{for(const p of BODY[key]){const path=new Path2D(p.d),a=p.m&&v[p.m]?.35+.65*Math.min(1,v[p.m]/max):0;
+    for(const mir of p.c?[0]:[0,1]){x.save();x.translate(ox+dx*k,top);x.scale(k,k);if(mir){x.translate(200,0);x.scale(-1,1);}
+      if(a){x.globalAlpha=a;x.fillStyle=hi;x.fill(path);}else{x.globalAlpha=p.m?.16:.1;x.fillStyle=ink;x.fill(path);}
+      x.restore();}}};
+  draw("front",0);draw("back",230);x.globalAlpha=1;
+}
+
 const STRAVA="#FC4C02";
 const TYPE_HEX={run:"#4F8DFF",walk:"#A58BFF",hike:"#C99A5B",ride:"#2FC48D",lift:"#E8A93A",climb:"#FF5C8A",hang:"#FF8A4C",other:"#8E8E93"};
 const FONTS={
@@ -3301,6 +3364,7 @@ async function drawShare(s,o){
     }
   }
   if(o.sends&&s.type==="climb"){const G=sendGroups(s).slice(0,8);if(G.length){const cols=Math.min(4,G.length),rows=Math.ceil(G.length/cols),cellH=210;y+=60;ops.push({sends:1,y,G,cols,cellH});y+=rows*cellH;}}
+  if(o.mus&&s.type==="lift"){const v=musLoad(s);if(Object.keys(v).length){const mh=Math.round(Math.min(560,maxW*.92*412/430));y+=70;ops.push({mus:1,y,h:mh,v});y+=mh+76;}}
   if(o.prs){const r=getC().by[s.id];const ent=r?[...r.medals,...(r.ymedals||[])].sort((a,b)=>a.rank-b.rank).slice(0,4):[];if(ent.length){y+=70;const h=prBlockHeight(ent.length);ops.push({prblock:1,y,h,ent});y+=h;}}
   const extra=[];
   if(o.level)extra.push("Level "+levelOf(getC().xp));
@@ -3334,6 +3398,11 @@ async function drawShare(s,o){
         x.textAlign="center";x.fillStyle=ink;x.font=fnt(F.num,64*F.k/1);x.fillText("×"+g.n,x0,top+150);
         x.globalAlpha=.8;x.font=fnt(F.label,28);let lab=g.gc?g.gl:"";if(g.fl)lab=(lab?lab+" · ":"")+g.fl+" flash"+(g.fl===1?"":"ed");x.fillText(lab,x0,top+190,cw-10);x.globalAlpha=1;});
       x.textAlign=left?"left":"center";x.restore();continue;}
+    if(op.mus){x.save();x.shadowColor="transparent";const mw=op.h*430/412,cx=left?P+mw/2:W/2;
+      drawMuscleMap(x,cx,off+op.y,op.h,op.v,ink,o.rcolor&&o.rcolor!=="same"?o.rcolor:ink);
+      x.globalAlpha=.9;x.fillStyle=ink;x.font=fnt(F.label,34);x.textAlign=left?"left":"center";
+      const T=musTop(op.v,4).map(([m])=>m).join("  ·  ");if(o.outline){x.lineWidth=5;x.strokeStyle=contrast;x.strokeText(T,left?P:W/2,off+op.y+op.h+60,maxW);}x.fillText(T,left?P:W/2,off+op.y+op.h+60,maxW);
+      x.restore();x.textAlign=left?"left":"center";continue;}
     if(op.prblock){x.save();x.shadowColor="transparent";const bw=Math.min(maxW,880);drawPRBlock(x,left?P:(W-bw)/2,off+op.y,bw,op.ent,{style:"glass",radius:28});x.restore();continue;}
     if(op.route){
       const box=Math.min(maxW,op.h*1.25),ox=left?P:(W-box)/2;
@@ -3355,13 +3424,13 @@ async function drawShare(s,o){
 let shareDl=null;
 function openShare(s){
   const hasRoute=!!(s.track&&s.track.length>1);
-  const o={layout:"stack",size:"fit",color:"#FFFFFF",font:"sport",align:"center",bg:"none",title:true,date:true,place:false,route:hasRoute,trophies:false,level:false,shadow:false,outline:false,rcolor:"same",sends:s.type==="climb"&&sendGroups(s).length>0,stats:defaultStats(s)};
+  const o={layout:"stack",size:"fit",color:"#FFFFFF",font:"sport",align:"center",bg:"none",title:true,date:true,place:false,route:hasRoute,trophies:false,level:false,shadow:false,outline:false,rcolor:"same",sends:s.type==="climb"&&sendGroups(s).length>0,mus:s.type==="lift"&&!!(s.ex&&s.ex.length),stats:defaultStats(s)};
   let blob=null,busy=false,again=false;
   const swatches=[...new Set(["#FFFFFF","#121212",STRAVA,TYPE_HEX[s.type],"#FFD23F","#FF6FB5","#7CF2C0"])];
   const swName=h=>h===STRAVA?"Strava orange":h==="#FFFFFF"?"White":h==="#121212"?"Black":"Color "+h;
   const segH=(id,key,opts)=>`<div class="seg" id="${id}">${opts.map(([v,t])=>`<button data-v="${v}" aria-pressed="${o[key]===v}">${t}</button>`).join("")}</div>`;
   const rr=getC().by[s.id],hasPR=!!(rr&&(rr.medals.length||(rr.ymedals||[]).length));
-  const toggles=[["title","Title"],["date","Date and time"],...(placeName(s)?[["place","Place"]]:[]),...(s.notes?[["notes","Notes"]]:[]),...(hasPR?[["prs","PR card"]]:[]),...(s.type==="climb"&&sendGroups(s).length?[["sends","Sends by grade"]]:[]),...(hasRoute?[["route","Route"]]:[]),["trophies","Medals"],["level","Level"],["shadow","Shadow"],["outline","Outline"]];
+  const toggles=[["title","Title"],["date","Date and time"],...(placeName(s)?[["place","Place"]]:[]),...(s.notes?[["notes","Notes"]]:[]),...(hasPR?[["prs","PR card"]]:[]),...(s.type==="climb"&&sendGroups(s).length?[["sends","Sends by grade"]]:[]),...(s.type==="lift"&&s.ex&&s.ex.length?[["mus","Muscles worked"]]:[]),...(hasRoute?[["route","Route"]]:[]),["trophies","Medals"],["level","Level"],["shadow","Shadow"],["outline","Outline"]];
   openSheet(`<h3>Share as image</h3><p class="sub">Transparent PNG unless you pick a background. Put it over a photo in Instagram Stories or any photo editor.</p>
     <div class="preview" id="pv"><span style="color:#fff">Drawing…</span></div>
     <div class="row"><button class="btn primary" id="ssave">Save image</button><button class="btn" id="scopy">Copy image</button></div>
@@ -3372,7 +3441,7 @@ function openShare(s){
       <div class="plabel">Stats to show (tap to add or remove, in order)</div><div class="tchips" id="o-stats">${allStats(s).map(st=>`<button class="tchip" data-k="${st.k}" aria-pressed="${o.stats.includes(st.k)}">${st.l}</button>`).join("")}</div>
       <div class="plabel">Show</div><div class="tchips" id="o-tog">${toggles.map(([k,t])=>`<button class="tchip" data-t="${k}" aria-pressed="${o[k]}">${t}</button>`).join("")}</div>
       <div class="plabel">Text color</div><div class="swrow" id="o-color">${swatches.map(h=>`<button class="sw" style="--sw:${h}" data-v="${h}" aria-label="${swName(h)}" title="${swName(h)}" aria-pressed="${o.color===h}"></button>`).join("")}</div>
-      ${hasRoute?`<div class="plabel">Route color</div><div class="swrow" id="o-rcolor"><button class="sw sw-same" data-v="same" aria-label="Same as text" title="Same as text" aria-pressed="${o.rcolor==="same"}">=</button>${swatches.map(h=>`<button class="sw" style="--sw:${h}" data-v="${h}" aria-label="${swName(h)}" title="${swName(h)}" aria-pressed="${o.rcolor===h}"></button>`).join("")}</div>`:""}
+      ${hasRoute||(s.type==="lift"&&s.ex&&s.ex.length)?`<div class="plabel">${hasRoute?"Route color":"Highlight color"}</div><div class="swrow" id="o-rcolor"><button class="sw sw-same" data-v="same" aria-label="Same as text" title="Same as text" aria-pressed="${o.rcolor==="same"}">=</button>${swatches.map(h=>`<button class="sw" style="--sw:${h}" data-v="${h}" aria-label="${swName(h)}" title="${swName(h)}" aria-pressed="${o.rcolor===h}"></button>`).join("")}</div>`:""}
       <div class="plabel">Font</div>${segH("o-font","font",[["sport","Sport"],["clean","Clean"],["classic","Classic"],["mono","Mono"]])}
       <div class="plabel">Alignment</div>${segH("o-align","align",[["center","Center"],["left","Left"]])}
       <div class="plabel">Background</div>${segH("o-bg","bg",[["none","None"],["dark","Dark"],["light","Light"],["color","Color"],...(s.photo?[["photo","Photo"]]:[])])}
@@ -3389,7 +3458,7 @@ function openShare(s){
     busy=false;if(again){again=false;redraw();}
   };
   const seg=(id,key)=>{const el=$(id);el.querySelectorAll("button").forEach(b=>b.onclick=()=>{el.querySelectorAll("button").forEach(z=>z.setAttribute("aria-pressed",z===b));o[key]=b.dataset.v;redraw();});};
-  ["layout","size","font","align","bg","color"].forEach(k=>seg("o-"+k,k));if(hasRoute)seg("o-rcolor","rcolor");
+  ["layout","size","font","align","bg","color"].forEach(k=>seg("o-"+k,k));if($("o-rcolor"))seg("o-rcolor","rcolor");
   $("o-stats").querySelectorAll("button").forEach(b=>b.onclick=()=>{const k=b.dataset.k,i=o.stats.indexOf(k);if(i>=0)o.stats.splice(i,1);else{if(o.stats.length>=6){toast("Up to 6 stats");return;}o.stats.push(k);}b.setAttribute("aria-pressed",i<0);redraw();});
   $("o-tog").querySelectorAll("button").forEach(b=>b.onclick=()=>{const k=b.dataset.t;o[k]=!o[k];b.setAttribute("aria-pressed",o[k]);redraw();});
   $("sback").onclick=()=>openDetail(s);
@@ -5594,11 +5663,13 @@ function gradeKind(label){const l=String(label||"");let m;
   if((m=l.match(/^(\d+)\s*pies?$/i)))return {k:"pie",n:+m[1],of:6};
   if(/\bchip$/i.test(l))return {k:"chip"};
   return {k:"dot"};}
+/* Boulder World "bars": a disc cut into 8 separate slices, grade = slices filled */
+function barSlices(n){const out=[],R=10.2,r=2.4,g=.13;for(let i=0;i<8;i++){const a0=i/8*Math.PI*2+g/2,a1=(i+1)/8*Math.PI*2-g/2,P=(rad,a)=>[12+rad*Math.sin(a),12-rad*Math.cos(a)];
+  const [x0,y0]=P(R,a0),[x1,y1]=P(R,a1),[x2,y2]=P(r,a1),[x3,y3]=P(r,a0);out.push({on:i<n,d:`M${x0.toFixed(2)} ${y0.toFixed(2)}A${R} ${R} 0 0 1 ${x1.toFixed(2)} ${y1.toFixed(2)}L${x2.toFixed(2)} ${y2.toFixed(2)}A${r} ${r} 0 0 0 ${x3.toFixed(2)} ${y3.toFixed(2)}Z`});}return out;}
 function gm(label,color,cls){
   const c=color||"#8E8E93",g=gradeKind(label),dark=/^#(1|2)/.test(c)&&c.length===7&&parseInt(c.slice(1,3),16)<0x40;
   const o=`<svg class="gm${cls?" "+cls:""}" viewBox="0 0 24 24" aria-hidden="true">`;
-  if(g.k==="bar"){const n=Math.min(8,g.n),w=1.7,gap=1.05,tot=n*w+(n-1)*gap,x0=12-tot/2;
-    return o+`<rect x="1" y="1" width="22" height="22" rx="7" fill="${c}"/>${[...Array(n)].map((_,i)=>`<rect x="${(x0+i*(w+gap)).toFixed(2)}" y="6.5" width="${w}" height="11" rx=".85" fill="#fff" fill-opacity=".95"/>`).join("")}</svg>`;}
+  if(g.k==="bar")return o+`<circle cx="12" cy="12" r="11.6" fill="#1C1C1E"/>${barSlices(Math.min(8,g.n)).map(w=>`<path d="${w.d}" fill="${c}"${w.on?"":` fill-opacity=".22"`}/>`).join("")}</svg>`;
   if(g.k==="pie"){const of=g.of||6,n=Math.min(of,g.n),a=n/of*Math.PI*2,x=12+9*Math.sin(a),y=12-9*Math.cos(a);
     const wedge=n>=of?`<circle cx="12" cy="12" r="9" fill="${c}"/>`:`<path d="M12 12L12 3A9 9 0 ${a>Math.PI?1:0} 1 ${x.toFixed(2)} ${y.toFixed(2)}Z" fill="${c}"/>`;
     return o+`<circle cx="12" cy="12" r="10.6" fill="#1C1C1E"/><circle cx="12" cy="12" r="9" fill="none" stroke="${c}" stroke-opacity=".35" stroke-width="1.2"/>${wedge}${[...Array(of)].map((_,i)=>{const t=i/of*Math.PI*2;return `<line x1="12" y1="12" x2="${(12+9*Math.sin(t)).toFixed(2)}" y2="${(12-9*Math.cos(t)).toFixed(2)}" stroke="#1C1C1E" stroke-width=".9"/>`;}).join("")}</svg>`;}
@@ -5609,7 +5680,7 @@ function gm(label,color,cls){
 function drawGM(x,label,color,cx,cy,r){
   const c=color||"#8E8E93",g=gradeKind(label),s=r/12;x.save();x.translate(cx-12*s,cy-12*s);x.scale(s,s);
   const rr=(X,Y,W,H,R)=>{x.beginPath();x.moveTo(X+R,Y);x.arcTo(X+W,Y,X+W,Y+H,R);x.arcTo(X+W,Y+H,X,Y+H,R);x.arcTo(X,Y+H,X,Y,R);x.arcTo(X,Y,X+W,Y,R);x.closePath();};
-  if(g.k==="bar"){rr(1,1,22,22,7);x.fillStyle=c;x.fill();const n=Math.min(8,g.n),w=1.7,gap=1.05,tot=n*w+(n-1)*gap,x0=12-tot/2;x.fillStyle="rgba(255,255,255,.95)";for(let i=0;i<n;i++){rr(x0+i*(w+gap),6.5,w,11,.85);x.fill();}}
+  if(g.k==="bar"){x.beginPath();x.arc(12,12,11.6,0,Math.PI*2);x.fillStyle="#1C1C1E";x.fill();for(const w of barSlices(Math.min(8,g.n))){x.globalAlpha=w.on?1:.22;x.fillStyle=c;x.fill(new Path2D(w.d));}x.globalAlpha=1;}
   else if(g.k==="pie"){const of=g.of||6,n=Math.min(of,g.n);x.beginPath();x.arc(12,12,10.6,0,Math.PI*2);x.fillStyle="#1C1C1E";x.fill();x.beginPath();x.moveTo(12,12);x.arc(12,12,9,-Math.PI/2,-Math.PI/2+n/of*Math.PI*2);x.closePath();x.fillStyle=c;x.fill();x.strokeStyle="#1C1C1E";x.lineWidth=.9;for(let i=0;i<of;i++){const t=i/of*Math.PI*2;x.beginPath();x.moveTo(12,12);x.lineTo(12+9*Math.sin(t),12-9*Math.cos(t));x.stroke();}x.beginPath();x.arc(12,12,9,0,Math.PI*2);x.strokeStyle=c;x.globalAlpha=.4;x.lineWidth=1.2;x.stroke();x.globalAlpha=1;}
   else if(g.k==="chip"){x.beginPath();x.arc(12,12,11,0,Math.PI*2);x.fillStyle=c;x.fill();x.setLineDash([3.3,3.3]);x.beginPath();x.arc(12,12,8.4,0,Math.PI*2);x.strokeStyle="rgba(255,255,255,.9)";x.lineWidth=2.4;x.stroke();x.setLineDash([]);x.beginPath();x.arc(12,12,5.2,0,Math.PI*2);x.fillStyle=c;x.fill();x.strokeStyle="rgba(255,255,255,.55)";x.lineWidth=.8;x.stroke();}
   else{x.beginPath();x.arc(12,12,10.5,0,Math.PI*2);x.fillStyle=c;x.fill();if(parseInt(c.slice(1,3),16)<0x40&&parseInt(c.slice(3,5),16)<0x40){x.strokeStyle="#5A5A60";x.lineWidth=1.2;x.stroke();}}
