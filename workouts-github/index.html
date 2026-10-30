@@ -4326,113 +4326,114 @@ function sendFacts(s,i){
   return {p,pr,result,tries,high,name:p.name||(pr&&pr.name)||"",style:[p.style,(p.holds||[]).join(", ")].filter(Boolean).join(" · "),gym:placeName(s)||"",date:fmtDate(s.date,{month:"short",day:"numeric",year:"numeric"})};
 }
 function ordinal(n){const v=n%100;return n+(v>=11&&v<=13?"th":({1:"st",2:"nd",3:"rd"}[n%10]||"th"));}
-/* ---------- edgier send stickers: Tape, Chrome, Stamp, Topo ---------- */
-const SX_LAYOUTS=["tape","chrome","stamp","topo"];
-const SXF={anton:sz=>`${Math.round(sz)}px "WkAnton",Impact,sans-serif`,wide:sz=>`${Math.round(sz)}px "WkWide","Archivo",sans-serif`,
-  mono:sz=>`${Math.round(sz)}px "WkMono",ui-monospace,Menlo,monospace`,monoB:sz=>`700 ${Math.round(sz)}px "WkMono",ui-monospace,Menlo,monospace`,
-  marker:sz=>`${Math.round(sz)}px "WkMarker","Permanent Marker","Comic Sans MS",cursive`};
+/* ---------- send stickers, second set: Tick, Chalk, T-nut, Top-out ----------
+   Type-led and climbing-specific: a hand tick through the grade, chalk-textured letters,
+   the grade set as holds on a gym wall's T-nut grid, and the grade rising over the lip. */
+const SX_LAYOUTS=["tick","chalk","tnut","topout"];
+const SXF={anton:sz=>`${Math.round(sz)}px "WkAnton",Impact,sans-serif`,wide:sz=>`${Math.round(sz)}px "WkWide","Archivo",sans-serif`};
 function sxRand(seed){let s=seed%2147483647||7;return ()=>(s=(s*16807)%2147483647)/2147483647;}
 function sxSeed(t){let h=9;for(const c of String(t))h=(h*31+c.charCodeAt(0))%2147483647;return h;}
+/* 5x7 dot font for the T-nut layout */
+const DOT5={A:"01110100011000111111100011000110001",B:"11110100011000111110100011000111110",C:"01110100011000010000100001000101110",D:"11110100011000110001100011000111110",E:"11111100001000011110100001000011111",F:"11111100001000011110100001000010000",G:"01110100011000010111100011000101111",H:"10001100011000111111100011000110001",I:"01110001000010000100001000010001110",J:"00111000100001000010000101001001100",K:"10001100101010011000101001001010001",L:"10000100001000010000100001000011111",M:"10001110111010110101100011000110001",N:"10001110011010110011100011000110001",O:"01110100011000110001100011000101110",P:"11110100011000111110100001000010000",Q:"01110100011000110001101011001001101",R:"11110100011000111110101001001010001",S:"01111100001000001110000010000111110",T:"11111001000010000100001000010000100",U:"10001100011000110001100011000101110",V:"10001100011000110001100010101000100",W:"10001100011000110101101011010101010",X:"10001100010101000100010101000110001",Y:"10001100010101000100001000010000100",Z:"11111000010001000100010001000011111",
+  "0":"01110100011001110101110011000101110","1":"00100011000010000100001000010001110","2":"01110100010000100010001000100011111","3":"11111000100010000010000011000101110","4":"00010001100101010010111110001000010","5":"11111100001111000001000011000101110","6":"00110010001000011110100011000101110","7":"11111000010001000100010000100001000","8":"01110100011000101110100011000101110","9":"01110100011000101111000010001001100",
+  "+":"00000001000010011111001000010000000","-":"00000000000000011111000000000000000"," ":"00000000000000000000000000000000000"};
+/* hash-based value noise; any coordinates, no array bounds */
+function vnoise(px,py,seed){const h=(a,b)=>{const t=Math.sin(a*127.1+b*311.7+seed*74.7)*43758.5453;return t-Math.floor(t);};
+  const ix=Math.floor(px),iy=Math.floor(py),tx=px-ix,ty=py-iy,sx=tx*tx*(3-2*tx),sy=ty*ty*(3-2*ty),a=h(ix,iy),b=h(ix+1,iy),c=h(ix,iy+1),d=h(ix+1,iy+1);
+  return a+(b-a)*sx+(c-a)*sy+(a-b-c+d)*sx*sy;}
+/* Roughen a drawn layer in place: eroded edges, powdery grain, optional brush streaks along an angle. */
+function gritLayer(cnv,o,seed,rnd){
+  const W=cnv.width,H=cnv.height,cx=cnv.getContext("2d"),bl=document.createElement("canvas");bl.width=W;bl.height=H;const bx=bl.getContext("2d");
+  try{bx.filter=`blur(${o.blur||4}px)`;}catch(e){}bx.drawImage(cnv,0,0);
+  const A=cx.getImageData(0,0,W,H),D=A.data,B=bx.getImageData(0,0,W,H).data,ca=Math.cos(o.angle||0),sa=Math.sin(o.angle||0);
+  for(let py=0;py<H;py++)for(let px=0;px<W;px++){const k=(py*W+px)*4,b=B[k+3]/255;if(b<.03){D[k+3]=0;continue;}
+    let e=b+(vnoise(px/7,py/7,seed)-.5)*(o.edge||.6)+(vnoise(px/34,py/34,seed+1)-.5)*.3;let a=Math.min(1,Math.max(0,(e-.38)/.24));
+    if(o.streak){const u=px*ca+py*sa,v=-px*sa+py*ca,st=vnoise(u/70,v/2.6,seed+2);a*=st<o.streak?st/o.streak*.35:1;}
+    if(o.patch){const pn=vnoise(px/46,py/46,seed+5);a*=1-o.patch*Math.max(0,(.62-pn)/.62);}
+    const g=rnd();a*=g<(o.holes||.1)?.15:(1-(o.grain||.35))+(o.grain||.35)*vnoise(px/2.2,py/2.2,seed+3);
+    D[k+3]=Math.round(a*Math.max(D[k+3],B[k+3]>200?255:D[k+3]));}
+  cx.putImageData(A,0,0);return cnv;}
+function sendSentence(f,o,s){
+  const p=f.p,att=p.att||1,sent=p.res!=="attempt";
+  let a=f.result==="Project sent"?`Project sent after ${f.tries}`:p.res==="flash"?"Flashed":sent?(o.tries?(att===1?"Sent first try":`Sent on the ${ordinal(att)} try`):"Sent"):(o.tries?`Working on it, ${att} ${att===1?"try":"tries"} so far`:"Working on it");
+  if(o.name&&f.name)a=`${f.name}. `+a;
+  if(o.gym&&f.gym)a+=` at ${f.gym}`;
+  if(o.date)a+=`, ${fmtDate(s.date,{month:"short",day:"numeric"})}`;
+  a+=".";if(f.high&&o.high)a+=" New high point.";
+  return a;
+}
 async function drawSendX(s,i,o){
   const f=sendFacts(s,i);
-  try{await Promise.all(["WkAnton","WkWide","WkMono","WkMarker"].map(n=>document.fonts.load(`80px "${n}"`))).catch(()=>{});await document.fonts.load('700 40px "WkMono"');}catch(e){}
+  try{await Promise.all([document.fonts.load('80px "WkAnton"'),document.fonts.load('40px "WkWide"'),document.fonts.load('600 40px "Barlow"')]);}catch(e){}
   const c=document.createElement("canvas"),x=c.getContext("2d"),ink=o.color,rnd=sxRand(sxSeed(s.id+":"+i));
-  const grade0=f.p.gl||"",gc=f.p.gc||null,res=f.result.toUpperCase();let grade=grade0;
+  const grade=(f.p.gl||"").toUpperCase(),gc=f.p.gc||null,acc=o.accent==="grade"&&gc?gc:ink;
   const lum=h=>{const n=parseInt(String(h).slice(1),16);return ((n>>16)*0.299+((n>>8)&255)*0.587+(n&255)*0.114)/255;};
-  const meta=[o.gym&&f.gym,o.date&&fmtDate(s.date,{day:"2-digit",month:"2-digit",year:"2-digit"}).replace(/\//g,".")].filter(Boolean);
-  const sub=[o.tries&&f.tries,o.style&&f.style].filter(Boolean);
-  const name=o.name&&f.name?f.name:"";
-  const W=1080;let H=0;const fx=()=>{if(o.shadow&&o.layout!=="tape"&&o.bg!=="glass"){x.shadowColor=lum(ink)>.5?"rgba(0,0,0,.5)":"rgba(255,255,255,.4)";x.shadowBlur=16;x.shadowOffsetY=3;}};
-  const glassBg=()=>{if(o.bg==="glass"){x.save();x.fillStyle="rgba(0,0,0,.6)";x.beginPath();x.roundRect?x.roundRect(0,0,c.width,c.height,48):x.rect(0,0,c.width,c.height);x.fill();x.restore();}};
-  const trim=()=>{ // crop to drawn pixels so the sticker sits tight
-    const d=x.getImageData(0,0,c.width,c.height).data;let t=c.height,b=0,l=c.width,r=0;
-    for(let yy=0;yy<c.height;yy+=2)for(let xx=0;xx<c.width;xx+=2){if(d[(yy*c.width+xx)*4+3]>8){if(yy<t)t=yy;if(yy>b)b=yy;if(xx<l)l=xx;if(xx>r)r=xx;}}
-    if(b<=t)return c;const m=o.bg==="glass"?56:30,o2=document.createElement("canvas");o2.width=r-l+2*m;o2.height=b-t+2*m;const y2=o2.getContext("2d");
-    if(o.bg==="glass"){y2.fillStyle="rgba(0,0,0,.6)";y2.beginPath();y2.roundRect?y2.roundRect(0,0,o2.width,o2.height,48):y2.rect(0,0,o2.width,o2.height);y2.fill();}
-    y2.drawImage(c,l,t,r-l,b-t,m,m,r-l,b-t);return o2;};
-  if(o.layout==="tape"){
-    // a strip of gym tape with a marker-written grade, torn ends
-    const tapeCol=gc&&o.accent==="grade"?gc:"#EFEBE2",inkT=lum(tapeCol)>.55?"#141414":"#FFFFFF";
-    x.font=SXF.marker(170);const gw=x.measureText(grade).width;x.font=SXF.marker(92);const rw=x.measureText(res).width;
-    const tw=Math.min(1240,Math.max(560,gw+rw+260)),th=300;c.width=tw+260;c.height=th+(name||sub.length||meta.length?420:220);
-    x.save();x.translate(c.width/2,150+th/2);x.rotate(-.045);
-    const L=-tw/2,R=tw/2,T=-th/2,B=th/2;x.beginPath();x.moveTo(L,T);
-    x.lineTo(R,T);let yy=T;while(yy<B){const d=14+rnd()*16;x.lineTo(R+(rnd()*2-1)*12,Math.min(B,yy+d/2));yy+=d;}x.lineTo(R,B);x.lineTo(L,B);
-    yy=B;while(yy>T){const d=14+rnd()*16;x.lineTo(L+(rnd()*2-1)*12,Math.max(T,yy-d/2));yy-=d;}x.closePath();
-    x.shadowColor="rgba(0,0,0,.45)";x.shadowBlur=24;x.shadowOffsetY=10;x.fillStyle=tapeCol;x.fill();x.shadowColor="transparent";
-    x.save();x.clip();x.globalAlpha=.07;x.fillStyle="#000";for(let k=0;k<70;k++){x.fillRect(L,T+rnd()*th,tw,1+rnd()*1.5);} // cloth weave
-    const g=x.createLinearGradient(0,T,0,B);g.addColorStop(0,"rgba(255,255,255,.35)");g.addColorStop(.5,"rgba(255,255,255,0)");g.addColorStop(1,"rgba(0,0,0,.12)");x.globalAlpha=1;x.fillStyle=g;x.fillRect(L,T,tw,th);
-    x.globalAlpha=.10;x.fillStyle="#FFF";for(let k=0;k<26;k++){x.beginPath();x.ellipse(L+rnd()*tw,T+rnd()*th,8+rnd()*30,4+rnd()*14,rnd()*3,0,7);x.fill();} // chalk smudges
-    x.restore();
-    x.fillStyle=inkT;x.textBaseline="middle";x.font=SXF.marker(170);x.textAlign="left";const x0=-(gw+60+rw)/2;x.fillText(grade,x0,8);
-    x.font=SXF.marker(92);x.fillText(res,x0+gw+60,18);
-    x.restore();
-    let ty=150+th+40;x.save();x.translate(c.width/2,0);x.rotate(-.02);x.textAlign="center";x.textBaseline="alphabetic";x.fillStyle=ink;fx();
-    if(name){ty+=86;x.font=SXF.marker(78);x.fillText(name,0,ty,tw);}
-    if(sub.length){ty+=62;x.font=SXF.mono(40);x.fillText(sub.join("  /  ").toUpperCase(),0,ty,tw);}
-    if(meta.length){ty+=56;x.font=SXF.mono(34);x.globalAlpha=.85;x.fillText(meta.join("  /  ").toUpperCase(),0,ty,tw);}
-    x.restore();
-    if(f.high&&o.high){x.save();x.translate(c.width/2+tw/2-40,118);x.rotate(.08);x.font=SXF.marker(54);x.textAlign="right";x.fillStyle="#E8323C";x.fillText("new high point!",0,0);x.restore();}
-    return trim();
+  const cap=sendSentence(f,o,s),capF=`600 40px "Barlow",system-ui,sans-serif`;
+  const shadowOn=()=>{if(o.shadow&&o.bg!=="glass"){x.shadowColor=lum(ink)>.5?"rgba(0,0,0,.55)":"rgba(255,255,255,.45)";x.shadowBlur=18;x.shadowOffsetY=3;}};
+  const caption=(X,Y,maxW,align)=>{x.save();shadowOn();x.font=capF;x.fillStyle=ink;x.textAlign=align||"left";const L=wrapLines(x,cap,maxW,3);L.forEach((l,k)=>x.fillText(l,X,Y+k*50));x.restore();return L.length*50;};
+  const trim=src=>{const d=src.getContext("2d").getImageData(0,0,src.width,src.height).data;let t=src.height,b=0,l=src.width,r=0;
+    for(let yy=0;yy<src.height;yy+=2)for(let xx=0;xx<src.width;xx+=2){if(d[(yy*src.width+xx)*4+3]>6){if(yy<t)t=yy;if(yy>b)b=yy;if(xx<l)l=xx;if(xx>r)r=xx;}}
+    if(b<=t)return src;const m=o.bg==="glass"?60:28,out=document.createElement("canvas");out.width=r-l+2*m;out.height=b-t+2*m;const y2=out.getContext("2d");
+    if(o.bg==="glass"){y2.fillStyle="rgba(0,0,0,.6)";y2.beginPath();y2.roundRect?y2.roundRect(0,0,out.width,out.height,44):y2.rect(0,0,out.width,out.height);y2.fill();}
+    y2.drawImage(src,l,t,r-l+1,b-t+1,m,m,r-l+1,b-t+1);return out;};
+  const fitAnton=(t,size,maxW)=>{let sz=size;x.font=SXF.anton(sz);while(x.measureText(t).width>maxW&&sz>60){sz-=8;x.font=SXF.anton(sz);}return sz;};
+
+  if(o.layout==="tick"){
+    // hollow grade, a dry-brush tick slashed through it: the logbook tick, scaled up
+    const gs=fitAnton(grade,460,1100);x.font=SXF.anton(gs);const gw=x.measureText(grade).width,capH=gs*1.02;
+    c.width=Math.max(760,gw+300);c.height=capH+420;const gx=(c.width-gw)/2,base=60+capH*.98;
+    x.save();shadowOn();x.font=SXF.anton(gs);x.textAlign="left";x.lineJoin="round";x.lineWidth=Math.max(5,gs*.016);x.strokeStyle=ink;x.strokeText(grade,gx,base);x.restore();
+    if(f.p.res!=="attempt"){
+      const top=base-capH*.92,P0=[gx-30,top+capH*.50],P1=[gx+gw*.30,top+capH*.95],P2=[gx+gw+80,top-40],W0=Math.max(40,gs*.13);
+      const t=document.createElement("canvas");t.width=c.width;t.height=c.height;const tx=t.getContext("2d");tx.fillStyle=acc;tx.strokeStyle=acc;tx.lineCap="round";
+      const seg=(a,b,n,w0,w1)=>{for(let k=0;k<n;k++){const q=k/n,q2=(k+1)/n;tx.lineWidth=w0+(w1-w0)*q;tx.beginPath();tx.moveTo(a[0]+(b[0]-a[0])*q,a[1]+(b[1]-a[1])*q);tx.lineTo(a[0]+(b[0]-a[0])*q2,a[1]+(b[1]-a[1])*q2);tx.stroke();}};
+      seg(P0,P1,20,W0*.55,W0);seg(P1,P2,40,W0,W0*.18);
+      gritLayer(t,{edge:.75,grain:.12,holes:.015,streak:.22,patch:.25,angle:Math.atan2(P2[1]-P1[1],P2[0]-P1[0]),blur:5},sxSeed(s.id)%97,rnd);
+      x.save();if(o.shadow){x.shadowColor="rgba(0,0,0,.4)";x.shadowBlur=12;}x.drawImage(t,0,0);x.restore();}
+    caption(gx,base+90,Math.max(gw,640),"left");
+    return trim(c);
   }
-  if(o.layout==="chrome"){
-    // liquid chrome grade, monochrome
-    grade=grade0.toUpperCase();const big=grade.length>3?250:330;x.font=SXF.wide(big);const gw=Math.max(400,x.measureText(grade).width);
-    c.width=Math.max(900,gw+300);c.height=big+520;const cx=c.width/2;let y=140+big*.78;
-    if(f.high&&o.high){x.font=SXF.monoB(32);x.textAlign="center";x.fillStyle=ink;trkFill(x,"✦ NEW HIGH POINT ✦".replace(/✦/g,"*"),cx,96,.25,"center");}
-    if(gc){drawGM(x,grade,gc,cx-gw/2-70,y-big*.36,46);}
-    const chrome=(top,h)=>{const g=x.createLinearGradient(0,top,0,top+h);g.addColorStop(0,"#FFFFFF");g.addColorStop(.28,"#C9CED6");g.addColorStop(.48,"#5D636C");g.addColorStop(.52,"#1E2126");g.addColorStop(.56,"#9EA4AD");g.addColorStop(.78,"#F4F6F8");g.addColorStop(1,"#8A9098");return g;};
-    x.font=SXF.wide(big);x.textAlign="center";x.textBaseline="alphabetic";x.lineJoin="round";
-    x.save();x.shadowColor="rgba(0,0,0,.55)";x.shadowBlur=30;x.shadowOffsetY=14;x.lineWidth=14;x.strokeStyle="#0D0E10";x.strokeText(grade,cx,y);x.restore();
-    x.lineWidth=4;x.strokeStyle="rgba(255,255,255,.85)";x.strokeText(grade,cx,y);
-    x.fillStyle=chrome(y-big*.74,big*.78);x.fillText(grade,cx,y);
-    // glint
-    const gx=cx+gw/2-10,gy=y-big*.66;x.save();x.fillStyle="#FFF";x.shadowColor="#FFF";x.shadowBlur=18;x.beginPath();for(let k=0;k<8;k++){const r=k%2?7:46,a=k*Math.PI/4;x.lineTo(gx+Math.cos(a)*r,gy+Math.sin(a)*r);}x.closePath();x.fill();x.restore();
-    y+=92;x.font=SXF.wide(64);x.fillStyle=chrome(y-56,62);x.lineWidth=6;x.strokeStyle="#0D0E10";const rw=trkW(x,res,.18);x.save();x.shadowColor="rgba(0,0,0,.5)";x.shadowBlur=12;x.textAlign="left";
-    let px=cx-rw/2;for(const ch of res){x.strokeText(ch,px,y);px+=x.measureText(ch).width+.18*64;}x.restore();trkFill(x,res,cx,y,.18,"center");
-    x.fillStyle=ink;fx();x.font=SXF.mono(36);let yy=y+20;
-    for(const line of [name.toUpperCase(),sub.join(" · ").toUpperCase(),meta.join(" · ").toUpperCase()].filter(Boolean)){yy+=58;x.globalAlpha=.9;trkFill(x,line.length>48?line.slice(0,47)+"…":line,cx,yy,.08,"center");}
-    x.globalAlpha=1;return trim();
+  if(o.layout==="chalk"){
+    // chalky letters: eroded edges, powder grain, dust falling off the bottom
+    const word=f.p.res==="flash"?"Flashed":f.p.res==="attempt"?"Projecting":"Sent";
+    const gs=fitAnton(grade,440,1000);x.font=SXF.anton(gs);const gw=x.measureText(grade).width;
+    x.font=SXF.wide(86);const ww=x.measureText(word).width;
+    const Wc=Math.max(gw,ww)+240,Hc=gs*1.05+200;const m=document.createElement("canvas");m.width=Wc;m.height=Hc;const mx=m.getContext("2d");
+    mx.fillStyle="#fff";mx.textAlign="center";mx.font=SXF.anton(gs);mx.fillText(grade,Wc/2,60+gs*.97);
+    mx.globalCompositeOperation="source-in";mx.fillStyle=ink;mx.fillRect(0,0,Wc,Hc);mx.globalCompositeOperation="source-over";
+    gritLayer(m,{edge:1.0,grain:.22,holes:.035,patch:.55,blur:7},sxSeed(s.id)%89,rnd);
+    mx.fillStyle=ink;mx.textAlign="center";mx.font=SXF.wide(80);mx.fillText(word,Wc/2,60+gs*.97+124);
+    c.width=Wc;c.height=Hc+260;
+    // dust: soft specks drifting below the letters
+    x.save();x.fillStyle=ink;for(let k=0;k<900;k++){const px=Wc/2+(rnd()*2-1)*gw*.55,py=60+gs*.6+Math.pow(rnd(),.7)*(gs*.9+160);x.globalAlpha=rnd()*.10;x.beginPath();x.arc(px,py,.8+rnd()*2.6,0,7);x.fill();}x.restore();
+    x.save();shadowOn();x.drawImage(m,0,0);x.restore();
+    caption(Wc/2,Hc+40,Math.max(gw,620),"center");
+    return trim(c);
   }
-  if(o.layout==="stamp"){
-    // rubber stamp, distressed, one ink
-    grade=grade0.toUpperCase();const word=f.result==="Working on it"?"PROJECT":f.result==="Flash"?"FLASHED":f.result==="Project sent"?"SENT IT":"SENT";
-    c.width=1000;c.height=760;x.save();x.translate(500,380);x.rotate(-.06);
-    x.strokeStyle=ink;x.fillStyle=ink;x.lineWidth=12;const bw=820,bh=560;
-    const rough=(w,h,j)=>{x.beginPath();const pts=[];for(let k=0;k<=40;k++)pts.push([-w/2+w*k/40,-h/2]);for(let k=0;k<=30;k++)pts.push([w/2,-h/2+h*k/30]);for(let k=40;k>=0;k--)pts.push([-w/2+w*k/40,h/2]);for(let k=30;k>=0;k--)pts.push([-w/2,-h/2+h*k/30]);
-      pts.forEach(([a,b],k)=>{a+=(rnd()*2-1)*j;b+=(rnd()*2-1)*j;k?x.lineTo(a,b):x.moveTo(a,b);});x.closePath();x.stroke();};
-    rough(bw,bh,3);x.lineWidth=5;rough(bw-44,bh-44,2);
-    x.textAlign="center";x.textBaseline="alphabetic";
-    x.font=SXF.anton(64);trkFill(x,(f.gym||"BOULDER").toUpperCase().slice(0,26),0,-bh/2+110,.12,"center");
-    let gs=230;x.font=SXF.anton(gs);while(x.measureText(word).width>bw-140&&gs>80){gs-=6;x.font=SXF.anton(gs);}
-    x.save();x.scale(1,1.12);trkFill(x,word,0,62/1.12,.01,"center");x.restore();
-    x.fillRect(-bw/2+60,96,bw-120,6);
-    x.font=SXF.anton(96);const gtxt=grade+(o.tries?"  ·  "+f.tries.toUpperCase():"");let s2=96;while(x.measureText(gtxt).width>bw-120&&s2>40){s2-=4;x.font=SXF.anton(s2);}trkFill(x,gtxt,0,206,.03,"center");
-    if(o.date){x.font=SXF.monoB(34);trkFill(x,fmtDate(s.date,{day:"2-digit",month:"short",year:"numeric"}).toUpperCase(),0,bh/2+80,.3,"center");}
-    x.restore();
-    // distress: knock out specks and scratches
-    x.save();x.globalCompositeOperation="destination-out";
-    for(let k=0;k<1400;k++){x.globalAlpha=.25+rnd()*.75;x.beginPath();x.arc(rnd()*c.width,rnd()*c.height,.6+rnd()*rnd()*5,0,7);x.fill();}
-    x.globalAlpha=.6;x.lineWidth=2;for(let k=0;k<14;k++){x.beginPath();const a=rnd()*c.width,b=rnd()*c.height;x.moveTo(a,b);x.lineTo(a+(rnd()-.5)*240,b+(rnd()-.5)*40);x.stroke();}
-    x.globalAlpha=.35;for(let k=0;k<6;k++){x.beginPath();x.ellipse(rnd()*c.width,rnd()*c.height,30+rnd()*90,10+rnd()*30,rnd()*3,0,7);x.fill();}
-    x.restore();
-    if(f.high&&o.high){x.save();x.font=SXF.marker(50);x.fillStyle="#E8323C";x.textAlign="right";x.translate(c.width-40,70);x.rotate(.05);x.fillText("new high point!",0,0);x.restore();}
-    return trim();
+  if(o.layout==="tnut"){
+    // the grade set as holds on a T-nut grid
+    const txt=grade.replace(/[^A-Z0-9+\- ]/g,"").slice(0,8)||"V?";const cols=txt.length*6-1;let pitch=Math.min(44,Math.floor(1180/(cols+2)));
+    const gw=(cols+2)*pitch,gh=9*pitch;c.width=Math.max(gw+80,720);c.height=gh+300;const ox=(c.width-gw)/2+pitch/2,oy=40+pitch/2;
+    x.save();x.strokeStyle=ink;x.globalAlpha=.42;x.lineWidth=2;for(let r=0;r<9;r++)for(let q=0;q<cols+2;q++){x.beginPath();x.arc(ox+q*pitch,oy+r*pitch,pitch*.09,0,7);x.stroke();}x.restore();
+    const filled=[];[...txt].forEach((ch,ci)=>{const g=DOT5[ch]||DOT5[" "];for(let r=0;r<7;r++)for(let q=0;q<5;q++)if(g[r*5+q]==="1")filled.push([1+ci*6+q,1+r]);});
+    const topHold=filled.reduce((a,p)=>!a||p[1]<a[1]||(p[1]===a[1]&&p[0]>a[0])?p:a,null);
+    x.save();shadowOn();filled.forEach(([q,r])=>{const isTop=topHold&&q===topHold[0]&&r===topHold[1];x.fillStyle=isTop&&gc?gc:o.accent==="grade"&&gc?gc:ink;
+      x.beginPath();x.arc(ox+q*pitch,oy+r*pitch,pitch*(isTop?.46:.36)+(rnd()-.5)*pitch*.06,0,7);x.fill();});x.restore();
+    caption(ox-pitch/2,oy+gh+40,gw,"left");
+    return trim(c);
   }
-  // topo: guidebook line drawing with numbered holds
-  c.width=1000;c.height=1000;const cx=500;x.strokeStyle=ink;x.fillStyle=ink;x.lineCap="round";x.lineJoin="round";fx();
-  const pts=[[cx-40,880],[cx+60,760],[cx-30,640],[cx+90,520],[cx+10,400],[cx+70,290],[cx+20,200]];
-  x.setLineDash([2,22]);x.lineWidth=10;x.beginPath();pts.forEach(([a,b],k)=>k?x.lineTo(a,b):x.moveTo(a,b));x.stroke();x.setLineDash([]);
-  pts.slice(0,-1).forEach(([a,b],k)=>{x.beginPath();x.arc(a,b,k?16:22,0,7);x.lineWidth=5;x.stroke();});
-  const [tx,ty]=pts[pts.length-1];x.beginPath();x.moveTo(tx-34,ty);x.lineTo(tx+34,ty);x.lineWidth=8;x.stroke();
-  x.font=SXF.mono(30);x.textAlign="left";x.fillText("TOP",tx+46,ty+10);x.fillText("START",pts[0][0]+40,pts[0][1]+12);
-  const lx=cx-400;x.textAlign="left";
-  if(gc)drawGM(x,grade,gc,lx+60,300,58);else{x.beginPath();x.arc(lx+60,300,62,0,7);x.lineWidth=6;x.stroke();x.font=SXF.wide(grade.length>2?40:52);x.textAlign="center";x.textBaseline="middle";x.fillText(grade,lx+60,304);x.textBaseline="alphabetic";}
-  x.textAlign="left";x.font=SXF.wide(78);x.fillText(res,lx,450,380);
-  x.font=SXF.mono(36);let yy=450;for(const l of [name,...sub,...meta].filter(Boolean).slice(0,5)){yy+=56;x.globalAlpha=.88;x.fillText(l.length>20?l.slice(0,19)+"…":l,lx,yy);}x.globalAlpha=1;
-  if(gc){x.font=SXF.monoB(30);x.fillText(grade.toUpperCase(),lx+140,312);}
-  if(f.high&&o.high){x.font=SXF.monoB(30);x.fillText("[ NEW HIGH POINT ]",lx,200);}
-  return trim();
+  // top-out: the grade rising over the lip, fading below it
+  const gs=fitAnton(grade,500,1080);x.font=SXF.anton(gs);const gw=x.measureText(grade).width,capH=gs*.98;
+  const Wc=Math.max(780,gw+260);const m=document.createElement("canvas");m.width=Wc;m.height=capH+140;const mx=m.getContext("2d");
+  const base=40+capH,lip=40+capH*.58;mx.fillStyle=ink;mx.textAlign="center";mx.font=SXF.anton(gs);mx.fillText(grade,Wc/2,base);
+  const mk=document.createElement("canvas");mk.width=Wc;mk.height=m.height;const kx=mk.getContext("2d"),g=kx.createLinearGradient(0,lip,0,base);g.addColorStop(0,"rgba(0,0,0,.5)");g.addColorStop(1,"rgba(0,0,0,0)");
+  kx.fillStyle="#000";kx.fillRect(0,0,Wc,lip);kx.fillStyle=g;kx.fillRect(0,lip,Wc,base-lip+2);
+  mx.globalCompositeOperation="destination-in";mx.drawImage(mk,0,0);
+  mx.globalCompositeOperation="destination-out";mx.fillRect(0,lip-10,Wc,22);
+  c.width=Wc;c.height=m.height+240;
+  x.save();shadowOn();x.drawImage(m,0,0);x.fillStyle=acc;const lx0=(Wc-gw)/2-70,lx1=(Wc+gw)/2+70;x.fillRect(lx0,lip-3,lx1-lx0,6);x.restore();
+  caption(lx0,base+60,Math.max(560,lx1-lx0),"left");
+  return trim(c);
 }
 async function drawSendCard(s,i,o){
   if(SX_LAYOUTS.includes(o.layout))return drawSendX(s,i,o);
@@ -4494,7 +4495,7 @@ function openSendShare(s,i,back){
   const f=sendFacts(s,i);if(!f)return;
   const o={layout:"stack",font:"sport",color:"#FFFFFF",accent:f.p.gc?"grade":"text",bg:"none",shadow:true,outline:false,gym:!!f.gym,date:true,tries:true,name:!!f.name,style:false,high:true};
   const segs=[{label:"Layout",key:"layout",opts:[["stack","Stack"],["strip","Strip"],["badge","Badge"]]},
-    {label:"Edgier",key:"layout",opts:[["tape","Tape"],["chrome","Chrome"],["stamp","Stamp"],["topo","Topo"]]},
+    {label:"More layouts",key:"layout",opts:[["tick","Tick"],["chalk","Chalk"],["tnut","Wall"],["topout","Top-out"]]},
     {label:"Background",key:"bg",opts:[["none","None"],["glass","Glass"]]},
     {label:"Text color",key:"color",opts:[["#FFFFFF","White"],["#121212","Black"],["#FC4C02","Strava orange"],["#CDF54A","Volt"]]},
     {label:"Result color",key:"accent",opts:[...(f.p.gc?[["grade","Grade color"]]:[]),["text","Same as text"]]},
