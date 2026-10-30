@@ -849,6 +849,49 @@ h2.sec{font-family:var(--display);font-weight:700;letter-spacing:-.015em}
 button.trow.sendrow{width:100%;text-align:left;color:inherit;font:inherit;background:none;border:0;border-bottom:1px solid var(--line);cursor:pointer}
 button.trow.sendrow:last-child{border-bottom:0}
 button.trow.sendrow:active{opacity:.6}
+
+/* ---------- v33 refinements (from Subframe review) ---------- */
+.wk-h em{padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.06)}
+.wk-h em.up{background:rgba(205,245,74,.12)}
+.wk-d.today span{position:relative}
+.wk-d.today span::after{content:"";position:absolute;left:50%;bottom:-8px;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:var(--accent)}
+.wk-bars{padding-bottom:6px}
+.chip .fdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--d);margin-right:6px;vertical-align:1px}
+.chip[aria-pressed="true"] .fdot{box-shadow:0 0 0 1.5px rgba(0,0,0,.25)}
+.mrow{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:22px 2px 10px}
+.mrow .month{margin:0}
+.mrow .pfilter{margin:0 0 0 auto;flex:0 1 auto;max-width:46%;height:34px;font-size:16px}
+.dhead{display:flex;gap:12px;align-items:flex-start;margin-bottom:4px}
+.dhead h3{margin:0}
+.dhead .sub{margin-top:2px}
+.dico{flex:none;width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 18%,transparent);color:var(--c);margin-top:2px}
+.dico .ico{width:22px;height:22px}
+@supports not (background:color-mix(in srgb,red 50%,blue)){.dico{background:rgba(255,255,255,.08)}}
+.dstats.c2,.dstats.c3{gap:8px;margin:14px 0 16px}
+.dstats.c2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.dstats.c3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.dstats.c2 .n,.dstats.c3 .n{background:rgba(255,255,255,.05);border-radius:14px;padding:11px 13px 12px;min-width:0}
+.dstats.c2 .n b{font-size:clamp(1.25rem,6vw,1.6rem)}
+.dstats.c3 .n b{font-size:clamp(1.02rem,4.8vw,1.3rem)}
+.row.dsec:empty{display:none}
+.row.dsec{margin-top:8px}
+.qrow{display:flex;justify-content:center;gap:4px;margin-top:14px}
+.qrow button{flex:1;min-height:44px;background:none;border:0;color:var(--muted);font:inherit;font-weight:600;font-size:.95rem;border-radius:12px}
+.qrow button:active{background:rgba(255,255,255,.06)}
+.qrow .qdel{color:var(--red,#FF3B47)}
+button.trow:not(.sendrow)::after{content:"";flex:none;width:7px;height:7px;border-top:2px solid currentColor;border-right:2px solid currentColor;transform:rotate(45deg);opacity:.3;margin:0 4px 0 6px}
+.qxp{flex:none;margin-left:auto;font-size:.78rem;font-weight:700;padding:4px 9px;border-radius:999px;background:rgba(244,182,63,.14);color:var(--gold)}
+.qxp.done{background:rgba(255,255,255,.06);color:var(--muted)}
+.rings.rtiles{grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.ring.rt{flex-direction:column;align-items:center;gap:8px;background:rgba(255,255,255,.05);border-radius:16px;padding:14px 10px 12px;text-align:center}
+.ring.rt .rwrap{position:relative;width:92px;height:92px}
+.ring.rt svg{width:92px;height:92px}
+.ring.rt svg text{display:none}
+.ring.rt .rnum{position:absolute;inset:0;display:grid;place-content:center;line-height:1.05}
+.ring.rt .rnum b{font-family:var(--num);font-weight:800;font-size:1.45rem;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.ring.rt .rnum span{font-size:.68rem;color:var(--muted);max-width:76px}
+.ring.rt.done .rnum b{color:var(--rc)}
+.ring.rt .rlab{font-size:.88rem;font-weight:600;line-height:1.25}
 </style>
 </head>
 <body>
@@ -2240,17 +2283,17 @@ function renderLog(){
   <div class="banner">${viewer.shared?"You're viewing a shared workout log. It's read-only. Refresh the page to see anything new they've logged.":"Nothing has been shared here yet. The owner can turn on sharing in Settings."}</div>`
   :`<div class="top"><h1>Workouts</h1><div class="topr"><button class="lvpill" data-go="trophies" style="display:flex;align-items:center;gap:4px">${svcList().length?serviceMedalSVG(svcList()[svcList().length-1].year,svcIndexInYear(svcList().length-1),22):""}<span class="lvk">Lv</span> ${L}${L>=40?" ★":""}</button>${live().length?`<button class="iconbtn" data-logmode="${logMode==="cal"?"list":"cal"}" aria-label="${logMode==="cal"?"Show list":"Show calendar"}">${icon(logMode==="cal"?"log":"calendar")}</button>`:""}<button class="iconbtn" data-act="settings" aria-label="Settings">${icon("gear")}</button></div></div>
   ${live().length&&logMode!=="cal"?weekStrip():""}
-  <div class="chips">${[["all","All"],...Object.entries(TYPES)].map(([k,v])=>`<button class="chip" data-filter="${k}" aria-pressed="${filter===k}">${v}</button>`).join("")}</div>
-  ${!viewer&&places().length?`<select class="pfilter" id="pfilter" aria-label="Filter by place"><option value="">All places</option>${places().map(p=>`<option value="${p.id}"${placeFilter===p.id?" selected":""}>${esc(p.name)}</option>`).join("")}</select>`:""}`;
+  <div class="chips">${[["all","All"],...Object.entries(TYPES)].map(([k,v])=>`<button class="chip" data-filter="${k}" aria-pressed="${filter===k}">${k==="all"?"":`<i class="fdot" style="--d:${col(k)}"></i>`}${v}</button>`).join("")}</div>`;
+  const pfHTML=!viewer&&places().length?`<select class="pfilter" id="pfilter" aria-label="Filter by place"><option value="">All places</option>${places().map(p=>`<option value="${p.id}"${placeFilter===p.id?" selected":""}>${esc(p.name)}</option>`).join("")}</select>`:"";let pfPlaced=false;
   if(!viewer)html+=activeBanner()+backupBanner();
-  if(logMode==="cal"&&live().length)return html+renderCalendar(list);
+  if(logMode==="cal"&&live().length)return html+(pfHTML?`<div class="mrow">${pfHTML}</div>`:"")+renderCalendar(list);
   if(!live().length&&viewer)return html;
   if(!live().length)return html+`<div class="empty"><strong>No workouts yet</strong>Tap + to add one. Type in the numbers from Strava, Hevy, or any other app, or import a GPX file to get your route, best efforts, and elevation automatically. Every workout earns XP, and new bests earn medals.</div>`;
-  if(!list.length)return html+`<div class="empty"><strong>Nothing matches these filters</strong>Pick "All" and "All places" to see everything you've logged.</div>`;
+  if(!list.length)return html+(pfHTML?`<div class="mrow">${pfHTML}</div>`:"")+`<div class="empty"><strong>Nothing matches these filters</strong>Pick "All" and "All places" to see everything you've logged.</div>`;
   let month="";
   for(const s of list.slice(0,logLimit)){
     const m=parseDate(s.date).toLocaleDateString(undefined,{month:"long",year:"numeric"});
-    if(m!==month){html+=`<h2 class="month">${m}</h2>`;month=m;}
+    if(m!==month){html+=pfPlaced||!pfHTML?`<h2 class="month">${m}</h2>`:`<div class="mrow"><h2 class="month">${m}</h2>${pfHTML}</div>`;pfPlaced=true;month=m;}
     const rt=s.track&&s.track.length>1;
     html+=`<button class="card feed" style="--c:${col(s.type)}" data-open="${s.id}">
       <div class="fh"><i class="tico">${icon(s.type)}</i><div class="fm"><b>${esc(titleOf(s))}</b><span>${fmtDate(s.date,{weekday:"short",month:"short",day:"numeric"})}${s.time?" · "+fmtTime(s.time):""}${placeName(s)?" · "+esc(placeName(s)):""}</span></div></div>
@@ -3133,10 +3176,11 @@ function openDetail(s){
   if(s.cal)st.push(["Calories",Math.round(s.cal)]);
   if(s.steps)st.push(["Steps",Math.round(s.steps).toLocaleString()]);
   if(s.rpe)st.push(["Effort",s.rpe+"/10"]);
-  let html=`<div style="--c:${col(s.type)}"><h3>${esc(titleOf(s))}</h3>
-    <p class="sub">${TYPES[s.type]}${placeName(s)?` at ${esc(placeName(s))}`:""}, ${fmtDate(s.date,{weekday:"long",month:"long",day:"numeric",year:"numeric"})}${s.time?", "+s.time:""}</p>`;
+  const thisYear=s.date.slice(0,4)===String(new Date().getFullYear());
+  let html=`<div style="--c:${col(s.type)}"><div class="dhead"><span class="dico">${icon(s.type)}</span><div style="min-width:0"><h3>${esc(titleOf(s))}</h3>
+    <p class="sub">${TYPES[s.type]}${placeName(s)?` at ${esc(placeName(s))}`:""} · ${fmtDate(s.date,thisYear?{weekday:"short",month:"short",day:"numeric"}:{month:"short",day:"numeric",year:"numeric"})}${s.time?" · "+fmtTime(s.time):""}</p></div></div>`;
   if(s.track&&s.track.length>1)html+=`<div class="route" id="lmap" style="overflow:hidden">${routeSVG(s.track,{w:600,h:340,pad:24,sw:5})}</div>`;
-  html+=`<div class="dstats">${st.map(([l,v])=>`<div class="n"><b>${esc(v)}</b><span>${l}</span></div>`).join("")}</div>`;
+  html+=`<div class="dstats ${st.length===2||st.length===4?"c2":"c3"}">${st.map(([l,v])=>`<div class="n"><b>${esc(v)}</b><span>${l}</span></div>`).join("")}</div>`;
   if(r)html+=`<span class="xpchip">+${r.xp} XP</span>`+tgtResultHTML(r);
   if(s.photo)html+=`<div id="d-photo" style="margin:4px 0 12px"></div>`;
   if(s.fuel&&s.dur){const h=s.dur/3600,sr=s.fuel.pre&&s.fuel.post?((s.fuel.pre-s.fuel.post)*1000+(s.fuel.fl||0))/h:null;html+=`<p class="hint" style="margin:-4px 0 10px">💧 ${s.fuel.fl?`${s.fuel.fl} ml drunk (${Math.round(s.fuel.fl/h)} ml/h)`:"No fluid logged"}${s.fuel.gels?`, ${s.fuel.gels} gel${s.fuel.gels===1?"":"s"}`:""}${sr?`. Sweat rate about ${r50(sr)} ml/h, ${s.fuel.pre>s.fuel.post?`lost ${round(toDispWt(s.fuel.pre-s.fuel.post),1)} ${wU()} (${round((s.fuel.pre-s.fuel.post)/s.fuel.pre*100,1)}% of body weight)`:"no weight lost"}`:""}.</p>`;}
@@ -3159,14 +3203,14 @@ function openDetail(s){
   if(s.notes)html+=`<div class="notes">${esc(s.notes)}</div>`;
   html+=`<h4>Feedback</h4><div class="fb">${feedback(s).map(t=>`<p>${esc(t)}</p>`).join("")}</div>`;
   html+=dykHTML(s);
-  html+=viewer?`<div class="row"><button class="btn primary" id="dclose">Close</button></div></div>`:`<div class="row"><button class="btn primary" id="dshare">Share as image</button>${hasTimes(s)?`<button class="btn" id="dseg">Create segment</button>`:""}</div>
-    <div class="row" style="margin-top:10px"><button class="btn" id="dedit">Edit</button><button class="btn danger" id="ddel">Delete</button><button class="btn" id="dclose">Close</button></div></div>`;
+  html+=viewer?`<div class="row"><button class="btn primary" id="dclose">Close</button></div></div>`:`<div class="row"><button class="btn primary" id="dshare">Share as image</button></div><div class="row dsec" id="dsec">${hasTimes(s)?`<button class="btn" id="dseg">Create segment</button>`:""}</div>
+    <div class="qrow"><button id="dedit">Edit</button><button class="qdel" id="ddel">Delete</button><button id="dclose">Close</button></div></div>`;
   openSheet(html);
   $("dclose").onclick=closeSheet;
   if(window.STANDALONE&&s.track&&s.track.length>1)showMap("lmap",s.track,TYPE_HEX[s.type]);
   if(s.photo&&!viewer)photoURL(s.id).then(u=>{const el=$("d-photo");if(el&&u)el.innerHTML=`<img src="${u}" alt="Workout photo" style="width:100%;border-radius:14px;display:block">`;else if(el)el.remove();});
   if(viewer)return;
-  if(["lift","hang","climb"].includes(s.type)&&$("dshare")){const b=document.createElement("button");b.className="btn";b.textContent="Save as routine";b.onclick=()=>saveRoutineFrom(s);$("dshare").parentNode.appendChild(b);}
+  if(["lift","hang","climb"].includes(s.type)&&$("dshare")){const b=document.createElement("button");b.className="btn";b.textContent="Save as routine";b.onclick=()=>saveRoutineFrom(s);($("dsec")||$("dshare").parentNode).appendChild(b);}
   $("dedit").onclick=()=>openForm(s);document.querySelectorAll("#sheet [data-ss]").forEach(b=>b.onclick=()=>{haptic("light");openSendShare(s,+b.dataset.ss);});if($("pmore"))$("pmore").onclick=e=>{const l=document.querySelector("#sheet .probs-long");if(l)l.classList.add("open");e.currentTarget.remove();};
   $("dshare").onclick=()=>openShare(s);if($("dpr"))$("dpr").onclick=()=>openPRShare(s);
   if($("dseg"))$("dseg").onclick=()=>createSegment(s);
@@ -3810,7 +3854,7 @@ function goalsCard(){
   const c=getC();
   let h=`<div class="ins"><div class="row2"><h3>This week's targets</h3><button class="chip" data-act="goals">${G.length?"Edit":"Set targets"}</button></div>`;
   if(!G.length)return h+`<p class="hint">Set weekly targets, like 3 bouldering sessions or 20 km of running. Each one you hit earns 40 XP, and hitting all of them builds a streak.</p></div>`;
-  h+=`<div class="rings">${G.map(g=>{const v=goalValue(g,wl);return `<div class="ring">${ringSVG(v/g.target,g.type==="all"?"var(--xp)":col(g.type))}<div><b>${esc(goalLabel(g))}</b><span>${esc(fmtGoal(g,v))} of ${esc(fmtGoal(g,g.target))}</span></div></div>`;}).join("")}</div>`;
+  h+=`<div class="rings rtiles">${G.map(g=>{const v=goalValue(g,wl),done=v>=g.target;return `<div class="ring rt${done?" done":""}" style="--rc:${g.type==="all"?"var(--accent)":col(g.type)}"><div class="rwrap">${ringSVG(v/g.target,g.type==="all"?"var(--accent)":col(g.type))}<div class="rnum"><b>${esc(fmtGoal(g,v).replace(/ (km|mi|kg|lb|m|ft|h|min)$/,""))}</b><span>of ${esc(fmtGoal(g,g.target))}</span></div></div><b class="rlab">${esc(goalLabel(g))}</b></div>`;}).join("")}</div>`;
   const prevWk=keyOf(addDays(parseDate(wk),-7)),streak=c.ctx.goalWeeks[wk]||c.ctx.goalWeeks[prevWk]?c.ctx.goalStreak:0;
   const daysLeft=7-((new Date().getDay()+6)%7);
   return h+`<p class="hint">${daysLeft} day${daysLeft===1?"":"s"} left this week.${streak?` All goals hit ${streak} week${streak===1?"":"s"} in a row.`:""}</p></div>`;
@@ -5530,7 +5574,7 @@ function todayHero(){
     ${rd!=null?`<button data-act="checkin2" class="ring" style="display:block;color:${col2}">${ringSVG(rd/100,col2).replace(/<text[^>]*>.*?<\/text>/,`<text x="29" y="35" text-anchor="middle" font-size="17" font-weight="700" fill="currentColor" font-family="-apple-system,Inter,sans-serif">${rd}</text>`)}</button>`:`<button class="chip" data-act="checkin2" style="background:var(--accent);color:var(--on-accent)">Check in</button>`}</div>`;
   if(px)h+=`<div class="trow" style="margin-top:8px"><span class="mdot" style="background:${col(px.type)}">${px.status==="done"?"✓":"▶"}</span><div class="tx"><b>${esc(px.title)}</b><span>${esc(ev.name)}, ${Math.ceil((parseDate(ev.date)-parseDate(today))/864e5)} days to go</span></div>${px.status==="todo"&&!px.race?`<button class="tchip" data-pstart="${today}" style="background:var(--accent);color:var(--on-accent)">Start</button>`:""}</div>`;
   else if(ev)h+=`<div class="trow" style="margin-top:8px"><span class="mdot" style="background:var(--chip)">💤</span><div class="tx"><b>Rest day in your plan</b><span>${esc(ev.name)}</span></div><button class="tchip" data-ev="${ev.id}">Plan</button></div>`;
-  if(q)h+=`<div class="trow"><span class="mdot" style="background:${qDone?"var(--ride)":"var(--chip)"}">${qDone?"✓":"🎯"}</span><div class="tx"><b style="${qDone?"color:var(--muted);text-decoration:line-through":""}">${esc(q.t)}</b><span>Daily quest, +${q.xp} XP</span></div></div>`;
+  if(q)h+=`<div class="trow"><span class="mdot" style="background:${qDone?"var(--ride)":"var(--chip)"}">${qDone?"✓":"🎯"}</span><div class="tx"><b style="${qDone?"color:var(--muted);text-decoration:line-through":""}">${esc(q.t)}</b><span>Daily quest</span></div><span class="qxp${qDone?" done":""}">+${q.xp} XP</span></div>`;
   return h+`</div>`;
 }
 
