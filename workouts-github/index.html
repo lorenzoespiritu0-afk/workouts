@@ -920,6 +920,11 @@ button.trow:not(.sendrow)::after{content:"";flex:none;width:7px;height:7px;borde
 .lsx .ico{width:16px;height:16px}
 .lsearch:focus-within{box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 55%,transparent)}
 .lscount{margin:-4px 2px 10px;font-size:.8rem;color:var(--muted)}
+
+/* v36 share styles */
+#sopts .op,#sopts[data-style="classic"] [data-v="poster"],#sopts[data-style="week"] .sonly{display:none}
+#sopts:not([data-style="classic"]) .op{display:block}
+#sopts:not([data-style="classic"]) .oc{display:none}
 </style>
 </head>
 <body>
@@ -3538,7 +3543,7 @@ async function drawShare(s,o){
   else if(o.size==="square"){H=Math.max(1080,contentH+2*P);off=(H-contentH)/2;}
   else{H=Math.ceil(contentH+2*P);off=P;}
   c.width=W;c.height=Math.ceil(H);
-  if(o.bg==="photo"){const u=await photoURL(s.id);if(u){const img=await new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.onerror=()=>r(null);i.src=u;});if(img){const sc=Math.max(W/img.width,c.height/img.height),iw=img.width*sc,ih=img.height*sc;x.drawImage(img,(W-iw)/2,(c.height-ih)/2,iw,ih);x.fillStyle="rgba(0,0,0,.35)";x.fillRect(0,0,W,c.height);}}}
+  if(o.bg==="photo"){const u=o.upimg||await photoURL(s.id);if(u){const img=await new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.onerror=()=>r(null);i.src=u;});if(img){const sc=Math.max(W/img.width,c.height/img.height),iw=img.width*sc,ih=img.height*sc;x.drawImage(img,(W-iw)/2,(c.height-ih)/2,iw,ih);x.fillStyle="rgba(0,0,0,.35)";x.fillRect(0,0,W,c.height);}}}
   else if(o.bg==="glass"){const gx=Math.round(P*.42),gy=Math.max(0,off-Math.round(P*.6)),gw=W-2*gx,gh=Math.min(c.height-gy,contentH+Math.round(P*1.2));x.save();x.fillStyle="rgba(0,0,0,.58)";x.beginPath();if(x.roundRect)x.roundRect(gx,gy,gw,gh,44);else x.rect(gx,gy,gw,gh);x.fill();x.restore();}
   else if(o.bg!=="none"){x.fillStyle=o.bg==="dark"?"#14171F":o.bg==="light"?"#F4F5F7":TYPE_HEX[s.type];x.fillRect(0,0,W,c.height);}
   x.textAlign=left?"left":"center";x.textBaseline="alphabetic";x.fillStyle=ink;x.strokeStyle=ink;x.lineJoin="round";
@@ -3584,10 +3589,134 @@ async function drawShare(s,o){
   }
   x.globalAlpha=1;return c;
 }
+/* ---------- poster share styles: "Weekday" (wide headline + route) and "Splits" (tall headline + lap table) ---------- */
+const PF={
+  wide:sz=>`800 ${Math.round(sz)}px "Inter","Barlow",system-ui,sans-serif`,
+  tall:sz=>`800 ${Math.round(sz)}px "Barlow Condensed","Arial Narrow",sans-serif`,
+  tallM:sz=>`700 ${Math.round(sz)}px "Barlow Condensed","Arial Narrow",sans-serif`,
+  ui:sz=>`600 ${Math.round(sz)}px "Barlow",system-ui,sans-serif`,
+  uiB:sz=>`700 ${Math.round(sz)}px "Barlow",system-ui,sans-serif`,
+  mono:sz=>`500 ${Math.round(sz)}px ui-monospace,"SF Mono",Menlo,Consolas,monospace`,
+  serif:sz=>`500 ${Math.round(sz)}px Georgia,"Times New Roman",serif`
+};
+const paceQ=sec=>{if(!sec||!isFinite(sec))return "";let v=dU()==="mi"?sec/KM_MI:sec;v=Math.round(v);return Math.floor(v/60)+"’"+pad(v%60)+"”";};
+const durCaps=sec=>{sec=Math.round(sec||0);const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),s=sec%60;return h?`${h}H ${m}M`:`${m}M ${pad(s)}S`;};
+const clockQ=sec=>{sec=Math.round(sec||0);const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),s=sec%60;return h?`${h}:${pad(m)}:${pad(s)}`:`${m}:${pad(s)}`;};
+/* Splits from a timed GPS track, per km or mile. Long efforts use bigger laps so the table stays readable. */
+function trackSplits(s){
+  const t=s&&s.track;if(!hasTimes(s)||t.length<3)return null;
+  const unit=dU()==="mi"?1609.344:1000,cum=[0];
+  for(let i=1;i<t.length;i++)cum.push(cum[i-1]+hav(t[i-1][0],t[i-1][1],t[i][0],t[i][1]));
+  const total=cum[cum.length-1];if(total<unit*.5)return null;
+  let step=unit;for(const k of [1,2,5,10])if(total/(unit*k)<=14){step=unit*k;break;}else step=unit*k;
+  const at=(d,col)=>{let i=1;while(i<cum.length-1&&cum[i]<d)i++;const a=cum[i-1],b=cum[i],f=b>a?(d-a)/(b-a):0,va=t[i-1][col],vb=t[i][col];return va==null||vb==null?(va!=null?va:vb):va+(vb-va)*f;};
+  const out=[];let d0=0;
+  while(d0<total-1){const d1=Math.min(total,d0+step),dt=at(d1,3)-at(d0,3),e0=at(d0,2),e1=at(d1,2);
+    if(d1-d0>=step*.15||!out.length)out.push({n:out.length+1,dist:(d1-d0)/1000,time:dt,pace:dt/((d1-d0)/1000),elev:e0!=null&&e1!=null?e1-e0:null});
+    d0=d1;}
+  if(!out.length)return null;
+  const fast=out.filter(r=>r.dist>=step/1000*.6&&r.time>0).reduce((a,r)=>!a||r.pace<a.pace?r:a,null);
+  return {rows:out,fast,step:step/unit};
+}
+function dayLine(o){
+  const T=(TYPES[o.type]||"Workout").toUpperCase();
+  if(o.dist&&DIST_TYPES.includes(o.type)){const v=round(toDispDist(o.dist),1);return {l:`${v} ${dU().toUpperCase()} ${T}`,r:[o.dur&&(o.type!=="ride")?paceQ(o.dur/o.dist):o.dur&&o.type==="ride"?fmtSpeed(o.dist,o.dur).toUpperCase():"",o.dur?durCaps(o.dur):""].filter(Boolean).join(", ")};}
+  return {l:(titleOf(o)||T).toUpperCase(),r:o.dur?durCaps(o.dur):""};
+}
+function headlineOf(s,o){return o.head==="title"?titleOf(s).toUpperCase():o.head==="type"?(TYPES[s.type]||"Workout").toUpperCase():parseDate(s.date).toLocaleDateString("en-US",{weekday:"long"}).toUpperCase();}
+async function posterBg(x,s,o,W,H){
+  let img=null;const u=o.upimg||(o.bg==="photo"?await photoURL(s.id):null);
+  if(u&&(o.upimg||o.bg==="photo"))img=await new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.onerror=()=>r(null);i.src=u;});
+  if(img){x.save();if(o.bw)x.filter="grayscale(1) contrast(1.18) brightness(.92)";const sc=Math.max(W/img.width,H/img.height),iw=img.width*sc,ih=img.height*sc;x.drawImage(img,(W-iw)/2,(H-ih)/2,iw,ih);x.restore();
+    const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,"rgba(0,0,0,.45)");g.addColorStop(.45,"rgba(0,0,0,.18)");g.addColorStop(1,"rgba(0,0,0,.62)");x.fillStyle=g;x.fillRect(0,0,W,H);}
+  else if(o.bg==="glass"){x.fillStyle="rgba(0,0,0,.58)";x.beginPath();if(x.roundRect)x.roundRect(24,24,W-48,H-48,44);else x.rect(24,24,W-48,H-48);x.fill();}
+  else if(o.bg==="dark"){x.fillStyle="#0B0B0C";x.fillRect(0,0,W,H);const g=x.createRadialGradient(W*.22,H*.3,10,W*.22,H*.3,W*.7);g.addColorStop(0,"rgba(255,255,255,.10)");g.addColorStop(1,"rgba(255,255,255,0)");x.fillStyle=g;x.fillRect(0,0,W,H);}
+  else if(o.bg==="light"){x.fillStyle="#F4F5F7";x.fillRect(0,0,W,H);}
+  else if(o.bg==="color"){x.fillStyle=TYPE_HEX[s.type];x.fillRect(0,0,W,H);}
+  if(o.grain&&(img||(o.bg!=="none"&&o.bg!=="glass"))){const n=document.createElement("canvas");n.width=n.height=160;const nx=n.getContext("2d"),d=nx.createImageData(160,160);
+    let seed=7;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
+    for(let i=0;i<d.data.length;i+=4){const v=rnd()*255;d.data[i]=d.data[i+1]=d.data[i+2]=v;d.data[i+3]=26;}nx.putImageData(d,0,0);
+    x.save();x.fillStyle=x.createPattern(n,"repeat");x.globalCompositeOperation="overlay";x.fillRect(0,0,W,H);x.restore();}
+}
+/* draw text squashed or stretched: sx widens, sy heightens */
+function txS(x,t,X,Y,font,sx,sy,align){x.save();x.font=font;x.translate(X,Y);x.scale(sx,sy);x.textAlign=align||"left";x.fillText(t,0,0);x.restore();}
+function fitS(x,t,fontFn,size,maxW,sx,min){let sz=size;x.font=fontFn(sz);while(x.measureText(t).width*sx>maxW&&sz>(min||20)){sz-=2;x.font=fontFn(sz);}return sz;}
+async function drawPoster(s,o){
+  try{await Promise.all([document.fonts.load('800 150px "Barlow Condensed"'),document.fonts.load('700 60px "Barlow Condensed"'),document.fonts.load('800 100px "Inter"'),document.fonts.load('600 40px "Barlow"'),document.fonts.load('700 40px "Barlow"')]);}catch(e){}
+  const W=1080,P=88,ink=o.color,acc=o.accent||"#E8323C",c=document.createElement("canvas"),x=c.getContext("2d");
+  const lum=h=>{const n=parseInt(h.slice(1),16);return ((n>>16)*0.299+((n>>8)&255)*0.587+(n&255)*0.114)/255;};
+  const shade=lum(ink)>0.5?"rgba(0,0,0,.55)":"rgba(255,255,255,.5)";
+  const ops=[];let y=0,band=0;const push=f=>ops.push({f,b:band});const maxW=W-2*P;const head=headlineOf(s,o);
+  const by=Object.fromEntries(allStats(s).map(z=>[z.k,z]));
+  if(o.style==="week"){
+    const SX=1.22,hs=fitS(x,head,PF.wide,190,maxW,SX,40);
+    y+=hs*.74;const yh=y;push(()=>{x.fillStyle=acc;txS(x,head,W/2,off+yh,PF.wide(hs),SX,1,"center");});
+    const sub=[(TYPES[s.type]||"Workout").toUpperCase(),...(()=>{const L=o.stats.map(k=>by[k]).filter(Boolean).slice(0,3);return (L.length>2?[L[0],L[L.length-1]]:L).map(z=>z.k==="time"?durCaps(s.dur):/^[\d,.]+$/.test(z.v)?`${z.v} ${(+z.v.replace(/,/g,"")===1?z.l.replace(/es$|s$/,""):z.l)}`.toUpperCase():z.v.replace(/\s*\/\s*/,"/").toUpperCase());})()];
+    let ss=48;const crowd=()=>{const w=sub.map(t=>x.measureText(t).width*1.1);if(w.length<3)return w.reduce((a,b)=>a+b,0)>maxW-50;return w[0]+w[1]/2>maxW/2-36||w[2]+w[1]/2>maxW/2-36;};x.font=PF.wide(ss);while(crowd()&&ss>20){ss-=2;x.font=PF.wide(ss);}
+    y+=26+ss;const ys=y;
+    push(()=>{x.fillStyle=acc;const n=sub.length;sub.forEach((t,i)=>{const X=n===1?W/2:P+(maxW)*(i/(n-1)),al=n===1?"center":i===0?"left":i===n-1?"right":"center";txS(x,t,X,off+ys,PF.wide(ss),1.1,1,al);});});
+    const route=o.route&&s.track&&s.track.length>1;
+    band=1;if(route){y+=110;const rh=860,yr=y;push(()=>{const box=Math.min(maxW*.86,rh*1.1),ox=(W-box)/2,Pj=projector(s.track,box,rh,20);
+      x.save();x.lineCap="round";x.lineJoin="round";x.beginPath();s.track.forEach((_,i)=>{const [px,py]=Pj(i);i?x.lineTo(ox+px,off+yr+py):x.moveTo(ox+px,off+yr+py);});
+      x.shadowColor="rgba(255,255,255,.35)";x.shadowBlur=o.shadow?18:0;x.strokeStyle=o.rcolor&&o.rcolor!=="same"?o.rcolor:ink;x.lineWidth=13;x.stroke();x.restore();});y+=rh;}
+    else if(s.type==="lift"&&s.ex&&s.ex.length){const v=musLoad(s);if(Object.keys(v).length){y+=120;const mh=640,ym=y;push(()=>{x.shadowColor="transparent";drawMuscleMap(x,W/2,off+ym,mh,v,ink,acc);x.fillStyle=ink;x.globalAlpha=.9;x.font=PF.mono(34);x.textAlign="center";x.fillText(musTop(v,4).map(([m])=>m).join("  ·  "),W/2,off+ym+mh+64,maxW);});y+=mh+64;}}
+    else if(s.type==="climb"){const G=sendGroups(s).slice(0,8);if(G.length){const cols=Math.min(4,G.length),rows=Math.ceil(G.length/cols),cell=230;y+=120;const yg=y;
+      push(()=>{x.shadowColor="transparent";const cw=Math.min(240,maxW/cols);G.forEach((g,i)=>{const r=Math.floor(i/cols),inR=Math.min(cols,G.length-r*cols),cx=W/2-(inR*cw)/2+cw*(i%cols)+cw/2,top=off+yg+r*cell;
+        if(g.gc)drawGM(x,g.gl,g.gc,cx,top+50,46);else{x.font=PF.wide(48);x.textAlign="center";x.fillStyle=acc;x.fillText(g.gl,cx,top+68);}
+        x.fillStyle=ink;x.textAlign="center";x.font=PF.wide(52);x.fillText("×"+g.n,cx,top+170);x.font=PF.mono(26);x.globalAlpha=.85;if(g.fl)x.fillText(g.fl+" flash"+(g.fl===1?"":"ed"),cx,top+210);x.globalAlpha=1;});});y+=rows*cell;}}
+    if(o.title){y+=route?70:130;const yt=y,t=titleOf(s);push(()=>{x.fillStyle=ink;x.font=PF.mono(40);x.textAlign="right";x.fillText(t,W-P,off+yt,maxW);});}
+    band=2;if(o.notes&&s.notes){x.font=PF.mono(36);const L=wrapLines(x,s.notes,maxW*.62,5);y+=90;const yn=y;y+=(L.length-1)*48;
+      push(()=>{x.fillStyle=ink;x.font=PF.mono(36);x.textAlign="left";L.forEach((l,i)=>x.fillText(l,P-30,off+yn+i*48));});}
+    const foot=[o.place&&placeName(s)?"@"+placeName(s).toLowerCase().replace(/[^a-z0-9]+/g,""):"",o.date?fmtDate(s.date,{month:"short",day:"numeric",year:"numeric"}).toLowerCase():"",o.level?"lv "+levelOf(getC().xp):""].filter(Boolean);
+    if(foot.length){y+=120;const yf=y;y+=(foot.length-1)*40;push(()=>{x.fillStyle=ink;x.font=PF.ui(30);x.textAlign="right";foot.forEach((t,i)=>{const yy=off+yf+i*40;x.globalAlpha=.9;x.fillText(t,W-P,yy);const w=x.measureText(t).width;x.fillRect(W-P-w,yy+5,w,2);});x.globalAlpha=1;});}
+  }else{ // splits
+    const SY=1.5;let hs=fitS(x,head,PF.tall,300,maxW+20,1,60);
+    y+=hs*.72*SY;const yh=y;push(()=>{x.fillStyle=ink;txS(x,head,W/2,off+yh,PF.tall(hs),1,SY,"center");});
+    const day=live().filter(z=>z.date===s.date&&z.type===s.type).sort((a,b)=>chrono(a,b));
+    const lines=(o.day&&day.length>1?day:[s]).map(dayLine);
+    y+=36;let ls=74;x.font=PF.tallM(ls);while(lines.some(l=>x.measureText(l.l).width+x.measureText(l.r).width>maxW-70)&&ls>30){ls-=2;x.font=PF.tallM(ls);}
+    const yl=y;lines.forEach(()=>{y+=ls*1.14;});
+    push(()=>{x.fillStyle=ink;lines.forEach((l,i)=>{const yy=off+yl+(i+1)*ls*1.14-ls*.14;txS(x,l.l,P,yy,PF.tallM(ls),1,1.12,"left");txS(x,l.r,W-P,yy,PF.tallM(ls),1,1.12,"right");});});
+    band=1;const sp=o.splits?trackSplits(s):null;
+    if(sp){
+      const hasE=sp.rows.some(r=>r.elev!=null),u=dU(),rh=58,cols=hasE?[[P+20,"left"],[P+maxW*.40,"right"],[P+maxW*.62,"right"],[P+maxW*.82,"right"],[W-P-10,"right"]]:[[P+30,"left"],[P+maxW*.45,"right"],[P+maxW*.70,"right"],[W-P-30,"right"]];
+      y+=80;const yt=y;const nR=sp.rows.length;y+=56+nR*rh+30+rh;
+      push(()=>{x.save();const hdr=["Lap",`Distance ${u}`,"Time",`Pace /${u}`,...(hasE?["Elev"]:[])];
+        x.fillStyle=ink;x.globalAlpha=.75;x.font=PF.ui(30);hdr.forEach((h,i)=>{x.textAlign=cols[i][1];x.fillText(h,cols[i][0],off+yt);});
+        x.globalAlpha=.5;x.fillRect(P,off+yt+20,maxW,2);x.globalAlpha=1;
+        sp.rows.forEach((r,i)=>{const yy=off+yt+56+i*rh+rh*.5;const isF=sp.fast===r;
+          const cells=[`${r.n}. ${s.type==="ride"?"Ride":s.type==="walk"?"Walk":s.type==="hike"?"Hike":"Run"}`,round(dU()==="mi"?r.dist/1.609344:r.dist,2).toFixed(2),clockQ(r.time),paceQ(r.pace),...(hasE?[r.elev==null?"":(r.elev>=0?"+":"−")+Math.abs(Math.round(toDispElev(r.elev)))]:[])];
+          cells.forEach((t,j)=>{x.font=j===0?PF.ui(36):PF.uiB(38);x.textAlign=cols[j][1];x.fillStyle=isF&&j===3?acc:ink;x.fillText(t,cols[j][0],yy);});});
+        const yT=off+yt+56+nR*rh+30;x.globalAlpha=.5;x.fillStyle=ink;x.fillRect(P,yT-24,maxW,2);x.globalAlpha=1;
+        const tot=["Total",round(toDispDist(s.dist||sp.rows.reduce((a,r)=>a+r.dist,0)),2).toFixed(2),clockQ(sp.rows.reduce((a,r)=>a+r.time,0)),paceQ(s.dur&&s.dist?s.dur/s.dist:0),...(hasE?[elevOf(s)?"+"+Math.round(toDispElev(elevOf(s))):""]:[])];
+        tot.forEach((t,j)=>{x.font=PF.uiB(44);x.textAlign=cols[j][1];x.fillStyle=ink;x.fillText(t,cols[j][0],yT+rh*.5);});x.restore();});
+    }
+    const totalDur=(o.day&&day.length>1?day:[s]).reduce((a,z)=>a+(z.dur||0),0);
+    const note=o.notes&&s.notes?s.notes:"";
+    band=2;if(totalDur||note){y+=110;const yf=y;let nl=[];if(note){x.font=PF.serif(32);nl=wrapLines(x,note,maxW*.5,6);}y+=Math.max(0,(nl.length-1)*42);
+      push(()=>{x.fillStyle=ink;if(totalDur){x.font=PF.ui(34);x.textAlign="left";const lab="Total time: ";x.fillText(lab,P,off+yf);const lw=x.measureText(lab).width;x.font=PF.uiB(52);x.fillText(clockQ(totalDur),P+lw,off+yf+2);}
+        if(nl.length){x.save();x.shadowColor="transparent";x.font=PF.serif(32);const bw=Math.max(...nl.map(l=>x.measureText(l).width))+44,bh=nl.length*42+26,bx=W-P-bw,by=off+yf-38;x.fillStyle="#FFFFFF";x.fillRect(bx,by,bw,bh);x.fillStyle="#111";x.textAlign="left";nl.forEach((l,i)=>x.fillText(l,bx+22,by+44+i*42));x.restore();}});}
+  }
+  const contentH=Math.max(y,10);let H,off,gaps=[0,0,0];
+  const tall=o.size==="story"||o.size==="poster";
+  if(tall){const top=o.size==="story"?190:130,bot=o.size==="story"?210:130;H=Math.max(o.size==="story"?1920:1620,contentH+top+bot);off=top;const ex=H-contentH-top-bot;gaps=o.style==="week"?[0,ex*.42,ex*.58]:[0,ex*.18,ex*.82];}
+  else if(o.size==="square"){H=Math.max(1080,contentH+2*P);off=(H-contentH)/2;}
+  else{H=Math.ceil(contentH+2*P);off=P;}
+  const base=off;
+  c.width=W;c.height=Math.ceil(H);
+  await posterBg(x,s,o,W,c.height);
+  x.textBaseline="alphabetic";
+  if(o.shadow){x.shadowColor=shade;x.shadowBlur=22;x.shadowOffsetY=2;}
+  for(const {f,b} of ops){off=base+gaps.slice(0,b+1).reduce((a,g)=>a+g,0);x.save();f();x.restore();}
+  return c;
+}
 let shareDl=null;
 function openShare(s){
   const hasRoute=!!(s.track&&s.track.length>1);
-  const o={layout:"stack",size:"fit",color:"#FFFFFF",font:"sport",align:"center",bg:"none",title:true,date:true,place:false,route:hasRoute,trophies:false,level:false,shadow:false,outline:false,rcolor:"same",sends:s.type==="climb"&&sendGroups(s).length>0,mus:s.type==="lift"&&!!(s.ex&&s.ex.length),stats:defaultStats(s)};
+  const o={layout:"stack",size:"fit",color:"#FFFFFF",font:"sport",align:"center",bg:"none",title:true,date:true,place:false,route:hasRoute,trophies:false,level:false,shadow:false,outline:false,rcolor:"same",sends:s.type==="climb"&&sendGroups(s).length>0,mus:s.type==="lift"&&!!(s.ex&&s.ex.length),stats:defaultStats(s),
+    style:"classic",head:"day",accent:"#E8323C",day:true,splits:true,bw:true,grain:true,upimg:null};
+  const sameDay=live().filter(z=>z.date===s.date).length>1,canSplit=!!trackSplits(s);
+  const accents=[["#E8323C","Red"],["#CDF54A","Volt"],[STRAVA,"Strava orange"],["#FFFFFF","White"],[TYPE_HEX[s.type],"Activity color"]];
   let blob=null,busy=false,again=false;
   const swatches=[...new Set(["#FFFFFF","#121212",STRAVA,TYPE_HEX[s.type],"#FFD23F","#FF6FB5","#7CF2C0"])];
   const swName=h=>h===STRAVA?"Strava orange":h==="#FFFFFF"?"White":h==="#121212"?"Black":"Color "+h;
@@ -3598,21 +3727,26 @@ function openShare(s){
     <div class="preview" id="pv"><span style="color:#fff">Drawing…</span></div>
     <div class="row"><button class="btn primary" id="ssave">Save image</button><button class="btn" id="scopy">Copy image</button></div>
     <p class="hint" id="shint">You can also press and hold the image above and choose "Save to Photos".</p>
-    <div class="opts" style="--c:#F5F5F7;--ct:#000">
-      <div class="plabel">Layout</div>${segH("o-layout","layout",[["stack","Stacked"],["list","List"],["row","Row"],["grid","Grid"],["hero","Big"]])}
-      <div class="plabel">Size</div>${segH("o-size","size",[["fit","Fit to content"],["story","Story 9:16"],["square","Square"]])}
+    <div class="opts" style="--c:#F5F5F7;--ct:#000" id="sopts" data-style="classic">
+      <div class="plabel">Style</div>${segH("o-style","style",[["classic","Classic"],["week","Weekday"],["splits","Splits"]])}
+      <div class="oc"><div class="plabel">Layout</div>${segH("o-layout","layout",[["stack","Stacked"],["list","List"],["row","Row"],["grid","Grid"],["hero","Big"]])}</div>
+      <div class="op"><div class="plabel">Headline</div>${segH("o-head","head",[["day","Weekday"],["title","Title"],["type","Activity"]])}
+        <div class="plabel">Poster</div><div class="tchips" id="o-ptog">${[...(sameDay?[["day","Whole day"]]:[]),...(canSplit?[["splits","Lap table"]]:[]),["bw","Black and white photo"],["grain","Film grain"]].map(([k,t])=>`<button class="tchip${k==="day"||k==="splits"?" sonly":""}" data-t="${k}" aria-pressed="${o[k]}">${t}</button>`).join("")}</div>
+        <div class="plabel">Headline color</div><div class="swrow" id="o-accent">${accents.map(([h,n])=>`<button class="sw" style="--sw:${h}" data-v="${h}" aria-label="${n}" title="${n}" aria-pressed="${o.accent===h}"></button>`).join("")}</div></div>
+      <div class="plabel">Size</div>${segH("o-size","size",[["fit","Fit to content"],["story","Story 9:16"],["poster","Poster 2:3"],["square","Square"]])}
       <div class="plabel">Stats to show (tap to add or remove, in order)</div><div class="tchips" id="o-stats">${allStats(s).map(st=>`<button class="tchip" data-k="${st.k}" aria-pressed="${o.stats.includes(st.k)}">${st.l}</button>`).join("")}</div>
       <div class="plabel">Show</div><div class="tchips" id="o-tog">${toggles.map(([k,t])=>`<button class="tchip" data-t="${k}" aria-pressed="${o[k]}">${t}</button>`).join("")}</div>
       <div class="plabel">Text color</div><div class="swrow" id="o-color">${swatches.map(h=>`<button class="sw" style="--sw:${h}" data-v="${h}" aria-label="${swName(h)}" title="${swName(h)}" aria-pressed="${o.color===h}"></button>`).join("")}</div>
       ${hasRoute||(s.type==="lift"&&s.ex&&s.ex.length)?`<div class="plabel">${hasRoute?"Route color":"Highlight color"}</div><div class="swrow" id="o-rcolor"><button class="sw sw-same" data-v="same" aria-label="Same as text" title="Same as text" aria-pressed="${o.rcolor==="same"}">=</button>${swatches.map(h=>`<button class="sw" style="--sw:${h}" data-v="${h}" aria-label="${swName(h)}" title="${swName(h)}" aria-pressed="${o.rcolor===h}"></button>`).join("")}</div>`:""}
-      <div class="plabel">Font</div>${segH("o-font","font",[["sport","Sport"],["clean","Clean"],["classic","Classic"],["mono","Mono"]])}
-      <div class="plabel">Alignment</div>${segH("o-align","align",[["center","Center"],["left","Left"]])}
-      <div class="plabel">Background</div>${segH("o-bg","bg",[["none","None"],["glass","Glass"],["dark","Dark"],["light","Light"],["color","Color"],...(s.photo?[["photo","Photo"]]:[])])}
+      <div class="oc"><div class="plabel">Font</div>${segH("o-font","font",[["sport","Sport"],["clean","Clean"],["classic","Classic"],["mono","Mono"]])}
+      <div class="plabel">Alignment</div>${segH("o-align","align",[["center","Center"],["left","Left"]])}</div>
+      <div class="plabel">Background</div>${segH("o-bg","bg",[["none","None"],["glass","Glass"],["dark","Dark"],["light","Light"],["color","Color"],["photo","Photo"]])}
+      <button class="addex" id="o-pick" style="margin-top:10px">${s.photo?"Use a different photo":"Choose a photo"}</button><input type="file" id="o-file" accept="image/*" hidden>
     </div>
     <div class="row" style="margin-top:16px"><button class="btn" id="sback">Back</button></div>`);
   const redraw=async()=>{
     if(busy){again=true;return;}busy=true;
-    const c=await drawShare(s,o);
+    const c=o.style==="classic"?await drawShare(s,o):await drawPoster(s,o);
     const dk=h=>{const n=parseInt(h.slice(1),16);return ((n>>16)*0.299+((n>>8)&255)*0.587+(n&255)*0.114)<128;};
     const light=o.bg==="none"&&dk(o.color)&&(!o.route||!hasRoute||o.rcolor==="same"||dk(o.rcolor));
     $("pv").className="preview"+(light?" light":"");
@@ -3621,7 +3755,17 @@ function openShare(s){
     busy=false;if(again){again=false;redraw();}
   };
   const seg=(id,key)=>{const el=$(id);el.querySelectorAll("button").forEach(b=>b.onclick=()=>{el.querySelectorAll("button").forEach(z=>z.setAttribute("aria-pressed",z===b));o[key]=b.dataset.v;redraw();});};
-  ["layout","size","font","align","bg","color"].forEach(k=>seg("o-"+k,k));if($("o-rcolor"))seg("o-rcolor","rcolor");
+  ["layout","size","font","align","color","head","accent"].forEach(k=>seg("o-"+k,k));if($("o-rcolor"))seg("o-rcolor","rcolor");
+  const press=(id,v)=>$(id).querySelectorAll("button").forEach(z=>z.setAttribute("aria-pressed",z.dataset.v===v));
+  $("o-style").querySelectorAll("button").forEach(b=>b.onclick=()=>{const was=o.style;o.style=b.dataset.v;press("o-style",o.style);$("sopts").dataset.style=o.style;
+    if(was==="classic"&&o.style!=="classic"&&o.size==="fit"){o.size="story";press("o-size","story");}
+    if(was==="classic"&&o.style!=="classic"&&s.notes&&!o.notes){o.notes=true;const nb=document.querySelector('#o-tog [data-t="notes"]');if(nb)nb.setAttribute("aria-pressed","true");}
+    if(o.style==="classic"&&o.size==="poster"){o.size="fit";press("o-size","fit");}redraw();});
+  const pickPhoto=()=>$("o-file").click();
+  $("o-file").onchange=()=>{const f=$("o-file").files&&$("o-file").files[0];if(!f)return;if(o.upimg)URL.revokeObjectURL(o.upimg);o.upimg=URL.createObjectURL(f);o.bg="photo";press("o-bg","photo");$("o-pick").textContent="Use a different photo";redraw();};
+  $("o-pick").onclick=pickPhoto;
+  $("o-bg").querySelectorAll("button").forEach(b=>b.onclick=()=>{if(b.dataset.v==="photo"&&!o.upimg&&!s.photo){pickPhoto();return;}o.bg=b.dataset.v;press("o-bg",o.bg);redraw();});
+  $("o-ptog").querySelectorAll("button").forEach(b=>b.onclick=()=>{const k=b.dataset.t;o[k]=!o[k];b.setAttribute("aria-pressed",o[k]);redraw();});
   $("o-stats").querySelectorAll("button").forEach(b=>b.onclick=()=>{const k=b.dataset.k,i=o.stats.indexOf(k);if(i>=0)o.stats.splice(i,1);else{if(o.stats.length>=6){toast("Up to 6 stats");return;}o.stats.push(k);}b.setAttribute("aria-pressed",i<0);redraw();});
   $("o-tog").querySelectorAll("button").forEach(b=>b.onclick=()=>{const k=b.dataset.t;o[k]=!o[k];b.setAttribute("aria-pressed",o[k]);redraw();});
   $("sback").onclick=()=>openDetail(s);
