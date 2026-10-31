@@ -4332,7 +4332,7 @@ function imageSheet(title,sub,drawFn,fname,segs,toggles,o,back){
   openSheet(`<h3>${esc(title)}</h3><p class="sub">${esc(sub)}</p><div class="preview" id="pv"><span style="color:#fff">Drawing…</span></div>
     <div class="row"><button class="btn primary" id="is-save">Save image</button><button class="btn" id="is-copy">Copy image</button></div>
     <p class="hint" id="is-hint">You can also press and hold the image and choose "Save to Photos".</p>
-    <div class="opts" style="--c:#F5F5F7;--ct:#000">${segs.map(sg=>`<div class="plabel">${sg.label}</div><div class="seg" data-sk="${sg.key}">${sg.opts.map(([v,t])=>`<button data-v="${v}" aria-pressed="${o[sg.key]===v}">${t}</button>`).join("")}</div>`).join("")}
+    <div class="opts" style="--c:#F5F5F7;--ct:#000">${segs.map(sg=>`${sg.label?`<div class="plabel">${sg.label}</div>`:""}<div class="seg" data-sk="${sg.key}"${sg.label?"":` style="margin-top:8px"`}>${sg.opts.map(([v,t])=>`<button data-v="${v}" aria-pressed="${o[sg.key]===v}">${t}</button>`).join("")}</div>`).join("")}
     ${toggles.length?`<div class="plabel">Show</div><div class="tchips">${toggles.map(([k,t])=>`<button class="tchip" data-tk="${k}" aria-pressed="${!!o[k]}">${t}</button>`).join("")}</div>`:""}</div>
     <div id="is-extra"></div>
     <div class="row" style="margin-top:16px"><button class="btn" id="is-back">Back</button></div>`);
@@ -4578,6 +4578,45 @@ async function drawSendCard(s,i,o){
     const tw=Math.max(G,mw(col?gradeTxt:gradeTxt,big),mw(resultTxt,fRes,.04));
     W=Math.ceil(pad*2+tw);H=Math.ceil(pad*2+(col?G+18:0)+bh+20+58*.9);
     draw=()=>{const cx=W/2;let y=pad;if(col){glyph(cx,y+G/2,G/2);y+=G+18;}y+=bh*.92;text(gradeTxt,cx,y,big,"center",ink,1);y+=20+58*.82;text(resultTxt,cx,y,fRes,"center",acc,1,.04);};
+  }else if(o.layout==="pill"){
+    // one compact chip: glyph or grade, result, tries
+    const PH=112,r=PH/2,fG=sfnt(F.num,62*K+6),fR=sfnt(F.title,46),fT=sfnt(F.label,42),G=col?84:0;
+    const parts=[[col?"":gradeTxt,fG,ink,1,0],[resultTxt,fR,acc,1,.06],...(tries?[[tries,fT,ink,.75,0]]:[]),...(nm?[[nm,fT,ink,.75,0]]:[])].filter(q=>q[0]);
+    const gap=26,iw=(col?G+gap:0)+parts.reduce((a,q)=>a+mw(q[0],q[1],q[4]),0)+gap*(parts.length-1);
+    W=Math.ceil(iw+r*2+(hi?0:0)+8);H=PH+(hi?TAG:0)+8;
+    draw=()=>{let y=4;if(hi){tag(W/2,y,"center");y+=TAG;}
+      const pillBg=lum(ink)>.5?"rgba(18,18,20,.72)":"rgba(255,255,255,.82)";x.save();if(o.shadow){x.shadowColor="rgba(0,0,0,.35)";x.shadowBlur=18;x.shadowOffsetY=4;}x.fillStyle=pillBg;x.beginPath();x.roundRect?x.roundRect(4,y,W-8,PH,PH/2):x.rect(4,y,W-8,PH);x.fill();x.restore();
+      let px=4+r-8;const cy=y+PH/2;if(col){x.save();drawGM(x,f.p.gl,f.p.gc,px+G/2,cy,G/2);x.restore();px+=G+gap;}
+      const sv=o.shadow;o.shadow=false;for(const [t,font,c2,a,em] of parts){const sz=parseInt(font.match(/(\d+)px/)[1]);text(t,px,cy+sz*.35,font,"left",c2,a,em);px+=mw(t,font,em)+gap;}o.shadow=sv;};
+  }else if(o.layout==="side"){
+    // a single line meant to run up the edge of a vertical video
+    const fG=sfnt(F.num,96*K+8),fR=sfnt(F.title,54),fT=sfnt(F.label,42),fM=sfnt(F.label,34),G=col?104:0,gap=36;
+    const parts=[[col?"":gradeTxt,fG,ink,1,0],...(col?[[gradeTxt,fR,ink,1,.04]]:[]),[resultTxt,fR,acc,1,.08],...(tries?[[tries,fT,ink,.85,0]]:[]),...(meta?[[meta,fM,ink,.7,.1]]:[])].filter(q=>q[0]);
+    const lw=(col?G+gap:0)+parts.reduce((a,q)=>a+mw(q[0],q[1],q[4]),0)+gap*(parts.length-1),lh=Math.max(G,96*K+8);
+    W=Math.ceil(pad*2+lh+(hi?TAG:0));H=Math.ceil(pad*2+lw);
+    draw=()=>{x.save();x.translate(pad+(hi?TAG:0),H-pad);x.rotate(-Math.PI/2);
+      let px=0;const cy=lh/2;if(col){x.save();fx();drawGM(x,f.p.gl,f.p.gc,G/2,cy,G/2);x.restore();px=G+gap;}
+      for(const [t,font,c2,a,em] of parts){const sz=parseInt(font.match(/(\d+)px/)[1]);text(t,px,cy+sz*.36,font,"left",c2,a,em);px+=mw(t,font,em)+gap;}
+      if(hi){x.translate(0,-TAG+10);tag(0,0);}x.restore();};
+  }else if(o.layout==="card"){
+    // a rounded card: glyph or grade on the left, the story of the send on the right
+    const dark=lum(ink)>.5,cardBg=dark?"rgba(16,16,18,.78)":"rgba(255,255,255,.9)",G=col?200:0,fG=sfnt(F.num,150*K+16),gw=col?G:mw(gradeTxt,fG);
+    const rows=[[resultTxt,fRes,58,acc,1,.06,14]];if(col)rows.push([gradeTxt,sfnt(F.title,48),48,ink,1,0,12]);if(nm)rows.push([nm,fName,44,ink,1,0,10]);if(tries)rows.push([tries,fSub,42,ink,.9,0,12]);if(sty)rows.push([sty,fMeta,30,ink,.75,.06,10]);if(meta)rows.push([meta,fMeta,30,ink,.7,.1,0]);
+    const rw=Math.min(620,Math.max(...rows.map(q=>mw(q[0],q[1],q[5])))),rh=rows.reduce((a,q)=>a+q[2]+q[6],0),ip=56,gap=48,bodyH=Math.max(col?G:150*K+16,rh);
+    W=Math.ceil(ip*2+gw+gap+rw+16);H=Math.ceil(ip*2+bodyH+(hi?TAG:0)+16);
+    draw=()=>{x.save();if(o.shadow){x.shadowColor="rgba(0,0,0,.4)";x.shadowBlur=26;x.shadowOffsetY=8;}x.fillStyle=cardBg;x.beginPath();x.roundRect?x.roundRect(8,8,W-16,H-16,44):x.rect(8,8,W-16,H-16);x.fill();x.restore();
+      const sv=o.shadow;o.shadow=false;let y=8+ip;if(hi){tag(8+ip,y-12);y+=TAG;}
+      if(col){x.save();drawGM(x,f.p.gl,f.p.gc,8+ip+G/2,y+bodyH/2,G/2);x.restore();}else text(gradeTxt,8+ip,y+bodyH/2+(150*K+16)*.36,fG,"left",ink,1);
+      let ty=y+(bodyH-rh)/2;const tx=8+ip+gw+gap;for(const [t,font,sz,c2,a,em,after] of rows){ty+=sz*.88;text(t,tx,ty,font,"left",c2,a,em);ty+=sz*.12+after;}o.shadow=sv;};
+  }else if(o.layout==="headline"){
+    // the result as the headline, grade and details tucked underneath, left aligned
+    const fH=sfnt(F.num,200*K+24),hs=200*K+24,G=col?hs*.62:0,rows=[];
+    const l2=[gradeTxt,tries].filter(Boolean).join("   ");rows.push([l2,sfnt(F.title,60),60,ink,1,.02,16]);if(nm)rows.push([nm,fName,44,ink,.95,0,12]);if(sty)rows.push([sty,fMeta,30,ink,.8,.06,10]);if(meta)rows.push([meta,fMeta,30,ink,.75,.1,0]);
+    const hw=mw(resultTxt,fH,-.01)+(col?G+28:0),tw=Math.min(1200,Math.max(hw,...rows.map(q=>mw(q[0],q[1],q[5]))));
+    W=Math.ceil(pad*2+tw);H=Math.ceil(pad*2+TAG+hs*.8+28+rows.reduce((a,q)=>a+q[2]+q[6],0));
+    draw=()=>{let y=pad;if(hi){tag(pad,y);y+=TAG;}const by=y+hs*.78;let hx=pad;
+      if(col){glyph(hx+G/2,by-hs*.36,G/2);hx+=G+28;}text(resultTxt,hx,by,fH,"left",acc,1,-.01);y=by+28;
+      for(const [t,font,sz,c2,a,em,after] of rows){y+=sz*.9;text(t,pad,y,font,"left",c2,a,em);y+=sz*.1+after;}};
   }else{ // stack
     const G=col?210:0,rows=[];
     if(nm)rows.push([nm,fName,44,ink,1,0,14]);
@@ -4597,8 +4636,9 @@ async function drawSendCard(s,i,o){
 function openSendShare(s,i,back){
   const f=sendFacts(s,i);if(!f)return;
   const o={layout:"stack",font:"sport",color:"#FFFFFF",accent:f.p.gc?"grade":"text",bg:"none",shadow:true,outline:false,gym:!!f.gym,date:true,tries:true,name:!!f.name,style:false,high:true};
-  const segs=[{label:"Layout",key:"layout",opts:[["stack","Stack"],["strip","Strip"],["badge","Badge"]]},
-    {label:"More layouts",key:"layout",opts:[["tick","Tick"],["circle","Circle"],["underline","Underline"],["tally","Tally"],["topout","Top-out"]]},
+  const segs=[{label:"Layout",key:"layout",opts:[["stack","Stack"],["strip","Strip"],["badge","Badge"],["headline","Headline"]]},
+    {label:"",key:"layout",opts:[["card","Card"],["pill","Pill"],["side","Side"]]},
+    {label:"Marker",key:"layout",opts:[["tick","Tick"],["circle","Circle"],["underline","Underline"],["tally","Tally"],["topout","Top-out"]]},
     {label:"Background",key:"bg",opts:[["none","None"],["glass","Glass"]]},
     {label:"Text color",key:"color",opts:[["#FFFFFF","White"],["#121212","Black"],["#FC4C02","Strava orange"],["#CDF54A","Volt"]]},
     {label:"Result color",key:"accent",opts:[...(f.p.gc?[["grade","Grade color"]]:[]),["text","Same as text"]]},
