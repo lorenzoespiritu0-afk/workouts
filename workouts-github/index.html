@@ -1112,8 +1112,8 @@ function climbPoints(s){return sends(s).reduce((a,p)=>a+p.g+1+(p.res==="flash"?1
 const gradeLabel=p=>p?p.gl:"—";
 
 /* ================= lifting ================= */
-const MUSCLES=["Chest","Back","Shoulders","Biceps","Triceps","Legs","Glutes","Core","Calves","Full body"];
-const MUSCLE_HINTS=[[/bench|chest|fly|flye|push.?up|dip|pec/i,["Chest","Triceps"]],[/squat|leg press|lunge|split|step.?up|leg ext|hack/i,["Legs","Glutes"]],[/deadlift|rdl|romanian|good morning|hip thrust|glute/i,["Glutes","Legs","Back"]],[/row|pull.?up|chin|lat|pulldown|shrug/i,["Back","Biceps"]],[/overhead|ohp|shoulder|military|lateral|raise|arnold|face pull/i,["Shoulders"]],[/curl/i,["Biceps"]],[/tricep|skull|pushdown|extension|close.?grip/i,["Triceps"]],[/plank|crunch|ab|core|sit.?up|leg raise|russian|pallof/i,["Core"]],[/calf|calves/i,["Calves"]],[/clean|snatch|thruster|burpee|kettlebell swing|swing/i,["Full body"]],[/hamstring|leg curl/i,["Legs"]]];
+const MUSCLES=["Chest","Back","Shoulders","Biceps","Triceps","Forearms","Legs","Glutes","Core","Calves","Full body"];
+const MUSCLE_HINTS=[[/wrist|forearm|grip|gripper|pinch|dead hang|towel hang|rice bucket|extensor|pronation|supination|reverse curl|reverse barbell curl|wrist roller/i,["Forearms"]],[/lock-?off|typewriter|scapular pull/i,["Back","Biceps"]],[/front lever/i,["Core","Back"]],[/external rotation/i,["Shoulders"]],[/bench|chest|fly|flye|push.?up|dip|pec/i,["Chest","Triceps"]],[/squat|leg press|lunge|split|step.?up|leg ext|hack/i,["Legs","Glutes"]],[/deadlift|rdl|romanian|good morning|hip thrust|glute/i,["Glutes","Legs","Back"]],[/row|pull.?up|chin|lat|pulldown|shrug/i,["Back","Biceps"]],[/overhead|ohp|shoulder|military|lateral|raise|arnold|face pull/i,["Shoulders"]],[/curl/i,["Biceps"]],[/tricep|skull|pushdown|extension|close.?grip/i,["Triceps"]],[/plank|crunch|ab|core|sit.?up|leg raise|russian|pallof/i,["Core"]],[/calf|calves/i,["Calves"]],[/clean|snatch|thruster|burpee|kettlebell swing|swing/i,["Full body"]],[/hamstring|leg curl/i,["Legs"]]];
 function guessMuscles(name){for(const [re,m] of MUSCLE_HINTS)if(re.test(name||""))return [...m];return [];}
 const e1rm=e=>e&&e.w>0&&e.reps>0?(e.reps===1?e.w:e.w*(1+Math.min(e.reps,15)/30)):null;
 /* ================= body weight ================= */
@@ -3378,7 +3378,7 @@ const BODY_COMMON=[
   {m:"",d:"M100 8C112 8 119 18 119 31C119 45 111 54 100 54C89 54 81 45 81 31C81 18 88 8 100 8Z",c:1},
   {m:"",d:"M91 55L109 55L111 64L89 64Z",c:1},
   {m:"Shoulders",d:"M75 66C63 64 54 70 51 82C49 92 50 101 53 108C60 103 66 96 71 89C75 83 77 74 75 66Z"},
-  {m:"",d:"M49 166C55 164 60 166 61 172L57 213C55 219 48 219 45 213C42 199 42 182 44 172C45 168 47 167 49 166Z"},
+  {m:"Forearms",d:"M49 166C55 164 60 166 61 172L57 213C55 219 48 219 45 213C42 199 42 182 44 172C45 168 47 167 49 166Z"},
   {m:"",d:"M48 221C53 221 56 226 55 231C54 237 49 239 45 236C41 232 42 223 48 221Z"},
   {m:"",d:"M84 312C89 312 92 315 92 318C92 321 89 323 84 323C79 323 76 321 76 318C76 315 79 312 84 312Z"},
   {m:"",d:"M76 395L91 395C95 395 97 399 95 403L74 403C72 399 73 396 76 395Z"},
@@ -4924,8 +4924,21 @@ const LIB={
   Biceps:{gym:["Barbell curl","Cable curl"],db:["Dumbbell curl","Hammer curl"],bw:["Chin-ups","Towel curls"]},
   Triceps:{gym:["Triceps pushdown","Close-grip bench press"],db:["Overhead dumbbell extension","Dumbbell kickbacks"],bw:["Bench dips","Diamond push-ups"]},
   Core:{gym:["Hanging leg raise","Cable crunch","Pallof press"],db:["Weighted plank","Dumbbell side bend","Russian twist"],bw:["Plank","Dead bug","Hollow hold"]},
-  Calves:{gym:["Standing calf raise","Seated calf raise"],db:["Dumbbell calf raise"],bw:["Single-leg calf raise"]}
+  Calves:{gym:["Standing calf raise","Seated calf raise"],db:["Dumbbell calf raise"],bw:["Single-leg calf raise"]},
+  Forearms:{gym:["Reverse wrist curl","Plate pinch hold","Wrist curl","Wrist roller","Reverse barbell curl"],db:["Dumbbell reverse wrist curl","Dumbbell wrist curl","Pronation and supination","Farmer's carry"],bw:["Dead hang","Finger extensor band","Towel hang","Rice bucket"]}
 };
+/* climbing day: pull strength, core tension, antagonist push, shoulder health, forearm balance */
+const CLIMB_LIB={
+  Back:{gym:["Weighted pull-ups","Lock-off holds","Offset pull-ups","Lat pulldown"],db:["Weighted pull-ups","Lock-off holds","One-arm dumbbell row"],bw:["Pull-ups","Lock-off holds","Typewriter pull-ups","Offset pull-ups"]},
+  Core:{gym:["Hanging leg raise","Front lever tucks","Windshield wipers"],db:["Front lever tucks","Hanging leg raise"],bw:["Front lever tucks","Hanging leg raise","Hollow hold"]},
+  Chest:{gym:["Dumbbell bench press","Push-ups"],db:["Dumbbell bench press","Push-ups"],bw:["Push-ups","Pike push-ups"]},
+  Shoulders:{gym:["Face pull","External rotation","Scapular pull-ups"],db:["Dumbbell external rotation","Y-T-W raises","Scapular pull-ups"],bw:["Scapular pull-ups","Y-T-W raises"]},
+  Forearms:{gym:["Reverse wrist curl","Finger extensor band","Wrist curl"],db:["Dumbbell reverse wrist curl","Finger extensor band","Pronation and supination"],bw:["Finger extensor band","Rice bucket","Dead hang"]}
+};
+/* moves done for time, not reps: [seconds, cue] */
+const HOLD_SECS=[[/dead hang|towel hang/i,20,"Hang on open hands with shoulders engaged."],[/lock-off/i,10,"Hold at the top, then at 90 degrees, then 120 degrees, each for the time."],[/front lever/i,10,"Tuck tight, push the bar down, keep your hips level with your shoulders."],
+  [/plate pinch|pinch block/i,20,"Squeeze with thumb and fingers, don't let it touch your body."],[/rice bucket/i,60,"Dig, open and close, and twist your hands in the bucket."],[/hollow hold|plank/i,30,"Lower back pressed down the whole time."],[/farmer/i,40,"Walk tall, about 40 seconds per carry."]];
+const holdOf=n=>HOLD_SECS.find(([re])=>re.test(n||""));
 const BANNED={Knees:/lunge|split squat|step-up|jump|back squat|wall sit/i,Shoulders:/overhead|pike|dip|wall walk|upright/i,"Lower back":/deadlift|barbell row|good morning|superman|back squat/i,Elbows:/skull|close-grip|dip|diamond/i,Ankles:/lunge|jump|step-up|calf raise/i};
 const SAFE_SWAP={Legs:"Leg press",Glutes:"Glute bridges",Back:"Chest-supported dumbbell row",Shoulders:"Lateral raise",Triceps:"Triceps pushdown",Calves:"Seated calf raise"};
 const SPLITS=[{n:"Push day",m:["Chest","Shoulders","Triceps"]},{n:"Pull day",m:["Back","Biceps","Core"]},{n:"Leg day",m:["Legs","Glutes","Calves","Core"]},{n:"Upper body",m:["Chest","Back","Shoulders","Biceps","Triceps"]},{n:"Full body",m:["Legs","Chest","Back","Glutes","Core"]}];
@@ -4934,7 +4947,8 @@ function hoursSince(filterFn){let b=null;for(const s of live())if(filterFn(s)){c
 function muscleHours(){
   const out={};for(const m of MUSCLES)out[m]=999;
   for(const s of live().filter(s=>s.type==="lift"&&daysAgo(s)<=7))for(const e of s.ex||[])for(const m of (e.mus&&e.mus.length?e.mus:guessMuscles(e.name)))out[m]=Math.min(out[m],Math.max(0,daysAgo(s)*24));
-  const c=hoursSince(s=>s.type==="climb"&&daysAgo(s)<=3);if(c!=null){out.Back=Math.min(out.Back,c+12);out.Biceps=Math.min(out.Biceps,c+12);}
+  const c=hoursSince(s=>s.type==="climb"&&daysAgo(s)<=3);if(c!=null){out.Back=Math.min(out.Back,c+12);out.Biceps=Math.min(out.Biceps,c+12);out.Forearms=Math.min(out.Forearms,c);}
+  const hb=hoursSince(s=>s.type==="hang"&&daysAgo(s)<=3);if(hb!=null)out.Forearms=Math.min(out.Forearms,hb);
   const r=hoursSince(s=>(s.type==="run"||s.type==="hike")&&daysAgo(s)<=3&&effortOf(s).v>=7);if(r!=null){out.Legs=Math.min(out.Legs,r+12);out.Calves=Math.min(out.Calves,r);}
   return out;
 }
@@ -4950,8 +4964,12 @@ function genLift(o){
   splits.sort((a,b)=>b.sc-a.sc);
   let sp=splits.length>1&&splits[1].sc>splits[0].sc-8&&o.seed%2?splits[1]:splits[0];
   const tg=Array.isArray(o.target)&&o.target.length?o.target:o.target==="any"?"any":null;
+  const climbDay=Array.isArray(tg)&&tg.includes("Climbing");
   if(tg==="any"){sp=SPLITS.find(x=>x.n==="Full body");why.push("Full body, as you asked: one move for each main muscle group.");}
-  else if(tg){const m=[...new Set(tg.flatMap(t=>t==="Arms"?["Biceps","Triceps"]:[t]))];sp={n:tg.join(" + ")+" day",m};
+  else if(climbDay){const extra=tg.filter(t=>t!=="Climbing").flatMap(t=>t==="Arms"?["Biceps","Triceps"]:[t]);sp={n:"Climbing strength",m:[...new Set(["Back","Core","Chest","Shoulders","Forearms",...extra])]};
+    why.push("Climbing strength: pulling and lock-offs, core tension for steep walls, and push, shoulder and wrist-extensor work to balance all the pulling.");
+    const fc=hoursSince(s=>(s.type==="climb"||s.type==="hang")&&daysAgo(s)<=2);if(fc!=null&&fc<24)why.push(`You were on the wall or board ${agoText(fc)}, so hangs and grip work are kept light today.`);}
+  else if(tg){const m=[...new Set(tg.flatMap(t=>t==="Arms"?["Biceps","Triceps"]:[t]))];if(m.length===1&&m[0]==="Forearms")why.push("Wrist flexors and extensors both get work, so your elbows stay balanced.");sp={n:tg.join(" + ")+" day",m};
     const sore=m.filter(x=>mh[x]<36);if(sore.length)why.push(`Heads up: ${sore.join(", ").toLowerCase()} ${sore.length===1?"was":"were"} trained ${agoText(Math.min(...sore.map(x=>mh[x])))}. Keep a rep or two in reserve on those.`);else why.push(`Built around what you picked: ${tg.join(", ").toLowerCase()}.`);}
   else why.push(`Muscles picked from your recent training: ${sp.m.join(", ").toLowerCase()} have had the most rest.`);
   const fresh=sp.m.filter(m=>mh[m]>=48),tired=MUSCLES.filter(m=>m!=="Full body"&&mh[m]<36&&!sp.m.includes(m));
@@ -4962,8 +4980,8 @@ function genLift(o){
   const ban=x=>caut.some(c=>BANNED[c]&&BANNED[c].test(x));
   if(g){const gm=guessMuscles(g.ex);if(gm.some(m=>sp.m.includes(m))&&!ban(g.ex))pool.push({name:g.ex,m:gm[0]});}
   const norm=x=>x.toLowerCase().replace(/barbell |dumbbell |machine |seated |standing /g,"").replace(/s$/,"").trim();
-  const dup=x=>pool.some(p=>{const a=norm(p.name),c=norm(x);return a===c||a.includes(c)||c.includes(a);});
-  while(pool.length<n&&idx<40){const m=sp.m[idx%sp.m.length],opts=(LIB[m]||{})[o.equip]||[];let pick=opts[(Math.floor(idx/sp.m.length)+o.seed)%Math.max(1,opts.length)];if(pick&&ban(pick))pick=SAFE_SWAP[m]&&!ban(SAFE_SWAP[m])?SAFE_SWAP[m]:null;if(pick&&!dup(pick))pool.push({name:pick,m});idx++;}
+  const dup=x=>pool.some(p=>{const a=norm(p.name),c=norm(x);return a===c||((a.includes(c)||c.includes(a))&&!/wrist/.test(a+c));});
+  while(pool.length<n&&idx<40){const m=sp.m[idx%sp.m.length],opts=((climbDay?CLIMB_LIB:LIB)[m]||LIB[m]||{})[o.equip]||[];let pick=opts[(Math.floor(idx/sp.m.length)+o.seed)%Math.max(1,opts.length)];if(pick&&ban(pick))pick=SAFE_SWAP[m]&&!ban(SAFE_SWAP[m])?SAFE_SWAP[m]:null;if(pick&&!dup(pick))pool.push({name:pick,m});idx++;}
   const relC=caut.filter(c=>BANNED[c]);
   if(relC.length)why.push(`Skipping moves that load your ${relC.join(", ").toLowerCase()}.`);
   const S={strength:{main:[5,5,180],acc:[3,8,90]},muscle:{main:[4,8,90],acc:[3,12,60]},endurance:{main:[3,15,45],acc:[3,15,45]},power:{main:[5,3,150],acc:[3,6,90]}}[focus];
@@ -4973,6 +4991,9 @@ function genLift(o){
   const items=pool.map((p,i)=>{const [sets0,reps,rest]=i<2?S.main:S.acc;let sets=Math.max(2,sets0+eAdj);if(lvl==="beginner")sets=Math.min(sets,3);
     const rm=o.equip==="bw"?0:bestE1rm(p.name);const w=rm?round25(rm/(1+reps/30)*pct):null;
     const note=focus==="power"&&i<2?"Move the weight fast. Stop the set if speed drops.":o.effort==="max"&&i===0?"Then try one heavier top set of "+Math.max(1,reps-2)+" reps.":`Leave about ${10-rpe} rep${10-rpe===1?"":"s"} in the tank.`;
+    const hd=holdOf(p.name);if(hd){const fl=climbDay&&/hang|pinch/i.test(p.name)&&(hoursSince(s=>(s.type==="climb"||s.type==="hang")&&daysAgo(s)<=1)||99)<24;return {ex:p.name,sets:fl?Math.max(2,sets-1):sets,reps:hd[1],hold:true,w:null,rest:Math.min(rest,90),mus:guessMuscles(p.name).length?guessMuscles(p.name):[p.m],note:hd[2]};}
+    if(/finger extensor/i.test(p.name))return {ex:p.name,sets:3,reps:20,w:null,rest:45,mus:["Forearms"],note:"Open your fingers against the band, slow on the way back."};
+    if(/wrist curl|wrist roller|pronation/i.test(p.name))return {ex:p.name,sets,reps:Math.max(12,reps),w:rm?w:null,rest:Math.min(rest,60),mus:["Forearms"],note:"Full range, slow lowering. Light weight is fine."};
     return {ex:p.name,sets,reps,w,rest,mus:guessMuscles(p.name).length?guessMuscles(p.name):[p.m],note};});
   if(o.feel==="tired"||o.feel==="sore")why.push("One less set per exercise to match how you feel.");
   const est=Math.round(8+items.reduce((a,it)=>a+it.sets*(40+it.rest),0)/60+5);
@@ -5184,7 +5205,7 @@ function planHTML(pl){
   return `<div class="ins" style="background:var(--bg);margin-top:16px;--c:${col(pl.type)}"><div class="row2"><h3>${esc(pl.title)}</h3><span class="xpchip" style="background:${col(pl.type)}">About ${pl.est} min</span></div>
     <p class="hint" style="margin-top:4px">Target effort ${pl.rpe}/10${pl.distEst?`, roughly ${fmtDist(pl.distEst)}`:""}</p>
     ${pl.why.length?`<div class="fb" style="background:var(--surface);margin:10px 0">${pl.why.map(t=>`<p>${esc(t)}</p>`).join("")}</div>`:""}
-    ${pl.blocks.map(b=>`<h4 style="margin:14px 0 6px">${esc(b.n)}</h4>${b.items.map(it=>it.ex?`<div class="trow" style="padding:8px 0"><span class="mdot" style="background:${col(pl.type)};font-size:.75rem">${it.sets}×</span><div class="tx"><b>${esc(it.ex)}</b><span>${it.sets} sets of ${it.reps}${it.w?` at ${fmtWt(it.w)}`:""}, rest ${it.rest>=120?it.rest/60+" min":it.rest+" s"}. ${esc(it.note)}</span></div></div>`:`<p style="margin:6px 0;font-size:.92rem;line-height:1.45">• ${esc(it.text)}</p>`).join("")}`).join("")}
+    ${pl.blocks.map(b=>`<h4 style="margin:14px 0 6px">${esc(b.n)}</h4>${b.items.map(it=>it.ex?`<div class="trow" style="padding:8px 0"><span class="mdot" style="background:${col(pl.type)};font-size:.75rem">${it.sets}×</span><div class="tx"><b>${esc(it.ex)}</b><span>${it.sets} sets of ${it.hold?it.reps+" seconds":it.reps}${it.w?` at ${fmtWt(it.w)}`:""}, rest ${it.rest>=120?it.rest/60+" min":it.rest+" s"}. ${esc(it.note)}</span></div></div>`:`<p style="margin:6px 0;font-size:.92rem;line-height:1.45">• ${esc(it.text)}</p>`).join("")}`).join("")}
   ${fuelHTML(fp)}</div>`;
 }
 let planPrefs=null;
@@ -5207,8 +5228,8 @@ function openPlanner(type){
       <label>Terrain</label><div class="seg" data-po="terrain">${Object.entries(TERRAIN).map(([v,[n]])=>`<button data-v="${v}" aria-pressed="${(o.terrain||"flat")===v}">${n}</button>`).join("")}</div>
       <p class="hint" style="margin-top:6px">${esc(TERRAIN[o.terrain||"flat"][1])}.${o.terrain==="steep"||o.terrain==="hilly"?" Targets switch from pace to effort, with walking and downhill cues.":""}</p>`;})():""}
       <p class="hint">${rec.h>0?`Based on your logs, you have about ${Math.round(rec.h)} hours of recovery left from ${esc(titleOf(rec.s))}.`:"Your logs say you're recovered."}</p>
-      ${o.type==="lift"?`<label>Target muscles</label><div class="tchips" id="pl-tg" style="--c:#F5F5F7;--ct:#000">${[["auto","Auto (recent training)"],["any","Any / full body"]].map(([v,n])=>`<button class="tchip" data-tg2="${v}" aria-pressed="${(o.target||"auto")===v}">${n}</button>`).join("")}${["Chest","Back","Shoulders","Arms","Legs","Glutes","Core"].map(m=>`<button class="tchip" data-tg2="${m}" aria-pressed="${Array.isArray(o.target)&&o.target.includes(m)}">${m}</button>`).join("")}</div>
-      <p class="hint" style="margin-top:6px">${Array.isArray(o.target)&&o.target.length?`Session built around ${o.target.join(", ").toLowerCase()}.`:o.target==="any"?"A full-body session.":"Picks whatever has had the most rest since your recent lifts, climbs, and runs."}</p>
+      ${o.type==="lift"?`<label>Target muscles</label><div class="tchips" id="pl-tg" style="--c:#F5F5F7;--ct:#000">${[["auto","Auto (recent training)"],["any","Any / full body"]].map(([v,n])=>`<button class="tchip" data-tg2="${v}" aria-pressed="${(o.target||"auto")===v}">${n}</button>`).join("")}${[["Chest","Chest"],["Back","Back"],["Shoulders","Shoulders"],["Arms","Arms"],["Forearms","Forearms and grip"],["Legs","Legs"],["Glutes","Glutes"],["Core","Core"],["Climbing","Climbing strength"]].map(([m,n])=>`<button class="tchip" data-tg2="${m}" aria-pressed="${Array.isArray(o.target)&&o.target.includes(m)}">${n}</button>`).join("")}</div>
+      <p class="hint" style="margin-top:6px">${Array.isArray(o.target)&&o.target.includes("Climbing")?"Pulling, lock-offs, core tension and the antagonist work that keeps climbers' shoulders and elbows healthy.":Array.isArray(o.target)&&o.target.length?`Session built around ${o.target.join(", ").toLowerCase()}.`:o.target==="any"?"A full-body session.":"Picks whatever has had the most rest since your recent lifts, climbs, and runs."}</p>
       <label>Focus</label><div class="seg" data-po="focus">${FOCUS.lift.map(([v,n])=>`<button data-v="${v}" aria-pressed="${o.focus===v}">${n}</button>`).join("")}</div>
       <label>Equipment</label><div class="seg" data-po="equip">${[["gym","Full gym"],["db","Dumbbells"],["bw","Bodyweight"]].map(([v,n])=>`<button data-v="${v}" aria-pressed="${o.equip===v}">${n}</button>`).join("")}</div>`:""}
       ${g?`<p class="hint">Working toward: ${esc(ltTitle(g))}. Suggestions lean toward this goal.</p>`:longGoals().length?"":`<p class="hint">Set a long-term goal in Coach for more targeted workouts.</p>`}
@@ -5469,7 +5490,7 @@ const icsEsc=t=>String(t||"").replace(/\\/g,"\\\\").replace(/;/g,"\\;").replace(
 function icsFold(line){const out=[];let s=line;while(new TextEncoder().encode(s).length>73){let n=73;while(new TextEncoder().encode(s.slice(0,n)).length>73)n--;out.push(s.slice(0,n));s=" "+s.slice(n);}out.push(s);return out.join("\r\n");}
 function planDayText(x){
   const lines=[];if(x.est)lines.push(`About ${x.est} min, effort ${x.rpe}/10.`);if(PHASE_NOTE[x.phase])lines.push(PHASE_NOTE[x.phase]+".");
-  for(const b of x.blocks||[]){lines.push("");lines.push(b.n.toUpperCase());for(const it of b.items)lines.push(it.ex?`- ${it.ex}: ${it.sets} x ${it.reps}${it.w?` at ${fmtWt(it.w)}`:""}`:`- ${it.text}`);}
+  for(const b of x.blocks||[]){lines.push("");lines.push(b.n.toUpperCase());for(const it of b.items)lines.push(it.ex?`- ${it.ex}: ${it.sets} x ${it.hold?it.reps+"s":it.reps}${it.w?` at ${fmtWt(it.w)}`:""}`:`- ${it.text}`);}
   return lines.join("\n");
 }
 function eventICS(ev){
@@ -6405,7 +6426,7 @@ function drawGM(x,label,color,cx,cy,r){
 function sendGroups(s){const m=new Map();for(const p of (s.probs||[]).filter(p=>p.res!=="attempt")){const k=p.g+"|"+p.gl;const e=m.get(k)||{g:p.g,gl:p.gl,gc:p.gc,n:0,fl:0};e.n++;if(p.res==="flash")e.fl++;m.set(k,e);}return [...m.values()].sort((a,b)=>b.g-a.g);}
 /* ================= exercise library (grouped by muscle) ================= */
 const EQ={bb:"Barbell",db:"Dumbbell",mc:"Machine",cb:"Cable",bw:"Bodyweight",kb:"Kettlebell"};
-const EXLIB_GROUPS=["Chest","Back","Shoulders","Biceps","Triceps","Legs","Glutes","Core","Calves","Full body"];
+const EXLIB_GROUPS=["Chest","Back","Shoulders","Biceps","Triceps","Forearms","Legs","Glutes","Core","Calves","Full body"];
 const EXLIB=[
  // name, group, muscles, equipment
  ["Barbell bench press","Chest",["Chest","Triceps","Shoulders"],"bb"],["Incline barbell bench press","Chest",["Chest","Shoulders","Triceps"],"bb"],["Decline bench press","Chest",["Chest","Triceps"],"bb"],
@@ -6440,6 +6461,12 @@ const EXLIB=[
  ["Standing calf raise","Calves",["Calves"],"mc"],["Seated calf raise","Calves",["Calves"],"mc"],["Dumbbell calf raise","Calves",["Calves"],"db"],["Single-leg calf raise","Calves",["Calves"],"bw"],
  ["Power clean","Full body",["Full body","Legs","Back"],"bb"],["Clean and jerk","Full body",["Full body","Legs","Shoulders"],"bb"],["Snatch","Full body",["Full body","Legs","Shoulders"],"bb"],["Thrusters","Full body",["Full body","Legs","Shoulders"],"bb"],
  ["Farmer's carry","Full body",["Full body","Core","Back"],"db"],["Dumbbell man makers","Full body",["Full body","Chest","Shoulders"],"db"],["Turkish get-up","Full body",["Full body","Core","Shoulders"],"kb"],
+ ["Wrist curl","Forearms",["Forearms"],"bb"],["Reverse wrist curl","Forearms",["Forearms"],"bb"],["Reverse barbell curl","Forearms",["Forearms","Biceps"],"bb"],
+ ["Dumbbell wrist curl","Forearms",["Forearms"],"db"],["Dumbbell reverse wrist curl","Forearms",["Forearms"],"db"],["Pronation and supination","Forearms",["Forearms"],"db"],["Wrist roller","Forearms",["Forearms","Shoulders"],"mc"],
+ ["Plate pinch hold","Forearms",["Forearms"],"mc"],["Pinch block hold","Forearms",["Forearms"],"mc"],["Gripper squeezes","Forearms",["Forearms"],"mc"],["Cable reverse curl","Forearms",["Forearms","Biceps"],"cb"],
+ ["Dead hang","Forearms",["Forearms","Back"],"bw"],["Towel hang","Forearms",["Forearms","Back"],"bw"],["Finger extensor band","Forearms",["Forearms"],"bw"],["Rice bucket","Forearms",["Forearms"],"bw"],
+ ["Lock-off holds","Back",["Back","Biceps"],"bw"],["Typewriter pull-ups","Back",["Back","Biceps"],"bw"],["Scapular pull-ups","Back",["Back","Shoulders"],"bw"],["Offset pull-ups","Back",["Back","Biceps"],"bw"],
+ ["External rotation","Shoulders",["Shoulders"],"cb"],["Dumbbell external rotation","Shoulders",["Shoulders"],"db"],["Front lever tucks","Core",["Core","Back"],"bw"],["Windshield wipers","Core",["Core"],"bw"],
  ["Sled push","Full body",["Full body","Legs"],"mc"],["Battle ropes","Full body",["Full body","Shoulders"],"mc"],["Burpees","Full body",["Full body","Chest","Legs"],"bw"]
 ].map(([name,g,mus,eq])=>({name,g,mus,eq}));
 const exByName=n=>EXLIB.find(x=>x.name.toLowerCase()===String(n||"").trim().toLowerCase());
