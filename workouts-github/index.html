@@ -1059,11 +1059,13 @@ function parseClock(v){
 /* ================= session math ================= */
 const live=()=>Object.values(sessions).filter(s=>!s.deleted);
 const liveSegs=()=>Object.values(segments).filter(g=>!g.deleted);
+/* moves logged as seconds held, not reps: they count as time, never as volume */
+function isHoldEx(e){return !!e&&(e.hold===true||(e.hold!==false&&/plank|\bholds?\b|wall sit|dead hang|towel hang|l-sit|hollow|isometric|lock-?off|front lever|rice bucket|farmer/i.test(e.name||"")));}
 function volume(s){
   if(s.type!=="lift")return 0;
-  const bwKg=(s.ex||[]).some(e=>e.bw)?(weightOn(s.date)||bio().weight||0):0;
-  const ex=(s.ex||[]).filter(e=>e.sets&&e.reps&&(e.w!=null||(e.bw&&bwKg)));
-  if(ex.length)return ex.reduce((a,e)=>{const b=e.bw?bwKg:0;if(!hasWs(e))return a+e.sets*e.reps*(b+(e.w||0));let v=0;for(let i=0;i<e.sets;i++)v+=e.reps*(b+(setW(e,i)||0));return a+v;},0);
+  const bwKg=(s.ex||[]).some(e=>e.bw===true)?(weightOn(s.date)||bio().weight||0):0;
+  const ex=(s.ex||[]).filter(e=>!isHoldEx(e)&&e.sets&&e.reps&&(e.w!=null||(e.bw===true&&bwKg)));
+  if(ex.length)return ex.reduce((a,e)=>{const b=e.bw===true?bwKg:0;if(!hasWs(e))return a+e.sets*e.reps*(b+(e.w||0));let v=0;for(let i=0;i<e.sets;i++)v+=e.reps*(b+(setW(e,i)||0));return a+v;},0);
   return s.vol||0;
 }
 const totalSets=s=>(s.ex||[]).reduce((a,e)=>a+(e.sets||0),0);
@@ -1127,7 +1129,7 @@ const wsLabel=e=>{if(hasWs(e)&&new Set(e.ws.slice(0,e.sets||e.ws.length).map(x=>
 const hasWs=e=>!!(e&&Array.isArray(e.ws)&&e.ws.length);
 const setW=(e,i)=>hasWs(e)&&e.ws[i]!=null?e.ws[i]:e.w;
 const topW=ws=>{const v=(ws||[]).filter(x=>x!=null);return v.length?Math.max(...v):null;};
-const e1rm=e=>e&&e.w>0&&e.reps>0?(e.reps===1?e.w:e.w*(1+Math.min(e.reps,15)/30)):null;
+const e1rm=e=>e&&e.w>0&&e.reps>0&&!isHoldEx(e)?(e.reps===1?e.w:e.w*(1+Math.min(e.reps,15)/30)):null;
 /* ================= body weight ================= */
 const weights=()=>(settings.weights||[]).slice().sort((a,b)=>a.d.localeCompare(b.d));
 function weightOn(date){const w=weights();if(!w.length)return (settings.bio||{}).weight||null;let v=w[0].kg;for(const x of w){if(x.d<=date)v=x.kg;else break;}return v;}
@@ -2893,15 +2895,16 @@ function openForm(existing,preset){
       body+=`<label>Exercises</label>
       <div class="timer"><b id="rt">${restLeft()?fmtClock(restLeft()):"Rest"}</b>${[60,90,120,180].map(t=>`<button data-rest="${t}">${t<120?t+"s":(t/60)+" min"}</button>`).join("")}<button data-rest="0">Stop</button></div>
       <div id="exlist">${d.ex.map((e,i)=>`<div class="ex">
-        <input type="text" class="exn" list="exlib-dl" placeholder="Exercise, e.g. Bench press" value="${esc(e.name)}" aria-label="Exercise name">${isBW(e)?`<span class="bwtag">Bodyweight</span>`:""}
+        <input type="text" class="exn" list="exlib-dl" placeholder="Exercise, e.g. Bench press" value="${esc(e.name)}" aria-label="Exercise name">
         <div class="r"><div><small>Sets</small><input class="exs" type="number" inputmode="numeric" min="0" value="${v(e.sets)}"></div>
-        <div><small>Reps</small><input class="exr" type="number" inputmode="numeric" min="0" value="${v(e.reps)}"></div>
+        <div><small>${isHoldEx(e)?"Seconds":"Reps"}</small><input class="exr" type="number" inputmode="numeric" min="0" value="${v(e.reps)}"></div>
         <div><small>${isBW(e)?`Added (${wU()})`:`Weight (${wU()})`}</small>${hasWs(e)?`<div class="pwtop" aria-label="Weight set per set">Per set ↓</div><input class="exw" type="hidden" value="">`:`<input class="exw" type="number" inputmode="decimal" step="any" min="0" placeholder="${isBW(e)?"0":""}" value="${e.w!=null?round(toDispWt(e.w),1):""}">`}</div>
         <button class="x" data-rm="${i}" aria-label="Remove exercise">×</button></div>
         ${hasWs(e)?`<div class="pwgrid">${Array.from({length:Math.max(1,e.sets||e.ws.length)},(_,si)=>`<div><small>Set ${si+1}</small><input class="exws" type="number" inputmode="decimal" step="any" min="0" placeholder="${isBW(e)?"0":""}" value="${setW(e,si)!=null?round(toDispWt(setW(e,si)),1):""}" aria-label="Set ${si+1} weight"></div>`).join("")}</div>`:""}
         <button class="pwbtn" data-pw="${i}">${hasWs(e)?"Same weight for every set":"Different weight per set"}</button>
+        <div class="tchips extog" style="margin-top:8px;--c:#F5F5F7;--ct:#000"><button type="button" class="tchip sm" data-bwt="${i}" aria-pressed="${isBW(e)}">Bodyweight</button><button type="button" class="tchip sm" data-hdt="${i}" aria-pressed="${isHoldEx(e)}">Timed hold</button></div>
         <div class="tchips" style="margin-top:8px;--c:var(--lift)">${MUSCLES.map(m=>`<button class="tchip sm" data-mu="${i}:${m}" aria-pressed="${(e.mus||[]).includes(m)}">${m}</button>`).join("")}</div>
-        ${e1rm(e)&&!isBW(e)?`<p class="hint" style="margin-top:6px">Estimated 1-rep max: ${fmtWt(e1rm(e))}</p>`:""}</div>`).join("")}</div>
+        ${isHoldEx(e)?`<p class="hint" style="margin-top:6px">Logged as seconds held, so it adds to time, not volume.</p>`:isBW(e)?`<p class="hint" style="margin-top:6px">Counts your bodyweight${e.w?" plus "+fmtWt(e.w):""} in volume.</p>`:""}${e1rm(e)&&!isBW(e)?`<p class="hint" style="margin-top:6px">Estimated 1-rep max: ${fmtWt(e1rm(e))}</p>`:""}</div>`).join("")}</div>
       <datalist id="exlib-dl">${EXLIB.map(x=>`<option value="${esc(x.name)}">`).join("")}</datalist>
       <div class="row" style="margin-top:4px"><button class="btn go" id="addexlib">${icon("lift")} Add from library</button><button class="btn" id="addex">+ Custom</button></div>
       <p class="hint">The library fills in muscle groups for you. For bodyweight moves like pull-ups or dips, the weight box is any extra load you add${bio().weight?`, and your body weight (${fmtWt(bio().weight)}) counts toward volume`:". Add your weight in Settings so they count toward volume"}.</p>
@@ -2949,7 +2952,7 @@ function openForm(existing,preset){
     if($("hlist"))d.hangs=[...document.querySelectorAll("#hlist .ex")].map(r=>{const a=num(r.querySelector(".ha").value);return {grip:r.querySelector(".hg").value,edge:num(r.querySelector(".he").value),add:a!=null?fromDispWt(a):0,hang:num(r.querySelector(".hh").value),rest:num(r.querySelector(".hr").value),reps:num(r.querySelector(".hp").value),sets:num(r.querySelector(".hs").value)};});
     if($("f-gear")){d.gearId=$("f-gear").value;gearTouched=true;}
     if($("exlist")){
-      d.ex=[...document.querySelectorAll(".ex")].map((r,i)=>{const w=num(r.querySelector(".exw").value);const name=r.querySelector(".exn").value.trim();let mus=(d.ex[i]&&d.ex[i].mus)||[];if(!mus.length&&name)mus=guessMuscles(name);const lib=exByName(name);if(lib&&(!mus.length||(d.ex[i]&&d.ex[i].name!==name)))mus=[...lib.mus];const wsIn=[...r.querySelectorAll(".exws")];const ws=wsIn.length?wsIn.map(x=>{const n=num(x.value);return n!=null?fromDispWt(n):null;}):null;const ww=ws?topW(ws):(w!=null?fromDispWt(w):null);return {name,sets:num(r.querySelector(".exs").value),reps:num(r.querySelector(".exr").value),w:ww,...(ws?{ws}:{}),mus,...((lib&&lib.eq==="bw")||(d.ex[i]&&d.ex[i].bw&&d.ex[i].name===name)?{bw:true}:{})};});
+      d.ex=[...document.querySelectorAll(".ex")].map((r,i)=>{const w=num(r.querySelector(".exw").value);const name=r.querySelector(".exn").value.trim();let mus=(d.ex[i]&&d.ex[i].mus)||[];if(!mus.length&&name)mus=guessMuscles(name);const lib=exByName(name);if(lib&&(!mus.length||(d.ex[i]&&d.ex[i].name!==name)))mus=[...lib.mus];const wsIn=[...r.querySelectorAll(".exws")];const ws=wsIn.length?wsIn.map(x=>{const n=num(x.value);return n!=null?fromDispWt(n):null;}):null;const ww=ws?topW(ws):(w!=null?fromDispWt(w):null);return {name,sets:num(r.querySelector(".exs").value),reps:num(r.querySelector(".exr").value),w:ww,...(ws?{ws}:{}),mus,...(d.ex[i]&&d.ex[i].name===name&&typeof d.ex[i].bw==="boolean"?{bw:d.ex[i].bw}:lib&&lib.eq==="bw"?{bw:true}:{}),...(d.ex[i]&&d.ex[i].name===name&&typeof d.ex[i].hold==="boolean"?{hold:d.ex[i].hold}:{})};});
       const vv=num($("f-vol").value);d.vol=vv!=null?fromDispWt(vv):null;
     }
   };
@@ -3029,7 +3032,9 @@ function openForm(existing,preset){
     $("f-time").onchange=()=>{$("f-title").placeholder=defaultTitle(d.type,$("f-time").value)};
     if($("addex"))$("addex").onclick=()=>{read();d.ex.push({name:"",sets:null,reps:null,w:null});draw();const l=document.querySelectorAll(".exn");l[l.length-1].focus();};
     if($("addexlib"))$("addexlib").onclick=()=>{read();openExPicker(add=>{d.ex=d.ex.filter(e=>e.name||e.sets||e.reps||e.w!=null);for(const a of add){const last=live().filter(s=>s.type==="lift").sort((x,y)=>chrono(y,x)).flatMap(s=>s.ex||[]).find(e=>e.name&&e.name.toLowerCase()===a.name.toLowerCase());d.ex.push({name:a.name,sets:last?last.sets:3,reps:last?last.reps:(a.bw?10:8),w:last?last.w:null,...(last&&hasWs(last)?{ws:[...last.ws]}:{}),mus:a.mus,...(a.bw?{bw:true}:{})});}draw();toast(`${add.length} exercise${add.length===1?"":"s"} added. Sets and reps are prefilled from last time.`);});};
-    $("sheet").querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{read();d.ex.splice(+b.dataset.rm,1);draw();});document.querySelectorAll("[data-pw]").forEach(b=>b.onclick=()=>{read();const e=d.ex[+b.dataset.pw];if(!e)return;if(hasWs(e)){e.w=topW(e.ws);delete e.ws;}else{const n=Math.max(1,e.sets||3);if(!e.sets)e.sets=n;e.ws=Array.from({length:n},()=>e.w);}draw();});document.querySelectorAll(".ex .exs").forEach((inp,i)=>inp.addEventListener("change",()=>{read();const e=d.ex[i];if(!e||!hasWs(e))return;const n=Math.max(1,e.sets||1);const last=e.ws.length?e.ws[e.ws.length-1]:e.w;e.ws=Array.from({length:n},(_,k)=>k<e.ws.length?e.ws[k]:last);e.w=topW(e.ws);draw();}));
+    $("sheet").querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{read();d.ex.splice(+b.dataset.rm,1);draw();});
+    $("sheet").querySelectorAll("[data-bwt]").forEach(b=>b.onclick=()=>{read();const e=d.ex[+b.dataset.bwt];if(!e)return;e.bw=!isBW(e);draw();});
+    $("sheet").querySelectorAll("[data-hdt]").forEach(b=>b.onclick=()=>{read();const e=d.ex[+b.dataset.hdt];if(!e)return;e.hold=!isHoldEx(e);draw();});document.querySelectorAll("[data-pw]").forEach(b=>b.onclick=()=>{read();const e=d.ex[+b.dataset.pw];if(!e)return;if(hasWs(e)){e.w=topW(e.ws);delete e.ws;}else{const n=Math.max(1,e.sets||3);if(!e.sets)e.sets=n;e.ws=Array.from({length:n},()=>e.w);}draw();});document.querySelectorAll(".ex .exs").forEach((inp,i)=>inp.addEventListener("change",()=>{read();const e=d.ex[i];if(!e||!hasWs(e))return;const n=Math.max(1,e.sets||1);const last=e.ws.length?e.ws[e.ws.length-1]:e.w;e.ws=Array.from({length:n},(_,k)=>k<e.ws.length?e.ws[k]:last);e.w=topW(e.ws);draw();}));
     if($("rmroute"))$("rmroute").onclick=()=>{read();d.track=null;d.maxEle=null;d.elapsed=null;draw();};
     if($("importgpx"))$("importgpx").onclick=()=>{
       read();const fi=$("gpxfile");fi.value="";fi.accept="";
@@ -3301,7 +3306,7 @@ function openDetail(s){
   const segRows=liveSegs().map(g=>{const t=segTime(g,s);if(!t)return null;const ef=segEfforts(g);const rank=ef.findIndex(x=>x.s.id===s.id)+1;return {g,t,rank,n:ef.length};}).filter(Boolean);
   if(segRows.length)html+=`<h4>Segments</h4><div class="tlist">${segRows.map(x=>`<button class="trow" data-seg2="${x.g.id}">${x.rank<=3?`<span class="mdot m${x.rank}">${x.rank}</span>`:`<span class="mdot" style="background:var(--chip);color:var(--muted)">${x.rank}</span>`}<div class="tx"><b>${esc(x.g.name)}</b><span>Ranked ${x.rank} of ${x.n} all-time</span></div><span class="tv">${fmtClock(x.t)}</span></button>`).join("")}</div>`;
   if(s.type==="lift"&&s.ex&&s.ex.length){const mv=musLoad(s),mt=musTop(mv,6);if(mt.length)html+=`<h4>Muscles worked</h4><div class="musbox">${muscleSVG(mv)}<div class="muslist">${mt.map(([m,n])=>`<div><b>${esc(m)}</b><span>${Math.round(n)} set${Math.round(n)===1?"":"s"}</span></div>`).join("")}</div></div>`;}
-  if(s.type==="lift"&&s.ex&&s.ex.length)html+=`<h4>Exercises</h4><table><thead><tr><th>Exercise</th><th>Sets × reps</th><th>Weight</th><th>Est. 1RM</th></tr></thead><tbody>${s.ex.map(e=>`<tr><td>${esc(e.name||"Exercise")}${e.mus&&e.mus.length?`<br><small style="color:var(--muted)">${esc(e.mus.join(", "))}</small>`:""}</td><td>${e.sets||"–"} × ${e.reps||"–"}</td><td>${wsLabel(e)}</td><td>${!isBW(e)&&e1rm(e)?fmtWt(e1rm(e)):"–"}</td></tr>`).join("")}</tbody></table>`;
+  if(s.type==="lift"&&s.ex&&s.ex.length)html+=`<h4>Exercises</h4><table><thead><tr><th>Exercise</th><th>Sets × reps</th><th>Weight</th><th>Est. 1RM</th></tr></thead><tbody>${s.ex.map(e=>`<tr><td>${esc(e.name||"Exercise")}${e.mus&&e.mus.length?`<br><small style="color:var(--muted)">${esc(e.mus.join(", "))}</small>`:""}</td><td>${e.sets||"–"} × ${e.reps||"–"}${isHoldEx(e)&&e.reps?" s":""}</td><td>${wsLabel(e)}</td><td>${!isBW(e)&&e1rm(e)?fmtWt(e1rm(e)):"–"}</td></tr>`).join("")}</tbody></table>`;
   if(s.type==="climb"&&s.probs&&s.probs.length)html+=`<h4>Problems${s.probs.length>24?` <span class="hint" style="font-weight:500">${s.probs.length}</span>`:""}</h4><p class="hint" style="margin:-4px 0 8px">Tap a problem to share it as a sticker for your send video.</p><div class="tlist${s.probs.length>24?" probs-long":""}">${s.probs.map((p,i)=>`<button class="trow sendrow${i>=24?" pmore":""}" data-ss="${i}" aria-label="Share ${esc(p.gl)}, ${RESULTS[p.res]}">${p.gc?`<span class="mdot gmd">${gm(p.gl,p.gc)}</span>`:`<span class="mdot" style="background:var(--climb);font-size:.8rem;width:auto;min-width:28px;padding:0 6px;border-radius:8px">${esc(p.gl)}</span>`}<div class="tx"><b>${p.proj?"🎯 ":""}${esc(p.name||(p.gc?p.gl+" problem":"Problem "+(i+1)))}</b>${[p.style,(p.holds||[]).join(", ")].filter(Boolean).length?`<span>${[p.style,(p.holds||[]).join(", ")].filter(Boolean).map(esc).join(". ")}</span>`:""}</div><span class="tv" style="font-size:1rem;text-align:right">${RESULTS[p.res]}<br><small style="color:var(--muted);font-family:var(--font);font-weight:500;font-size:.75rem">${p.att||1} ${(p.att||1)===1?"try":"tries"}</small></span></button>`).join("")}</div>${s.probs.length>24?`<button class="btn" id="pmore" style="width:100%;margin-top:10px">Show all ${s.probs.length} problems</button>`:""}`;
   if(s.notes)html+=`<div class="notes">${esc(s.notes)}</div>`;
   html+=`<h4>Feedback</h4><div class="fb">${feedback(s).map(t=>`<p>${esc(t)}</p>`).join("")}</div>`;
@@ -5270,7 +5275,7 @@ let active=null,actIv=null;
 function loadActive(){try{const r=localStorage.getItem(AKEY);active=r?JSON.parse(r):null;}catch(e){active=null;}}
 function saveActive(){try{if(active)localStorage.setItem(AKEY,JSON.stringify(active));else localStorage.removeItem(AKEY);}catch(e){}}
 function startActive(plan){
-  const ex=[];plan.blocks.forEach(b=>b.items.forEach(it=>{if(it.ex)ex.push({name:it.ex,sets:it.sets,reps:it.reps,w:it.w,...(hasWs(it)?{ws:[...it.ws]}:{}),mus:it.mus,rest:it.rest,done:0});}));
+  const ex=[];plan.blocks.forEach(b=>b.items.forEach(it=>{if(it.ex)ex.push({name:it.ex,...(it.hold?{hold:true}:{}),sets:it.sets,reps:it.reps,w:it.w,...(hasWs(it)?{ws:[...it.ws]}:{}),mus:it.mus,rest:it.rest,done:0});}));
   active={plan,started:Date.now(),checks:{},ex};saveActive();render();openActive();
 }
 const elapsedSec=()=>active?Math.round((Date.now()-active.started)/1000):0;
@@ -5280,7 +5285,7 @@ function openActive(){
   const pl=active.plan;
   let ci=0;const tmrItems={};
   const exCard=(e,k)=>`<div class="ex" style="--c:${col(pl.type)}"><div class="ph aex-h"><div style="min-width:0"><b>${esc(e.name)}</b><span class="hint" style="margin:0;display:block">${e.from?`Swapped from ${esc(e.from)}, `:""}rest ${e.rest>=120?e.rest/60+" min":e.rest+" s"}</span></div><button type="button" class="tchip sm aswap" data-aswap="${k}" aria-label="Swap ${esc(e.name)}">Swap</button></div>`;
-  const exBody=(e,k)=>`        <div class="r" style="grid-template-columns:1fr 1fr"><div><small>Reps</small><input data-ar="${k}" type="number" inputmode="numeric" value="${e.reps}"></div><div><small>Weight (${wU()})</small>${hasWs(e)?`<div class="pwtop">Per set ↓</div>`:`<input data-aw="${k}" type="number" inputmode="decimal" step="any" value="${e.w!=null?round(toDispWt(e.w),1):""}" placeholder="—">`}</div></div>
+  const exBody=(e,k)=>`        <div class="r" style="grid-template-columns:1fr 1fr"><div><small>${isHoldEx(e)?"Seconds":"Reps"}</small><input data-ar="${k}" type="number" inputmode="numeric" value="${e.reps}"></div><div><small>Weight (${wU()})</small>${hasWs(e)?`<div class="pwtop">Per set ↓</div>`:`<input data-aw="${k}" type="number" inputmode="decimal" step="any" value="${e.w!=null?round(toDispWt(e.w),1):""}" placeholder="—">`}</div></div>
         ${hasWs(e)?`<div class="pwgrid">${Array.from({length:e.sets},(_,si)=>`<div><small>Set ${si+1}</small><input data-aws="${k}:${si}" type="number" inputmode="decimal" step="any" min="0" value="${setW(e,si)!=null?round(toDispWt(setW(e,si)),1):""}" placeholder="—" aria-label="Set ${si+1} weight"></div>`).join("")}</div>`:""}
         <button class="pwbtn" data-apw="${k}">${hasWs(e)?"Same weight for every set":"Different weight per set"}</button>
         <div class="tchips" style="margin-top:8px">${Array.from({length:e.sets},(_,si)=>`<button class="tchip" data-as="${k}:${si}" aria-pressed="${si<e.done}">Set ${si+1}${si<e.done?" ✓":""}</button>`).join("")}${TIMED_RE.test(e.name)?`<button class="tchip thold" data-thold="${k}">${icon("timer")} Hold timer</button>`:""}</div></div>`;
@@ -5324,7 +5329,7 @@ function openActive(){
   $("act-fin").onclick=()=>{
     const st=new Date(active.started),pl2=active.plan;
     const preset={fromPlan:true,type:pl2.type,title:pl2.title,date:keyOf(st),time:pad(st.getHours())+":"+pad(st.getMinutes()),dur:Math.max(60,elapsedSec()),rpe:pl2.rpe,notes:`Planned: ${pl2.title}.`};
-    if(pl2.type==="lift")preset.ex=active.ex.filter(e=>e.done>0).map(e=>{const ws=hasWs(e)?e.ws.slice(0,e.done):null;return {name:e.name,sets:e.done,reps:e.reps,w:ws?topW(ws):e.w,...(ws?{ws}:{}),mus:e.mus};});
+    if(pl2.type==="lift")preset.ex=active.ex.filter(e=>e.done>0).map(e=>{const ws=hasWs(e)?e.ws.slice(0,e.done):null;return {name:e.name,...(e.hold?{hold:true}:{}),...(typeof e.bw==="boolean"?{bw:e.bw}:{}),sets:e.done,reps:e.reps,w:ws?topW(ws):e.w,...(ws?{ws}:{}),mus:e.mus};});
     if(pl2.type==="climb"){preset.gs=pl2.gs;preset.placeId=pl2.placeId;}
     else if(pl2.placeId)preset.placeId=pl2.placeId;
     if(pl2.targetId)preset.targetId=pl2.targetId;
@@ -6498,7 +6503,7 @@ const EXLIB=[
  ["Sled push","Full body",["Full body","Legs"],"mc"],["Battle ropes","Full body",["Full body","Shoulders"],"mc"],["Burpees","Full body",["Full body","Chest","Legs"],"bw"]
 ].map(([name,g,mus,eq])=>({name,g,mus,eq}));
 const exByName=n=>EXLIB.find(x=>x.name.toLowerCase()===String(n||"").trim().toLowerCase());
-const isBW=e=>!!(e&&(e.bw||(exByName(e.name)&&exByName(e.name).eq==="bw")));
+const isBW=e=>!!(e&&(e.bw===true||(e.bw!==false&&exByName(e.name)&&exByName(e.name).eq==="bw")));
 /* full-screen picker that sits above the form; onAdd gets [{name,mus,bw}] */
 function openExPicker(onAdd,opt){
   opt=opt||{};
