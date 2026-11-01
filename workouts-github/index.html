@@ -1,3 +1,7 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}
+.aex-h{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.aex-h .aswap{flex:none;min-height:36px;padding:0 14px}
+</style></head><body>
 <!doctype html>
 <html lang="en">
 <head>
@@ -165,6 +169,10 @@ textarea{min-height:80px}
 .gpx p{margin:0;font-size:.84rem;color:var(--muted);line-height:1.35}
 .ex{background:var(--bg);border-radius:12px;padding:10px;margin-bottom:8px}
 .ex .r{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;margin-top:8px;align-items:end}
+.pwtop{height:42px;display:flex;align-items:center;font-size:.82rem;color:var(--muted);font-weight:600}
+.pwgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px;margin-top:8px}
+.pwgrid small{display:block;font-size:.72rem;color:var(--muted);margin-bottom:3px}
+.pwbtn{margin-top:8px;padding:6px 10px;border-radius:8px;background:var(--chip);color:var(--ink);font-size:.8rem;font-weight:600}
 .ex input{background:var(--surface)}
 .ex small{display:block;font-size:.72rem;color:var(--muted);margin-bottom:3px}
 .x{width:40px;height:44px;border-radius:10px;color:var(--muted);font-size:1.2rem}
@@ -929,9 +937,6 @@ button.trow:not(.sendrow)::after{content:"";flex:none;width:7px;height:7px;borde
 #sopts:not([data-style="classic"]) .oc{display:none}
 
 .typepick button[data-type="pickle"][aria-pressed=true]{color:#141414}
-
-.aex-h{display:flex;justify-content:space-between;align-items:center;gap:10px}
-.aex-h .aswap{flex:none;min-height:36px;padding:0 14px}
 </style>
 </head>
 <body>
@@ -1058,7 +1063,7 @@ function volume(s){
   if(s.type!=="lift")return 0;
   const bwKg=(s.ex||[]).some(e=>e.bw)?(weightOn(s.date)||bio().weight||0):0;
   const ex=(s.ex||[]).filter(e=>e.sets&&e.reps&&(e.w!=null||(e.bw&&bwKg)));
-  if(ex.length)return ex.reduce((a,e)=>a+e.sets*e.reps*((e.bw?bwKg:0)+(e.w||0)),0);
+  if(ex.length)return ex.reduce((a,e)=>{const b=e.bw?bwKg:0;if(!hasWs(e))return a+e.sets*e.reps*(b+(e.w||0));let v=0;for(let i=0;i<e.sets;i++)v+=e.reps*(b+(setW(e,i)||0));return a+v;},0);
   return s.vol||0;
 }
 const totalSets=s=>(s.ex||[]).reduce((a,e)=>a+(e.sets||0),0);
@@ -1118,6 +1123,10 @@ const gradeLabel=p=>p?p.gl:"—";
 const MUSCLES=["Chest","Back","Shoulders","Biceps","Triceps","Forearms","Legs","Glutes","Core","Calves","Full body"];
 const MUSCLE_HINTS=[[/wrist|forearm|grip|gripper|pinch|dead hang|towel hang|rice bucket|extensor|pronation|supination|reverse curl|reverse barbell curl|wrist roller/i,["Forearms"]],[/lock-?off|typewriter|scapular pull/i,["Back","Biceps"]],[/front lever/i,["Core","Back"]],[/external rotation/i,["Shoulders"]],[/bench|chest|fly|flye|push.?up|dip|pec/i,["Chest","Triceps"]],[/squat|leg press|lunge|split|step.?up|leg ext|hack/i,["Legs","Glutes"]],[/deadlift|rdl|romanian|good morning|hip thrust|glute/i,["Glutes","Legs","Back"]],[/row|pull.?up|chin|lat|pulldown|shrug/i,["Back","Biceps"]],[/overhead|ohp|shoulder|military|lateral|raise|arnold|face pull/i,["Shoulders"]],[/curl/i,["Biceps"]],[/tricep|skull|pushdown|extension|close.?grip/i,["Triceps"]],[/plank|crunch|ab|core|sit.?up|leg raise|russian|pallof/i,["Core"]],[/calf|calves/i,["Calves"]],[/clean|snatch|thruster|burpee|kettlebell swing|swing/i,["Full body"]],[/hamstring|leg curl/i,["Legs"]]];
 function guessMuscles(name){for(const [re,m] of MUSCLE_HINTS)if(re.test(name||""))return [...m];return [];}
+const wsLabel=e=>{if(hasWs(e)&&new Set(e.ws.slice(0,e.sets||e.ws.length).map(x=>x??null)).size>1){const l=e.ws.slice(0,e.sets||e.ws.length).map(x=>x!=null?round(toDispWt(x),1).toLocaleString():"–").join(" / ")+" "+wU();return isBW(e)?"BW + "+l:l;}return isBW(e)||e.w===0?(e.w>0?"BW + "+fmtWt(e.w):"Body&shy;weight"):e.w!=null?fmtWt(e.w):"–";};
+const hasWs=e=>!!(e&&Array.isArray(e.ws)&&e.ws.length);
+const setW=(e,i)=>hasWs(e)&&e.ws[i]!=null?e.ws[i]:e.w;
+const topW=ws=>{const v=(ws||[]).filter(x=>x!=null);return v.length?Math.max(...v):null;};
 const e1rm=e=>e&&e.w>0&&e.reps>0?(e.reps===1?e.w:e.w*(1+Math.min(e.reps,15)/30)):null;
 /* ================= body weight ================= */
 const weights=()=>(settings.weights||[]).slice().sort((a,b)=>a.d.localeCompare(b.d));
@@ -2887,8 +2896,10 @@ function openForm(existing,preset){
         <input type="text" class="exn" list="exlib-dl" placeholder="Exercise, e.g. Bench press" value="${esc(e.name)}" aria-label="Exercise name">${isBW(e)?`<span class="bwtag">Bodyweight</span>`:""}
         <div class="r"><div><small>Sets</small><input class="exs" type="number" inputmode="numeric" min="0" value="${v(e.sets)}"></div>
         <div><small>Reps</small><input class="exr" type="number" inputmode="numeric" min="0" value="${v(e.reps)}"></div>
-        <div><small>${isBW(e)?`Added (${wU()})`:`Weight (${wU()})`}</small><input class="exw" type="number" inputmode="decimal" step="any" min="0" placeholder="${isBW(e)?"0":""}" value="${e.w!=null?round(toDispWt(e.w),1):""}"></div>
+        <div><small>${isBW(e)?`Added (${wU()})`:`Weight (${wU()})`}</small>${hasWs(e)?`<div class="pwtop" aria-label="Weight set per set">Per set ↓</div><input class="exw" type="hidden" value="">`:`<input class="exw" type="number" inputmode="decimal" step="any" min="0" placeholder="${isBW(e)?"0":""}" value="${e.w!=null?round(toDispWt(e.w),1):""}">`}</div>
         <button class="x" data-rm="${i}" aria-label="Remove exercise">×</button></div>
+        ${hasWs(e)?`<div class="pwgrid">${Array.from({length:Math.max(1,e.sets||e.ws.length)},(_,si)=>`<div><small>Set ${si+1}</small><input class="exws" type="number" inputmode="decimal" step="any" min="0" placeholder="${isBW(e)?"0":""}" value="${setW(e,si)!=null?round(toDispWt(setW(e,si)),1):""}" aria-label="Set ${si+1} weight"></div>`).join("")}</div>`:""}
+        <button class="pwbtn" data-pw="${i}">${hasWs(e)?"Same weight for every set":"Different weight per set"}</button>
         <div class="tchips" style="margin-top:8px;--c:var(--lift)">${MUSCLES.map(m=>`<button class="tchip sm" data-mu="${i}:${m}" aria-pressed="${(e.mus||[]).includes(m)}">${m}</button>`).join("")}</div>
         ${e1rm(e)&&!isBW(e)?`<p class="hint" style="margin-top:6px">Estimated 1-rep max: ${fmtWt(e1rm(e))}</p>`:""}</div>`).join("")}</div>
       <datalist id="exlib-dl">${EXLIB.map(x=>`<option value="${esc(x.name)}">`).join("")}</datalist>
@@ -2938,7 +2949,7 @@ function openForm(existing,preset){
     if($("hlist"))d.hangs=[...document.querySelectorAll("#hlist .ex")].map(r=>{const a=num(r.querySelector(".ha").value);return {grip:r.querySelector(".hg").value,edge:num(r.querySelector(".he").value),add:a!=null?fromDispWt(a):0,hang:num(r.querySelector(".hh").value),rest:num(r.querySelector(".hr").value),reps:num(r.querySelector(".hp").value),sets:num(r.querySelector(".hs").value)};});
     if($("f-gear")){d.gearId=$("f-gear").value;gearTouched=true;}
     if($("exlist")){
-      d.ex=[...document.querySelectorAll(".ex")].map((r,i)=>{const w=num(r.querySelector(".exw").value);const name=r.querySelector(".exn").value.trim();let mus=(d.ex[i]&&d.ex[i].mus)||[];if(!mus.length&&name)mus=guessMuscles(name);const lib=exByName(name);if(lib&&(!mus.length||(d.ex[i]&&d.ex[i].name!==name)))mus=[...lib.mus];return {name,sets:num(r.querySelector(".exs").value),reps:num(r.querySelector(".exr").value),w:w!=null?fromDispWt(w):null,mus,...((lib&&lib.eq==="bw")||(d.ex[i]&&d.ex[i].bw&&d.ex[i].name===name)?{bw:true}:{})};});
+      d.ex=[...document.querySelectorAll(".ex")].map((r,i)=>{const w=num(r.querySelector(".exw").value);const name=r.querySelector(".exn").value.trim();let mus=(d.ex[i]&&d.ex[i].mus)||[];if(!mus.length&&name)mus=guessMuscles(name);const lib=exByName(name);if(lib&&(!mus.length||(d.ex[i]&&d.ex[i].name!==name)))mus=[...lib.mus];const wsIn=[...r.querySelectorAll(".exws")];const ws=wsIn.length?wsIn.map(x=>{const n=num(x.value);return n!=null?fromDispWt(n):null;}):null;const ww=ws?topW(ws):(w!=null?fromDispWt(w):null);return {name,sets:num(r.querySelector(".exs").value),reps:num(r.querySelector(".exr").value),w:ww,...(ws?{ws}:{}),mus,...((lib&&lib.eq==="bw")||(d.ex[i]&&d.ex[i].bw&&d.ex[i].name===name)?{bw:true}:{})};});
       const vv=num($("f-vol").value);d.vol=vv!=null?fromDispWt(vv):null;
     }
   };
@@ -3017,8 +3028,8 @@ function openForm(existing,preset){
     }
     $("f-time").onchange=()=>{$("f-title").placeholder=defaultTitle(d.type,$("f-time").value)};
     if($("addex"))$("addex").onclick=()=>{read();d.ex.push({name:"",sets:null,reps:null,w:null});draw();const l=document.querySelectorAll(".exn");l[l.length-1].focus();};
-    if($("addexlib"))$("addexlib").onclick=()=>{read();openExPicker(add=>{d.ex=d.ex.filter(e=>e.name||e.sets||e.reps||e.w!=null);for(const a of add){const last=live().filter(s=>s.type==="lift").sort((x,y)=>chrono(y,x)).flatMap(s=>s.ex||[]).find(e=>e.name&&e.name.toLowerCase()===a.name.toLowerCase());d.ex.push({name:a.name,sets:last?last.sets:3,reps:last?last.reps:(a.bw?10:8),w:last?last.w:null,mus:a.mus,...(a.bw?{bw:true}:{})});}draw();toast(`${add.length} exercise${add.length===1?"":"s"} added. Sets and reps are prefilled from last time.`);});};
-    $("sheet").querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{read();d.ex.splice(+b.dataset.rm,1);draw();});
+    if($("addexlib"))$("addexlib").onclick=()=>{read();openExPicker(add=>{d.ex=d.ex.filter(e=>e.name||e.sets||e.reps||e.w!=null);for(const a of add){const last=live().filter(s=>s.type==="lift").sort((x,y)=>chrono(y,x)).flatMap(s=>s.ex||[]).find(e=>e.name&&e.name.toLowerCase()===a.name.toLowerCase());d.ex.push({name:a.name,sets:last?last.sets:3,reps:last?last.reps:(a.bw?10:8),w:last?last.w:null,...(last&&hasWs(last)?{ws:[...last.ws]}:{}),mus:a.mus,...(a.bw?{bw:true}:{})});}draw();toast(`${add.length} exercise${add.length===1?"":"s"} added. Sets and reps are prefilled from last time.`);});};
+    $("sheet").querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{read();d.ex.splice(+b.dataset.rm,1);draw();});document.querySelectorAll("[data-pw]").forEach(b=>b.onclick=()=>{read();const e=d.ex[+b.dataset.pw];if(!e)return;if(hasWs(e)){e.w=topW(e.ws);delete e.ws;}else{const n=Math.max(1,e.sets||3);if(!e.sets)e.sets=n;e.ws=Array.from({length:n},()=>e.w);}draw();});document.querySelectorAll(".ex .exs").forEach((inp,i)=>inp.addEventListener("change",()=>{read();const e=d.ex[i];if(!e||!hasWs(e))return;const n=Math.max(1,e.sets||1);const last=e.ws.length?e.ws[e.ws.length-1]:e.w;e.ws=Array.from({length:n},(_,k)=>k<e.ws.length?e.ws[k]:last);e.w=topW(e.ws);draw();}));
     if($("rmroute"))$("rmroute").onclick=()=>{read();d.track=null;d.maxEle=null;d.elapsed=null;draw();};
     if($("importgpx"))$("importgpx").onclick=()=>{
       read();const fi=$("gpxfile");fi.value="";fi.accept="";
@@ -3290,7 +3301,7 @@ function openDetail(s){
   const segRows=liveSegs().map(g=>{const t=segTime(g,s);if(!t)return null;const ef=segEfforts(g);const rank=ef.findIndex(x=>x.s.id===s.id)+1;return {g,t,rank,n:ef.length};}).filter(Boolean);
   if(segRows.length)html+=`<h4>Segments</h4><div class="tlist">${segRows.map(x=>`<button class="trow" data-seg2="${x.g.id}">${x.rank<=3?`<span class="mdot m${x.rank}">${x.rank}</span>`:`<span class="mdot" style="background:var(--chip);color:var(--muted)">${x.rank}</span>`}<div class="tx"><b>${esc(x.g.name)}</b><span>Ranked ${x.rank} of ${x.n} all-time</span></div><span class="tv">${fmtClock(x.t)}</span></button>`).join("")}</div>`;
   if(s.type==="lift"&&s.ex&&s.ex.length){const mv=musLoad(s),mt=musTop(mv,6);if(mt.length)html+=`<h4>Muscles worked</h4><div class="musbox">${muscleSVG(mv)}<div class="muslist">${mt.map(([m,n])=>`<div><b>${esc(m)}</b><span>${Math.round(n)} set${Math.round(n)===1?"":"s"}</span></div>`).join("")}</div></div>`;}
-  if(s.type==="lift"&&s.ex&&s.ex.length)html+=`<h4>Exercises</h4><table><thead><tr><th>Exercise</th><th>Sets × reps</th><th>Weight</th><th>Est. 1RM</th></tr></thead><tbody>${s.ex.map(e=>`<tr><td>${esc(e.name||"Exercise")}${e.mus&&e.mus.length?`<br><small style="color:var(--muted)">${esc(e.mus.join(", "))}</small>`:""}</td><td>${e.sets||"–"} × ${e.reps||"–"}</td><td>${isBW(e)||e.w===0?(e.w>0?"BW + "+fmtWt(e.w):"Body&shy;weight"):e.w!=null?fmtWt(e.w):"–"}</td><td>${!isBW(e)&&e1rm(e)?fmtWt(e1rm(e)):"–"}</td></tr>`).join("")}</tbody></table>`;
+  if(s.type==="lift"&&s.ex&&s.ex.length)html+=`<h4>Exercises</h4><table><thead><tr><th>Exercise</th><th>Sets × reps</th><th>Weight</th><th>Est. 1RM</th></tr></thead><tbody>${s.ex.map(e=>`<tr><td>${esc(e.name||"Exercise")}${e.mus&&e.mus.length?`<br><small style="color:var(--muted)">${esc(e.mus.join(", "))}</small>`:""}</td><td>${e.sets||"–"} × ${e.reps||"–"}</td><td>${wsLabel(e)}</td><td>${!isBW(e)&&e1rm(e)?fmtWt(e1rm(e)):"–"}</td></tr>`).join("")}</tbody></table>`;
   if(s.type==="climb"&&s.probs&&s.probs.length)html+=`<h4>Problems${s.probs.length>24?` <span class="hint" style="font-weight:500">${s.probs.length}</span>`:""}</h4><p class="hint" style="margin:-4px 0 8px">Tap a problem to share it as a sticker for your send video.</p><div class="tlist${s.probs.length>24?" probs-long":""}">${s.probs.map((p,i)=>`<button class="trow sendrow${i>=24?" pmore":""}" data-ss="${i}" aria-label="Share ${esc(p.gl)}, ${RESULTS[p.res]}">${p.gc?`<span class="mdot gmd">${gm(p.gl,p.gc)}</span>`:`<span class="mdot" style="background:var(--climb);font-size:.8rem;width:auto;min-width:28px;padding:0 6px;border-radius:8px">${esc(p.gl)}</span>`}<div class="tx"><b>${p.proj?"🎯 ":""}${esc(p.name||(p.gc?p.gl+" problem":"Problem "+(i+1)))}</b>${[p.style,(p.holds||[]).join(", ")].filter(Boolean).length?`<span>${[p.style,(p.holds||[]).join(", ")].filter(Boolean).map(esc).join(". ")}</span>`:""}</div><span class="tv" style="font-size:1rem;text-align:right">${RESULTS[p.res]}<br><small style="color:var(--muted);font-family:var(--font);font-weight:500;font-size:.75rem">${p.att||1} ${(p.att||1)===1?"try":"tries"}</small></span></button>`).join("")}</div>${s.probs.length>24?`<button class="btn" id="pmore" style="width:100%;margin-top:10px">Show all ${s.probs.length} problems</button>`:""}`;
   if(s.notes)html+=`<div class="notes">${esc(s.notes)}</div>`;
   html+=`<h4>Feedback</h4><div class="fb">${feedback(s).map(t=>`<p>${esc(t)}</p>`).join("")}</div>`;
@@ -5259,7 +5270,7 @@ let active=null,actIv=null;
 function loadActive(){try{const r=localStorage.getItem(AKEY);active=r?JSON.parse(r):null;}catch(e){active=null;}}
 function saveActive(){try{if(active)localStorage.setItem(AKEY,JSON.stringify(active));else localStorage.removeItem(AKEY);}catch(e){}}
 function startActive(plan){
-  const ex=[];plan.blocks.forEach(b=>b.items.forEach(it=>{if(it.ex)ex.push({name:it.ex,sets:it.sets,reps:it.reps,w:it.w,mus:it.mus,rest:it.rest,done:0});}));
+  const ex=[];plan.blocks.forEach(b=>b.items.forEach(it=>{if(it.ex)ex.push({name:it.ex,sets:it.sets,reps:it.reps,w:it.w,...(hasWs(it)?{ws:[...it.ws]}:{}),mus:it.mus,rest:it.rest,done:0});}));
   active={plan,started:Date.now(),checks:{},ex};saveActive();render();openActive();
 }
 const elapsedSec=()=>active?Math.round((Date.now()-active.started)/1000):0;
@@ -5269,17 +5280,16 @@ function openActive(){
   const pl=active.plan;
   let ci=0;const tmrItems={};
   const exCard=(e,k)=>`<div class="ex" style="--c:${col(pl.type)}"><div class="ph aex-h"><div style="min-width:0"><b>${esc(e.name)}</b><span class="hint" style="margin:0;display:block">${e.from?`Swapped from ${esc(e.from)}, `:""}rest ${e.rest>=120?e.rest/60+" min":e.rest+" s"}</span></div><button type="button" class="tchip sm aswap" data-aswap="${k}" aria-label="Swap ${esc(e.name)}">Swap</button></div>`;
+  const exBody=(e,k)=>`        <div class="r" style="grid-template-columns:1fr 1fr"><div><small>Reps</small><input data-ar="${k}" type="number" inputmode="numeric" value="${e.reps}"></div><div><small>Weight (${wU()})</small>${hasWs(e)?`<div class="pwtop">Per set ↓</div>`:`<input data-aw="${k}" type="number" inputmode="decimal" step="any" value="${e.w!=null?round(toDispWt(e.w),1):""}" placeholder="—">`}</div></div>
+        ${hasWs(e)?`<div class="pwgrid">${Array.from({length:e.sets},(_,si)=>`<div><small>Set ${si+1}</small><input data-aws="${k}:${si}" type="number" inputmode="decimal" step="any" min="0" value="${setW(e,si)!=null?round(toDispWt(setW(e,si)),1):""}" placeholder="—" aria-label="Set ${si+1} weight"></div>`).join("")}</div>`:""}
+        <button class="pwbtn" data-apw="${k}">${hasWs(e)?"Same weight for every set":"Different weight per set"}</button>
+        <div class="tchips" style="margin-top:8px">${Array.from({length:e.sets},(_,si)=>`<button class="tchip" data-as="${k}:${si}" aria-pressed="${si<e.done}">Set ${si+1}${si<e.done?" ✓":""}</button>`).join("")}${TIMED_RE.test(e.name)?`<button class="tchip thold" data-thold="${k}">${icon("timer")} Hold timer</button>`:""}</div></div>`;
   const body=pl.blocks.map((b,bi)=>`<h4 style="margin:16px 0 6px">${esc(b.n)}</h4>`+b.items.map((it,ii)=>{
-    if(it.ex){const k=ci++,e=active.ex[k];if(!e)return "";
-      return exCard(e,k)+`
-        <div class="r" style="grid-template-columns:1fr 1fr"><div><small>Reps</small><input data-ar="${k}" type="number" inputmode="numeric" value="${e.reps}"></div><div><small>Weight (${wU()})</small><input data-aw="${k}" type="number" inputmode="decimal" step="any" value="${e.w!=null?round(toDispWt(e.w),1):""}" placeholder="—"></div></div>
-        <div class="tchips" style="margin-top:8px">${Array.from({length:e.sets},(_,si)=>`<button class="tchip" data-as="${k}:${si}" aria-pressed="${si<e.done}">Set ${si+1}${si<e.done?" ✓":""}</button>`).join("")}${TIMED_RE.test(e.name)?`<button class="tchip thold" data-thold="${k}">${icon("timer")} Hold timer</button>`:""}</div></div>`;}
+    if(it.ex){const k=ci++,e=active.ex[k];if(!e)return "";return exCard(e,k)+exBody(e,k);}
     const key=bi+"-"+ii;
     if(it.hang||it.timer){const tc=it.timer||hangCfg(it.hang);tmrItems[key]=tc;return `<div class="ex tcard" style="--c:${it.hang?"var(--hang)":"var(--core)"}"><b style="display:block;margin-bottom:8px;white-space:normal">${esc(it.text)}</b><button class="btn go tstart" data-tmr="${key}">${icon("timer")} Start timer <span>${fmtClock(tmTotal(tc))}</span></button><button class="tchip" data-ac="${key}" aria-pressed="${!!active.checks[key]}" style="margin-top:8px">${active.checks[key]?"Done ✓":"Mark done"}</button></div>`;}
     return `<button class="trow" data-ac="${key}" style="width:100%;text-align:left"><span class="mdot" style="background:${active.checks[key]?col(pl.type):"var(--chip)"};color:${active.checks[key]?"#fff":"var(--muted)"}">${active.checks[key]?"✓":""}</span><div class="tx"><b style="white-space:normal;font-weight:${active.checks[key]?400:600};${active.checks[key]?"text-decoration:line-through;color:var(--muted)":""}">${esc(it.text)}</b></div></button>`;
   }).join("")).join("");
-  const exBody=(e,k)=>`<div class="r" style="grid-template-columns:1fr 1fr"><div><small>Reps</small><input data-ar="${k}" type="number" inputmode="numeric" value="${e.reps}"></div><div><small>Weight (${wU()})</small><input data-aw="${k}" type="number" inputmode="decimal" step="any" value="${e.w!=null?round(toDispWt(e.w),1):""}" placeholder="—"></div></div>
-        <div class="tchips" style="margin-top:8px">${Array.from({length:e.sets},(_,si)=>`<button class="tchip" data-as="${k}:${si}" aria-pressed="${si<e.done}">Set ${si+1}${si<e.done?" ✓":""}</button>`).join("")}${TIMED_RE.test(e.name)?`<button class="tchip thold" data-thold="${k}">${icon("timer")} Hold timer</button>`:""}</div></div>`;
   const extras=active.ex.slice(ci);
   const extraHTML=pl.type==="lift"?(extras.length?`<h4 style="margin:16px 0 6px">Added</h4>`+extras.map((e,j)=>exCard(e,ci+j)+exBody(e,ci+j)).join(""):"")+`<button class="addex" id="act-addex" style="margin-top:12px">+ Add exercise</button>`:"";
   openSheet(`<div style="--c:${col(pl.type)}"><div class="row2" style="display:flex;justify-content:space-between;align-items:center"><h3><span class="rec-dot"></span>${esc(pl.title)}</h3><span class="rpev" id="act-el" style="color:var(--red)">${fmtClock(elapsedSec())}</span></div>
@@ -5298,13 +5308,15 @@ function openActive(){
   sh.querySelectorAll("[data-ac]").forEach(b=>b.onclick=()=>{const k=b.dataset.ac;active.checks[k]=!active.checks[k];saveActive();const top=sh.scrollTop;openActive();$("sheet").scrollTop=top;});
   sh.querySelectorAll("[data-as]").forEach(b=>b.onclick=()=>{const [k,si]=b.dataset.as.split(":").map(Number);const e=active.ex[k];const was=si<e.done;e.done=was?si:si+1;saveActive();if(!was&&e.done<e.sets)startRest(e.rest);const top=sh.scrollTop;openActive();$("sheet").scrollTop=top;});
   sh.querySelectorAll("[data-ar]").forEach(i=>i.onchange=()=>{active.ex[+i.dataset.ar].reps=num(i.value)||active.ex[+i.dataset.ar].reps;saveActive();});
-  sh.querySelectorAll("[data-aw]").forEach(i=>i.onchange=()=>{const v=num(i.value);active.ex[+i.dataset.aw].w=v!=null?fromDispWt(v):null;saveActive();});
+  sh.querySelectorAll("[data-apw]").forEach(b=>b.onclick=()=>{const e=active.ex[+b.dataset.apw];if(!e)return;if(hasWs(e)){e.w=topW(e.ws);delete e.ws;}else e.ws=Array.from({length:Math.max(1,e.sets||1)},()=>e.w);saveActive();const top=sh.scrollTop;openActive();$("sheet").scrollTop=top;});
+  sh.querySelectorAll("[data-aws]").forEach(i=>i.onchange=()=>{const [k,si]=i.dataset.aws.split(":").map(Number);const e=active.ex[k];if(!hasWs(e))return;const v=num(i.value);while(e.ws.length<e.sets)e.ws.push(e.w);e.ws[si]=v!=null?fromDispWt(v):null;e.w=topW(e.ws);saveActive();});
+  sh.querySelectorAll("[data-aw]").forEach(i=>i.onchange=()=>{const v=num(i.value),e=active.ex[+i.dataset.aw];e.w=v!=null?fromDispWt(v):null;const had=hasWs(e);delete e.ws;saveActive();if(had){const top=sh.scrollTop;openActive();$("sheet").scrollTop=top;}});
   const lastW=n=>{for(const s of live().filter(x=>x.type==="lift").sort((a,b)=>chrono(b,a)))for(const x of s.ex||[])if(x.name&&x.name.toLowerCase()===n.toLowerCase()&&x.w!=null)return x.w;return null;};
   const reopen=()=>{const top=$("sheet").scrollTop;openActive();$("sheet").scrollTop=top;};
   sh.querySelectorAll("[data-aswap]").forEach(b=>b.onclick=()=>{const k=+b.dataset.aswap,e=active.ex[k];if(!e)return;
     const prim=(e.mus&&e.mus[0])||guessMuscles(e.name)[0];const em=e.mus&&e.mus.length?e.mus:guessMuscles(e.name),sc=x=>x.mus.filter(m=>em.includes(m)).length*2+(x.mus[0]===prim?1:0)-Math.max(0,x.mus.length-em.length)*.5;const sug=EXLIB.filter(x=>x.name!==e.name&&(x.mus[0]===prim||x.g===prim)).sort((a,b)=>sc(b)-sc(a)).map(x=>x.name).slice(0,10);
     openExPicker(out=>{const n=out[0];if(!n)return;if(n.name.toLowerCase()===e.name.toLowerCase())return;if(!e.from)e.from=e.name;else if(e.from.toLowerCase()===n.name.toLowerCase())delete e.from;
-      e.name=n.name;e.mus=n.mus&&n.mus.length?n.mus:guessMuscles(n.name);e.w=n.bw?null:lastW(n.name);saveActive();reopen();toast(`Swapped to ${n.name}`);},
+      e.name=n.name;e.mus=n.mus&&n.mus.length?n.mus:guessMuscles(n.name);e.w=n.bw?null:lastW(n.name);if(hasWs(e))e.ws=e.ws.map(()=>e.w);saveActive();reopen();toast(`Swapped to ${n.name}`);},
       {single:true,title:"Swap exercise",sub:`Replacing ${e.name}. Pick one, or type your own.`,suggest:sug});});
   if($("act-addex"))$("act-addex").onclick=()=>openExPicker(out=>{for(const n of out)active.ex.push({name:n.name,sets:3,reps:10,w:n.bw?null:lastW(n.name),mus:n.mus&&n.mus.length?n.mus:guessMuscles(n.name),rest:90,done:0,added:true});saveActive();reopen();},{title:"Add exercises"});
   $("act-min").onclick=()=>{closeSheet();render();};
@@ -5312,7 +5324,7 @@ function openActive(){
   $("act-fin").onclick=()=>{
     const st=new Date(active.started),pl2=active.plan;
     const preset={fromPlan:true,type:pl2.type,title:pl2.title,date:keyOf(st),time:pad(st.getHours())+":"+pad(st.getMinutes()),dur:Math.max(60,elapsedSec()),rpe:pl2.rpe,notes:`Planned: ${pl2.title}.`};
-    if(pl2.type==="lift")preset.ex=active.ex.filter(e=>e.done>0).map(e=>({name:e.name,sets:e.done,reps:e.reps,w:e.w,mus:e.mus}));
+    if(pl2.type==="lift")preset.ex=active.ex.filter(e=>e.done>0).map(e=>{const ws=hasWs(e)?e.ws.slice(0,e.done):null;return {name:e.name,sets:e.done,reps:e.reps,w:ws?topW(ws):e.w,...(ws?{ws}:{}),mus:e.mus};});
     if(pl2.type==="climb"){preset.gs=pl2.gs;preset.placeId=pl2.placeId;}
     else if(pl2.placeId)preset.placeId=pl2.placeId;
     if(pl2.targetId)preset.targetId=pl2.targetId;
@@ -5451,7 +5463,7 @@ function openCheckin(){
 const routines=()=>settings.routines||[];
 function saveRoutineFrom(s){
   const r={id:uid(),name:titleOf(s),type:s.type,created:Date.now()};
-  if(s.type==="lift")r.ex=(s.ex||[]).filter(e=>e.name).map(e=>({name:e.name,sets:e.sets||3,reps:e.reps||8,w:e.w,mus:e.mus||guessMuscles(e.name),rest:90}));
+  if(s.type==="lift")r.ex=(s.ex||[]).filter(e=>e.name).map(e=>({name:e.name,sets:e.sets||3,reps:e.reps||8,w:e.w,...(hasWs(e)?{ws:[...e.ws]}:{}),mus:e.mus||guessMuscles(e.name),rest:90}));
   if(s.type==="hang")r.hangs=JSON.parse(JSON.stringify(s.hangs||[]));
   if(s.type==="climb")r.steps=["5 minutes mobility: wrists, shoulders, hips",...(s.probs||[]).map(p=>`${p.gl}${p.style?" "+p.style.toLowerCase():""}${p.name?": "+p.name:""}`)];
   openSheet(`<h3>Save as routine</h3><p class="sub">Start it again any time from the + button.</p><label for="rt-n">Routine name</label><input id="rt-n" type="text" maxlength="40" value="${esc(r.name)}"><div class="row"><button class="btn" id="rt-c">Cancel</button><button class="btn primary" id="rt-s">Save routine</button></div>`);
@@ -5461,7 +5473,7 @@ function saveRoutineFrom(s){
 function savePlanAsRoutine(pl){const r={id:uid(),name:pl.title,type:pl.type,created:Date.now(),plan:JSON.parse(JSON.stringify(pl))};settings.routines=[...routines(),r];settings.updatedAt=Date.now();saveLocal();pushSettings();toast("Saved to routines");}
 function routinePlan(r){
   if(r.plan)return JSON.parse(JSON.stringify(r.plan));
-  if(r.type==="lift")return {type:"lift",title:r.name,why:[],rpe:7,est:Math.round(8+r.ex.reduce((a,e)=>a+e.sets*(40+(e.rest||90)),0)/60),blocks:[{n:"Warm-up",items:[{text:"5 minutes easy cardio and 2 ramp-up sets"}]},{n:"Main work",items:r.ex.map(e=>({ex:e.name,sets:e.sets,reps:e.reps,w:e.w,rest:e.rest||90,mus:e.mus,note:"Same as last time, or add a little if it felt easy."}))}]};
+  if(r.type==="lift")return {type:"lift",title:r.name,why:[],rpe:7,est:Math.round(8+r.ex.reduce((a,e)=>a+e.sets*(40+(e.rest||90)),0)/60),blocks:[{n:"Warm-up",items:[{text:"5 minutes easy cardio and 2 ramp-up sets"}]},{n:"Main work",items:r.ex.map(e=>({ex:e.name,sets:e.sets,reps:e.reps,w:e.w,...(hasWs(e)?{ws:[...e.ws]}:{}),rest:e.rest||90,mus:e.mus,note:"Same as last time, or add a little if it felt easy."}))}]};
   if(r.type==="hang")return {type:"hang",title:r.name,why:[],rpe:7,est:30,hangs:r.hangs,blocks:[{n:"Warm-up",items:[{text:"10 minutes easy climbing or a progressive warm-up on big holds"}]},{n:"Hangs",items:r.hangs.map(h=>({text:`${h.grip}${h.edge?" "+h.edge+" mm":""}, ${fmtAdd(h.add||0)}: ${h.sets} sets of ${h.reps} × ${h.hang}s on / ${h.rest}s off`,hang:h}))}]};
   return {type:r.type,title:r.name,why:[],rpe:6,est:60,blocks:[{n:"Session",items:(r.steps||[]).map(t=>({text:t}))}]};
 }
@@ -6697,3 +6709,5 @@ setTimeout(maybePrompt,4000);
 </script>
 </body>
 </html>
+
+</body></html>
