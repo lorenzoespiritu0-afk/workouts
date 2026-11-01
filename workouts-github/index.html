@@ -1,6 +1,8 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}
 .aex-h{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .aex-h .aswap{flex:none;min-height:36px;padding:0 14px}
+
+#sopts:not([data-logo="badge"]):not([data-logo="mark"]):not([data-logo="word"]) .lgo{display:none}
 </style></head><body>
 <!doctype html>
 <html lang="en">
@@ -1061,11 +1063,15 @@ const live=()=>Object.values(sessions).filter(s=>!s.deleted);
 const liveSegs=()=>Object.values(segments).filter(g=>!g.deleted);
 /* moves logged as seconds held, not reps: they count as time, never as volume */
 function isHoldEx(e){return !!e&&(e.hold===true||(e.hold!==false&&/plank|\bholds?\b|wall sit|dead hang|towel hang|l-sit|hollow|isometric|lock-?off|front lever|rice bucket|farmer/i.test(e.name||"")));}
+/* two-dumbbell moves: weight is logged per dumbbell, volume counts both */
+const DB_SINGLE=/one[- ]?arm|single[- ]arm|single[- ]leg|goblet|pullover|concentration|side bend|suitcase|renegade|kettlebell/i;
+function isPairDB(e){if(!e||e.pair===false)return false;if(e.pair===true)return true;const x=exByName(e.name);if(DB_SINGLE.test(e.name||""))return false;return x?x.eq==="db":/dumbbell|\bdb\b/i.test(e.name||"");}
+function canPairDB(e){const x=e&&exByName(e.name);return !!e&&(e.pair!=null||(x?x.eq==="db":/dumbbell|\bdb\b/i.test(e.name||"")));}
 function volume(s){
   if(s.type!=="lift")return 0;
   const bwKg=(s.ex||[]).some(e=>e.bw===true)?(weightOn(s.date)||bio().weight||0):0;
   const ex=(s.ex||[]).filter(e=>!isHoldEx(e)&&e.sets&&e.reps&&(e.w!=null||(e.bw===true&&bwKg)));
-  if(ex.length)return ex.reduce((a,e)=>{const b=e.bw===true?bwKg:0;if(!hasWs(e))return a+e.sets*e.reps*(b+(e.w||0));let v=0;for(let i=0;i<e.sets;i++)v+=e.reps*(b+(setW(e,i)||0));return a+v;},0);
+  if(ex.length)return ex.reduce((a,e)=>{const b=e.bw===true?bwKg:0,m=isPairDB(e)?2:1;if(!hasWs(e))return a+e.sets*e.reps*(b+(e.w||0)*m);let v=0;for(let i=0;i<e.sets;i++)v+=e.reps*(b+(setW(e,i)||0)*m);return a+v;},0);
   return s.vol||0;
 }
 const totalSets=s=>(s.ex||[]).reduce((a,e)=>a+(e.sets||0),0);
@@ -2898,13 +2904,13 @@ function openForm(existing,preset){
         <input type="text" class="exn" list="exlib-dl" placeholder="Exercise, e.g. Bench press" value="${esc(e.name)}" aria-label="Exercise name">
         <div class="r"><div><small>Sets</small><input class="exs" type="number" inputmode="numeric" min="0" value="${v(e.sets)}"></div>
         <div><small>${isHoldEx(e)?"Seconds":"Reps"}</small><input class="exr" type="number" inputmode="numeric" min="0" value="${v(e.reps)}"></div>
-        <div><small>${isBW(e)?`Added (${wU()})`:`Weight (${wU()})`}</small>${hasWs(e)?`<div class="pwtop" aria-label="Weight set per set">Per set ↓</div><input class="exw" type="hidden" value="">`:`<input class="exw" type="number" inputmode="decimal" step="any" min="0" placeholder="${isBW(e)?"0":""}" value="${e.w!=null?round(toDispWt(e.w),1):""}">`}</div>
+        <div><small>${isBW(e)?`Added (${wU()})`:isPairDB(e)?`Each DB (${wU()})`:`Weight (${wU()})`}</small>${hasWs(e)?`<div class="pwtop" aria-label="Weight set per set">Per set ↓</div><input class="exw" type="hidden" value="">`:`<input class="exw" type="number" inputmode="decimal" step="any" min="0" placeholder="${isBW(e)?"0":""}" value="${e.w!=null?round(toDispWt(e.w),1):""}">`}</div>
         <button class="x" data-rm="${i}" aria-label="Remove exercise">×</button></div>
         ${hasWs(e)?`<div class="pwgrid">${Array.from({length:Math.max(1,e.sets||e.ws.length)},(_,si)=>`<div><small>Set ${si+1}</small><input class="exws" type="number" inputmode="decimal" step="any" min="0" placeholder="${isBW(e)?"0":""}" value="${setW(e,si)!=null?round(toDispWt(setW(e,si)),1):""}" aria-label="Set ${si+1} weight"></div>`).join("")}</div>`:""}
         <button class="pwbtn" data-pw="${i}">${hasWs(e)?"Same weight for every set":"Different weight per set"}</button>
-        <div class="tchips extog" style="margin-top:8px;--c:#F5F5F7;--ct:#000"><button type="button" class="tchip sm" data-bwt="${i}" aria-pressed="${isBW(e)}">Bodyweight</button><button type="button" class="tchip sm" data-hdt="${i}" aria-pressed="${isHoldEx(e)}">Timed hold</button></div>
+        <div class="tchips extog" style="margin-top:8px;--c:#F5F5F7;--ct:#000"><button type="button" class="tchip sm" data-bwt="${i}" aria-pressed="${isBW(e)}">Bodyweight</button><button type="button" class="tchip sm" data-hdt="${i}" aria-pressed="${isHoldEx(e)}">Timed hold</button>${canPairDB(e)?`<button type="button" class="tchip sm" data-pdb="${i}" aria-pressed="${isPairDB(e)}">Two dumbbells</button>`:""}</div>
         <div class="tchips" style="margin-top:8px;--c:var(--lift)">${MUSCLES.map(m=>`<button class="tchip sm" data-mu="${i}:${m}" aria-pressed="${(e.mus||[]).includes(m)}">${m}</button>`).join("")}</div>
-        ${isHoldEx(e)?`<p class="hint" style="margin-top:6px">Logged as seconds held, so it adds to time, not volume.</p>`:isBW(e)?`<p class="hint" style="margin-top:6px">Counts your bodyweight${e.w?" plus "+fmtWt(e.w):""} in volume.</p>`:""}${e1rm(e)&&!isBW(e)?`<p class="hint" style="margin-top:6px">Estimated 1-rep max: ${fmtWt(e1rm(e))}</p>`:""}</div>`).join("")}</div>
+        ${isPairDB(e)&&!isHoldEx(e)?`<p class="hint" style="margin-top:6px">Weight is per dumbbell. Volume counts both${e.w?` (2 × ${fmtWt(e.w)})`:""}.</p>`:""}${isHoldEx(e)?`<p class="hint" style="margin-top:6px">Logged as seconds held, so it adds to time, not volume.</p>`:isBW(e)?`<p class="hint" style="margin-top:6px">Counts your bodyweight${e.w?" plus "+fmtWt(e.w):""} in volume.</p>`:""}${e1rm(e)&&!isBW(e)?`<p class="hint" style="margin-top:6px">Estimated 1-rep max: ${fmtWt(e1rm(e))}</p>`:""}</div>`).join("")}</div>
       <datalist id="exlib-dl">${EXLIB.map(x=>`<option value="${esc(x.name)}">`).join("")}</datalist>
       <div class="row" style="margin-top:4px"><button class="btn go" id="addexlib">${icon("lift")} Add from library</button><button class="btn" id="addex">+ Custom</button></div>
       <p class="hint">The library fills in muscle groups for you. For bodyweight moves like pull-ups or dips, the weight box is any extra load you add${bio().weight?`, and your body weight (${fmtWt(bio().weight)}) counts toward volume`:". Add your weight in Settings so they count toward volume"}.</p>
@@ -2952,7 +2958,7 @@ function openForm(existing,preset){
     if($("hlist"))d.hangs=[...document.querySelectorAll("#hlist .ex")].map(r=>{const a=num(r.querySelector(".ha").value);return {grip:r.querySelector(".hg").value,edge:num(r.querySelector(".he").value),add:a!=null?fromDispWt(a):0,hang:num(r.querySelector(".hh").value),rest:num(r.querySelector(".hr").value),reps:num(r.querySelector(".hp").value),sets:num(r.querySelector(".hs").value)};});
     if($("f-gear")){d.gearId=$("f-gear").value;gearTouched=true;}
     if($("exlist")){
-      d.ex=[...document.querySelectorAll(".ex")].map((r,i)=>{const w=num(r.querySelector(".exw").value);const name=r.querySelector(".exn").value.trim();let mus=(d.ex[i]&&d.ex[i].mus)||[];if(!mus.length&&name)mus=guessMuscles(name);const lib=exByName(name);if(lib&&(!mus.length||(d.ex[i]&&d.ex[i].name!==name)))mus=[...lib.mus];const wsIn=[...r.querySelectorAll(".exws")];const ws=wsIn.length?wsIn.map(x=>{const n=num(x.value);return n!=null?fromDispWt(n):null;}):null;const ww=ws?topW(ws):(w!=null?fromDispWt(w):null);return {name,sets:num(r.querySelector(".exs").value),reps:num(r.querySelector(".exr").value),w:ww,...(ws?{ws}:{}),mus,...(d.ex[i]&&d.ex[i].name===name&&typeof d.ex[i].bw==="boolean"?{bw:d.ex[i].bw}:lib&&lib.eq==="bw"?{bw:true}:{}),...(d.ex[i]&&d.ex[i].name===name&&typeof d.ex[i].hold==="boolean"?{hold:d.ex[i].hold}:{})};});
+      d.ex=[...document.querySelectorAll(".ex")].map((r,i)=>{const w=num(r.querySelector(".exw").value);const name=r.querySelector(".exn").value.trim();let mus=(d.ex[i]&&d.ex[i].mus)||[];if(!mus.length&&name)mus=guessMuscles(name);const lib=exByName(name);if(lib&&(!mus.length||(d.ex[i]&&d.ex[i].name!==name)))mus=[...lib.mus];const wsIn=[...r.querySelectorAll(".exws")];const ws=wsIn.length?wsIn.map(x=>{const n=num(x.value);return n!=null?fromDispWt(n):null;}):null;const ww=ws?topW(ws):(w!=null?fromDispWt(w):null);return {name,sets:num(r.querySelector(".exs").value),reps:num(r.querySelector(".exr").value),w:ww,...(ws?{ws}:{}),mus,...(d.ex[i]&&d.ex[i].name===name&&typeof d.ex[i].bw==="boolean"?{bw:d.ex[i].bw}:lib&&lib.eq==="bw"?{bw:true}:{}),...(d.ex[i]&&d.ex[i].name===name&&typeof d.ex[i].hold==="boolean"?{hold:d.ex[i].hold}:{}),...(d.ex[i]&&d.ex[i].name===name&&typeof d.ex[i].pair==="boolean"?{pair:d.ex[i].pair}:{})};});
       const vv=num($("f-vol").value);d.vol=vv!=null?fromDispWt(vv):null;
     }
   };
@@ -3034,6 +3040,7 @@ function openForm(existing,preset){
     if($("addexlib"))$("addexlib").onclick=()=>{read();openExPicker(add=>{d.ex=d.ex.filter(e=>e.name||e.sets||e.reps||e.w!=null);for(const a of add){const last=live().filter(s=>s.type==="lift").sort((x,y)=>chrono(y,x)).flatMap(s=>s.ex||[]).find(e=>e.name&&e.name.toLowerCase()===a.name.toLowerCase());d.ex.push({name:a.name,sets:last?last.sets:3,reps:last?last.reps:(a.bw?10:8),w:last?last.w:null,...(last&&hasWs(last)?{ws:[...last.ws]}:{}),mus:a.mus,...(a.bw?{bw:true}:{})});}draw();toast(`${add.length} exercise${add.length===1?"":"s"} added. Sets and reps are prefilled from last time.`);});};
     $("sheet").querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{read();d.ex.splice(+b.dataset.rm,1);draw();});
     $("sheet").querySelectorAll("[data-bwt]").forEach(b=>b.onclick=()=>{read();const e=d.ex[+b.dataset.bwt];if(!e)return;e.bw=!isBW(e);draw();});
+    $("sheet").querySelectorAll("[data-pdb]").forEach(b=>b.onclick=()=>{read();const e=d.ex[+b.dataset.pdb];if(!e)return;e.pair=!isPairDB(e);draw();});
     $("sheet").querySelectorAll("[data-hdt]").forEach(b=>b.onclick=()=>{read();const e=d.ex[+b.dataset.hdt];if(!e)return;e.hold=!isHoldEx(e);draw();});document.querySelectorAll("[data-pw]").forEach(b=>b.onclick=()=>{read();const e=d.ex[+b.dataset.pw];if(!e)return;if(hasWs(e)){e.w=topW(e.ws);delete e.ws;}else{const n=Math.max(1,e.sets||3);if(!e.sets)e.sets=n;e.ws=Array.from({length:n},()=>e.w);}draw();});document.querySelectorAll(".ex .exs").forEach((inp,i)=>inp.addEventListener("change",()=>{read();const e=d.ex[i];if(!e||!hasWs(e))return;const n=Math.max(1,e.sets||1);const last=e.ws.length?e.ws[e.ws.length-1]:e.w;e.ws=Array.from({length:n},(_,k)=>k<e.ws.length?e.ws[k]:last);e.w=topW(e.ws);draw();}));
     if($("rmroute"))$("rmroute").onclick=()=>{read();d.track=null;d.maxEle=null;d.elapsed=null;draw();};
     if($("importgpx"))$("importgpx").onclick=()=>{
@@ -3306,7 +3313,7 @@ function openDetail(s){
   const segRows=liveSegs().map(g=>{const t=segTime(g,s);if(!t)return null;const ef=segEfforts(g);const rank=ef.findIndex(x=>x.s.id===s.id)+1;return {g,t,rank,n:ef.length};}).filter(Boolean);
   if(segRows.length)html+=`<h4>Segments</h4><div class="tlist">${segRows.map(x=>`<button class="trow" data-seg2="${x.g.id}">${x.rank<=3?`<span class="mdot m${x.rank}">${x.rank}</span>`:`<span class="mdot" style="background:var(--chip);color:var(--muted)">${x.rank}</span>`}<div class="tx"><b>${esc(x.g.name)}</b><span>Ranked ${x.rank} of ${x.n} all-time</span></div><span class="tv">${fmtClock(x.t)}</span></button>`).join("")}</div>`;
   if(s.type==="lift"&&s.ex&&s.ex.length){const mv=musLoad(s),mt=musTop(mv,6);if(mt.length)html+=`<h4>Muscles worked</h4><div class="musbox">${muscleSVG(mv)}<div class="muslist">${mt.map(([m,n])=>`<div><b>${esc(m)}</b><span>${Math.round(n)} set${Math.round(n)===1?"":"s"}</span></div>`).join("")}</div></div>`;}
-  if(s.type==="lift"&&s.ex&&s.ex.length)html+=`<h4>Exercises</h4><table><thead><tr><th>Exercise</th><th>Sets × reps</th><th>Weight</th><th>Est. 1RM</th></tr></thead><tbody>${s.ex.map(e=>`<tr><td>${esc(e.name||"Exercise")}${e.mus&&e.mus.length?`<br><small style="color:var(--muted)">${esc(e.mus.join(", "))}</small>`:""}</td><td>${e.sets||"–"} × ${e.reps||"–"}${isHoldEx(e)&&e.reps?" s":""}</td><td>${wsLabel(e)}</td><td>${!isBW(e)&&e1rm(e)?fmtWt(e1rm(e)):"–"}</td></tr>`).join("")}</tbody></table>`;
+  if(s.type==="lift"&&s.ex&&s.ex.length)html+=`<h4>Exercises</h4><table><thead><tr><th>Exercise</th><th>Sets × reps</th><th>Weight</th><th>Est. 1RM</th></tr></thead><tbody>${s.ex.map(e=>`<tr><td>${esc(e.name||"Exercise")}${e.mus&&e.mus.length?`<br><small style="color:var(--muted)">${esc(e.mus.join(", "))}</small>`:""}</td><td>${e.sets||"–"} × ${e.reps||"–"}${isHoldEx(e)&&e.reps?" s":""}</td><td>${wsLabel(e)}${isPairDB(e)&&e.w?`<br><small style="color:var(--muted)">each</small>`:""}</td><td>${!isBW(e)&&e1rm(e)?fmtWt(e1rm(e)):"–"}</td></tr>`).join("")}</tbody></table>`;
   if(s.type==="climb"&&s.probs&&s.probs.length)html+=`<h4>Problems${s.probs.length>24?` <span class="hint" style="font-weight:500">${s.probs.length}</span>`:""}</h4><p class="hint" style="margin:-4px 0 8px">Tap a problem to share it as a sticker for your send video.</p><div class="tlist${s.probs.length>24?" probs-long":""}">${s.probs.map((p,i)=>`<button class="trow sendrow${i>=24?" pmore":""}" data-ss="${i}" aria-label="Share ${esc(p.gl)}, ${RESULTS[p.res]}">${p.gc?`<span class="mdot gmd">${gm(p.gl,p.gc)}</span>`:`<span class="mdot" style="background:var(--climb);font-size:.8rem;width:auto;min-width:28px;padding:0 6px;border-radius:8px">${esc(p.gl)}</span>`}<div class="tx"><b>${p.proj?"🎯 ":""}${esc(p.name||(p.gc?p.gl+" problem":"Problem "+(i+1)))}</b>${[p.style,(p.holds||[]).join(", ")].filter(Boolean).length?`<span>${[p.style,(p.holds||[]).join(", ")].filter(Boolean).map(esc).join(". ")}</span>`:""}</div><span class="tv" style="font-size:1rem;text-align:right">${RESULTS[p.res]}<br><small style="color:var(--muted);font-family:var(--font);font-weight:500;font-size:.75rem">${p.att||1} ${(p.att||1)===1?"try":"tries"}</small></span></button>`).join("")}</div>${s.probs.length>24?`<button class="btn" id="pmore" style="width:100%;margin-top:10px">Show all ${s.probs.length} problems</button>`:""}`;
   if(s.notes)html+=`<div class="notes">${esc(s.notes)}</div>`;
   html+=`<h4>Feedback</h4><div class="fb">${feedback(s).map(t=>`<p>${esc(t)}</p>`).join("")}</div>`;
@@ -3844,7 +3851,7 @@ async function drawPoster3(s,o){
     const rows=lines.map(t=>{let sz=600;x.font=A(sz);while(x.measureText(t).width>MW&&sz>60)sz-=4,x.font=A(sz);return {t,sz:Math.min(sz,420)};});
     let H=60+(o.title?110:0)+rows.reduce((a,r)=>a+r.sz*.86,0)+60+180;k.height=H;let y=60;
     if(o.title){x.save();shadowOn();x.font=Wd(54);x.fillStyle=ink;x.textAlign="left";x.fillText(titleOf(s),80,y+54,MW);x.restore();y+=110;}
-    rows.forEach((r,j)=>{y+=r.sz*.86;x.save();shadowOn();x.font=A(r.sz);x.textAlign="left";const w=x.measureText(r.t).width;x.translate(80,y);x.scale(MW/w,1);x.fillStyle=j===rows.length-1?acc:ink;x.fillText(r.t,0,0);x.restore();y+=r.sz*.04;});
+    rows.forEach((r,j)=>{y+=r.sz*.86;x.save();shadowOn();x.font=A(r.sz);x.textAlign="left";const w=x.measureText(r.t).width;x.translate(80,y);x.scale(Math.min(MW/w,1.3),1);x.fillStyle=j===rows.length-1?acc:ink;x.fillText(r.t,0,0);x.restore();y+=r.sz*.04;});
     x.save();shadowOn();x.font=capF;x.fillStyle=ink;wrapLines(x,cap,MW,3).forEach((l,j)=>x.fillText(l,80,y+90+j*52));x.restore();
   }
   return finishPoster(s,o,trimCanvas(k));
@@ -3862,11 +3869,53 @@ async function finishPoster(s,o,art){
   const top=o.size==="fit"?pad:(H-ah)*(o.style==="bib"?.5:.42);
   x.drawImage(art,(W-aw)/2,top,aw,ah);return c;
 }
+/* ---------- app logo on share images: Badge (app icon), Mark (ridge and flag), Wordmark ---------- */
+const LOGO_COLORS={volt:"#CDF54A",white:"#FFFFFF",black:"#121212"};
+function logoCol(o,hex){return o.lcol==="text"?(o.color||"#FFFFFF"):o.lcol==="activity"?(hex||"#CDF54A"):LOGO_COLORS[o.lcol]||"#CDF54A";}
+/* draws the ridge-and-flag in 1024 icon units; caller has scaled the context */
+function logoMarkPaths(x,ridge,flag){
+  x.save();x.translate(0,-10);x.lineCap="round";x.lineJoin="round";
+  x.beginPath();x.moveTo(206,712);x.lineTo(388,392);x.lineTo(512,584);x.lineTo(640,338);x.lineTo(818,712);x.strokeStyle=ridge;x.lineWidth=100;x.stroke();
+  x.beginPath();x.moveTo(640,338);x.lineTo(640,196);x.strokeStyle=flag;x.lineWidth=36;x.stroke();
+  x.beginPath();x.moveTo(652,198);x.lineTo(762,232);x.lineTo(652,266);x.closePath();x.fillStyle=flag;x.strokeStyle=flag;x.lineWidth=20;x.fill();x.stroke();
+  x.restore();
+}
+/* size of the logo block for a given height h */
+function logoSize(x,style,h){if(style==="badge")return [h,h];const mw=h*712/584;if(style==="mark")return [mw,h];x.save();x.font=`${Math.round(h*.46)}px "WkWide","Archivo",sans-serif`;const tw=x.measureText("WORKOUTS").width+7*h*.46*.06;x.restore();return [mw+h*.32+tw,h];}
+function drawLogo(x,X,Y,h,style,col){
+  x.save();
+  if(style==="badge"){const k=h/1024;x.translate(X,Y);x.scale(k,k);
+    const g=x.createRadialGradient(635,287,10,635,287,870);g.addColorStop(0,"#20231B");g.addColorStop(.55,"#0B0C0A");g.addColorStop(1,"#000");
+    x.beginPath();x.roundRect?x.roundRect(0,0,1024,1024,228):x.rect(0,0,1024,1024);x.fillStyle=g;x.fill();
+    let ridge=col;if(col==="#CDF54A"){ridge=x.createLinearGradient(206,712,818,196);ridge.addColorStop(0,"#9ED12B");ridge.addColorStop(.55,"#CDF54A");ridge.addColorStop(1,"#EEFFA3");}else if(col==="#121212")ridge="#CDF54A";
+    logoMarkPaths(x,ridge,"#FFFFFF");x.restore();return;}
+  const k=h/584;x.translate(X-156*k,Y-158*k);x.scale(k,k);logoMarkPaths(x,col,col);x.setTransform(1,0,0,1,0,0);
+  if(style==="word"){const fs=Math.round(h*.46),em=fs*.06;x.font=`${fs}px "WkWide","Archivo",sans-serif`;x.fillStyle=col;x.textBaseline="middle";let px=X+h*712/584+h*.32;for(const ch of "WORKOUTS"){x.fillText(ch,px,Y+h*.54);px+=x.measureText(ch).width+em;}}
+  x.restore();
+}
+/* add the logo to a finished share canvas. Transparent images grow a band for it; anything with a background gets it laid on top. */
+async function withLogo(c,o,hex){
+  if(!o.logo||o.logo==="none")return c;
+  try{await document.fonts.load('60px "WkWide"');}catch(e){}
+  const col=logoCol(o,hex),pos=o.lpos||"bc",top=pos[0]==="t",al=pos[1];
+  const fixed=o.size==="story"||o.size==="poster"||o.size==="square";
+  const tmp=document.createElement("canvas").getContext("2d");
+  const shadow=x=>{if(col!=="#121212"&&o.logo!=="badge"){x.shadowColor="rgba(0,0,0,.45)";x.shadowBlur=14;x.shadowOffsetY=2;}};
+  if(fixed||(o.bg&&o.bg!=="none")){
+    const h=fixed?(o.logo==="badge"?132:104):(o.logo==="badge"?72:60),m=fixed?64:Math.max(18,Math.round(Math.min(c.width,c.height)*.035));
+    const [w]=logoSize(tmp,o.logo,h),X=al==="l"?m:al==="r"?c.width-m-w:(c.width-w)/2,Y=top?m:c.height-m-h;
+    const x=c.getContext("2d");x.save();shadow(x);drawLogo(x,X,Y,h,o.logo,col);x.restore();return c;}
+  const h=o.logo==="badge"?Math.round(Math.max(84,c.width*.12)):Math.round(Math.max(64,c.width*.085)),gap=Math.round(h*.5),[w]=logoSize(tmp,o.logo,h);
+  const out=document.createElement("canvas");out.width=Math.max(c.width,Math.ceil(w+40));out.height=c.height+h+gap;const x=out.getContext("2d");
+  x.drawImage(c,(out.width-c.width)/2,top?h+gap:0);
+  const pad=Math.round(Math.min(48,c.width*.05)),X=al==="l"?pad:al==="r"?out.width-pad-w:(out.width-w)/2,Y=top?0:c.height+gap;
+  x.save();shadow(x);drawLogo(x,X,Y,h,o.logo,col);x.restore();return out;
+}
 let shareDl=null;
 function openShare(s){
   const hasRoute=!!(s.track&&s.track.length>1);
   const o={layout:"stack",size:"fit",color:"#FFFFFF",font:"sport",align:"center",bg:"none",title:true,date:true,place:false,route:hasRoute,trophies:false,level:false,shadow:false,outline:false,rcolor:"same",sends:s.type==="climb"&&sendGroups(s).length>0,mus:s.type==="lift"&&!!(s.ex&&s.ex.length),stats:defaultStats(s),
-    style:"classic",head:"day",accent:"#E8323C",day:true,splits:true,bw:true,grain:true,motion:false,upimg:null};let motionSet=false;
+    style:"classic",head:"day",accent:"#E8323C",day:true,splits:true,bw:true,grain:true,motion:false,upimg:null,logo:"none",lcol:"volt",lpos:"bc"};let motionSet=false;
   const sameDay=live().filter(z=>z.date===s.date).length>1,canSplit=!!trackSplits(s);
   const accents=[["#E8323C","Red"],["#CDF54A","Volt"],[STRAVA,"Strava orange"],["#FFFFFF","White"],[TYPE_HEX[s.type],"Activity color"]];
   let blob=null,busy=false,again=false;
@@ -3892,13 +3941,16 @@ function openShare(s){
       ${hasRoute||(s.type==="lift"&&s.ex&&s.ex.length)?`<div class="plabel">${hasRoute?"Route color":"Highlight color"}</div><div class="swrow" id="o-rcolor"><button class="sw sw-same" data-v="same" aria-label="Same as text" title="Same as text" aria-pressed="${o.rcolor==="same"}">=</button>${swatches.map(h=>`<button class="sw" style="--sw:${h}" data-v="${h}" aria-label="${swName(h)}" title="${swName(h)}" aria-pressed="${o.rcolor===h}"></button>`).join("")}</div>`:""}
       <div class="oc"><div class="plabel">Font</div>${segH("o-font","font",[["sport","Sport"],["clean","Clean"],["classic","Classic"],["mono","Mono"]])}
       <div class="plabel">Alignment</div>${segH("o-align","align",[["center","Center"],["left","Left"]])}</div>
+      <div class="plabel">App logo</div>${segH("o-logo","logo",[["none","None"],["badge","Badge"],["mark","Mark"],["word","Wordmark"]])}
+      <div class="lgo"><div class="plabel">Logo color</div>${segH("o-lcol","lcol",[["volt","Volt"],["white","White"],["black","Black"],["activity","Activity"],["text","Text"]])}
+      <div class="plabel">Logo position</div>${segH("o-lpos","lpos",[["bl","Bottom left"],["bc","Bottom"],["br","Bottom right"],["tl","Top left"],["tr","Top right"]])}</div>
       <div class="plabel">Background</div>${segH("o-bg","bg",[["none","None"],["glass","Glass"],["dark","Dark"],["light","Light"],["color","Color"],["photo","Photo"]])}
       <button class="addex" id="o-pick" style="margin-top:10px">${s.photo?"Use a different photo":"Choose a photo"}</button><input type="file" id="o-file" accept="image/*" hidden>
     </div>
     <div class="row" style="margin-top:16px"><button class="btn" id="sback">Back</button></div>`);
   const redraw=async()=>{
     if(busy){again=true;return;}busy=true;
-    const c=o.style==="classic"?await drawShare(s,o):await drawPoster(s,o);
+    const c=await withLogo(o.style==="classic"?await drawShare(s,o):await drawPoster(s,o),o,TYPE_HEX[s.type]);
     const dk=h=>{const n=parseInt(h.slice(1),16);return ((n>>16)*0.299+((n>>8)&255)*0.587+(n&255)*0.114)<128;};
     const light=o.bg==="none"&&dk(o.color)&&(!o.route||!hasRoute||o.rcolor==="same"||dk(o.rcolor));
     $("pv").className="preview"+(light?" light":"");
@@ -3907,7 +3959,9 @@ function openShare(s){
     busy=false;if(again){again=false;redraw();}
   };
   const seg=(id,key)=>{const el=$(id);el.querySelectorAll("button").forEach(b=>b.onclick=()=>{el.querySelectorAll("button").forEach(z=>z.setAttribute("aria-pressed",z===b));o[key]=b.dataset.v;redraw();});};
-  ["layout","size","font","align","color","head","accent"].forEach(k=>seg("o-"+k,k));if($("o-rcolor"))seg("o-rcolor","rcolor");
+  ["layout","size","font","align","color","head","accent","lcol","lpos"].forEach(k=>seg("o-"+k,k));
+  const lgShow=()=>{$("sopts").dataset.logo=o.logo;};lgShow();
+  $("o-logo").querySelectorAll("button").forEach(b=>b.onclick=()=>{o.logo=b.dataset.v;$("o-logo").querySelectorAll("button").forEach(z=>z.setAttribute("aria-pressed",z===b));lgShow();redraw();});if($("o-rcolor"))seg("o-rcolor","rcolor");
   const press=(id,v)=>$(id).querySelectorAll("button").forEach(z=>z.setAttribute("aria-pressed",z.dataset.v===v));
   document.querySelectorAll("#o-style button,#o-style2 button").forEach(b=>b.onclick=()=>{const was=o.style;o.style=b.dataset.v;press("o-style",o.style);press("o-style2",o.style);$("sopts").dataset.style=o.style;
     if(was==="classic"&&o.style!=="classic"&&o.size==="fit"){o.size="story";press("o-size","story");}
@@ -4699,7 +4753,9 @@ function openSendShare(s,i,back){
     {label:"Font",key:"font",opts:[["sport","Sport"],["clean","Clean"],["classic","Classic"],["mono","Mono"]]}];
   const tg=[["shadow","Shadow"],["outline","Outline"],["tries","Tries"],...(f.name?[["name","Problem name"]]:[]),...(f.style?[["style","Style and holds"]]:[]),...(f.gym?[["gym","Gym"]]:[]),["date","Date"],...(f.high?[["high","New high point"]]:[])];
   const slug=(f.p.gl+"-"+f.result).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
-  imageSheet("Share this send","A transparent sticker for your send video. Drop it into an empty corner of the frame in your editor or Instagram.",()=>drawSendCard(s,i,o),slug+".png",segs,tg,o,back||(()=>openDetail(s)));
+  o.logo="none";o.lcol="volt";o.lpos="bc";
+  segs.push({label:"App logo",key:"logo",opts:[["none","None"],["badge","Badge"],["mark","Mark"],["word","Wordmark"]]},{label:"Logo color",key:"lcol",opts:[["volt","Volt"],["white","White"],["black","Black"],["text","Text"]]},{label:"Logo position",key:"lpos",opts:[["bl","Bottom left"],["bc","Bottom"],["br","Bottom right"],["tl","Top left"],["tr","Top right"]]});
+  imageSheet("Share this send","A transparent sticker for your send video. Drop it into an empty corner of the frame in your editor or Instagram.",async()=>withLogo(await drawSendCard(s,i,o),o,f.p.gc||"#FF5C8A"),slug+".png",segs,tg,o,back||(()=>openDetail(s)));
 }
 
 function openPRShare(s){
@@ -5285,7 +5341,7 @@ function openActive(){
   const pl=active.plan;
   let ci=0;const tmrItems={};
   const exCard=(e,k)=>`<div class="ex" style="--c:${col(pl.type)}"><div class="ph aex-h"><div style="min-width:0"><b>${esc(e.name)}</b><span class="hint" style="margin:0;display:block">${e.from?`Swapped from ${esc(e.from)}, `:""}rest ${e.rest>=120?e.rest/60+" min":e.rest+" s"}</span></div><button type="button" class="tchip sm aswap" data-aswap="${k}" aria-label="Swap ${esc(e.name)}">Swap</button></div>`;
-  const exBody=(e,k)=>`        <div class="r" style="grid-template-columns:1fr 1fr"><div><small>${isHoldEx(e)?"Seconds":"Reps"}</small><input data-ar="${k}" type="number" inputmode="numeric" value="${e.reps}"></div><div><small>Weight (${wU()})</small>${hasWs(e)?`<div class="pwtop">Per set ↓</div>`:`<input data-aw="${k}" type="number" inputmode="decimal" step="any" value="${e.w!=null?round(toDispWt(e.w),1):""}" placeholder="—">`}</div></div>
+  const exBody=(e,k)=>`        <div class="r" style="grid-template-columns:1fr 1fr"><div><small>${isHoldEx(e)?"Seconds":"Reps"}</small><input data-ar="${k}" type="number" inputmode="numeric" value="${e.reps}"></div><div><small>${isPairDB(e)?"Each DB":"Weight"} (${wU()})</small>${hasWs(e)?`<div class="pwtop">Per set ↓</div>`:`<input data-aw="${k}" type="number" inputmode="decimal" step="any" value="${e.w!=null?round(toDispWt(e.w),1):""}" placeholder="—">`}</div></div>
         ${hasWs(e)?`<div class="pwgrid">${Array.from({length:e.sets},(_,si)=>`<div><small>Set ${si+1}</small><input data-aws="${k}:${si}" type="number" inputmode="decimal" step="any" min="0" value="${setW(e,si)!=null?round(toDispWt(setW(e,si)),1):""}" placeholder="—" aria-label="Set ${si+1} weight"></div>`).join("")}</div>`:""}
         <button class="pwbtn" data-apw="${k}">${hasWs(e)?"Same weight for every set":"Different weight per set"}</button>
         <div class="tchips" style="margin-top:8px">${Array.from({length:e.sets},(_,si)=>`<button class="tchip" data-as="${k}:${si}" aria-pressed="${si<e.done}">Set ${si+1}${si<e.done?" ✓":""}</button>`).join("")}${TIMED_RE.test(e.name)?`<button class="tchip thold" data-thold="${k}">${icon("timer")} Hold timer</button>`:""}</div></div>`;
@@ -5329,7 +5385,7 @@ function openActive(){
   $("act-fin").onclick=()=>{
     const st=new Date(active.started),pl2=active.plan;
     const preset={fromPlan:true,type:pl2.type,title:pl2.title,date:keyOf(st),time:pad(st.getHours())+":"+pad(st.getMinutes()),dur:Math.max(60,elapsedSec()),rpe:pl2.rpe,notes:`Planned: ${pl2.title}.`};
-    if(pl2.type==="lift")preset.ex=active.ex.filter(e=>e.done>0).map(e=>{const ws=hasWs(e)?e.ws.slice(0,e.done):null;return {name:e.name,...(e.hold?{hold:true}:{}),...(typeof e.bw==="boolean"?{bw:e.bw}:{}),sets:e.done,reps:e.reps,w:ws?topW(ws):e.w,...(ws?{ws}:{}),mus:e.mus};});
+    if(pl2.type==="lift")preset.ex=active.ex.filter(e=>e.done>0).map(e=>{const ws=hasWs(e)?e.ws.slice(0,e.done):null;return {name:e.name,...(e.hold?{hold:true}:{}),...(typeof e.pair==="boolean"?{pair:e.pair}:{}),...(typeof e.bw==="boolean"?{bw:e.bw}:{}),sets:e.done,reps:e.reps,w:ws?topW(ws):e.w,...(ws?{ws}:{}),mus:e.mus};});
     if(pl2.type==="climb"){preset.gs=pl2.gs;preset.placeId=pl2.placeId;}
     else if(pl2.placeId)preset.placeId=pl2.placeId;
     if(pl2.targetId)preset.targetId=pl2.targetId;
