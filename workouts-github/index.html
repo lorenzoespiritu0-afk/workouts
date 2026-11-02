@@ -5130,20 +5130,24 @@ function genLift(o){
   if(tg==="any"){sp=SPLITS.find(x=>x.n==="Full body");why.push("Full body, as you asked: one move for each main muscle group.");}
   else if(climbDay){const extra=tg.filter(t=>t!=="Climbing").flatMap(t=>t==="Arms"?["Biceps","Triceps"]:[t]);sp={n:"Climbing strength",m:[...new Set(["Back","Core","Chest","Shoulders","Forearms",...extra])]};
     why.push("Climbing strength: pulling and lock-offs, core tension for steep walls, and push, shoulder and wrist-extensor work to balance all the pulling.");
-    const fc=hoursSince(s=>(s.type==="climb"||s.type==="hang")&&daysAgo(s)<=2);if(fc!=null&&fc<24)why.push(`You were on the wall or board ${agoText(fc)}, so hangs and grip work are kept light today.`);}
+    const fc=hoursSince(s=>(s.type==="climb"||s.type==="hang")&&daysAgo(s)<=2);if(!o.noCoach&&fc!=null&&fc<24)why.push(`You were on the wall or board ${agoText(fc)}, so hangs and grip work are kept light today.`);}
   else if(tg){const m=[...new Set(tg.flatMap(t=>t==="Arms"?["Biceps","Triceps"]:[t]))];if(m.length===1&&m[0]==="Forearms")why.push("Wrist flexors and extensors both get work, so your elbows stay balanced.");sp={n:tg.join(" + ")+" day",m};
     const sore=m.filter(x=>mh[x]<36);if(sore.length)why.push(`Heads up: ${sore.join(", ").toLowerCase()} ${sore.length===1?"was":"were"} trained ${agoText(Math.min(...sore.map(x=>mh[x])))}. Keep a rep or two in reserve on those.`);else why.push(`Built around what you picked: ${tg.join(", ").toLowerCase()}.`);}
   else why.push(`Muscles picked from your recent training: ${sp.m.join(", ").toLowerCase()} have had the most rest.`);
+  const exl=new Set((o.exclude||[]).flatMap(m=>m==="Arms"?["Biceps","Triceps"]:[m]));
+  if(exl.size){const keep=sp.m.filter(m=>!exl.has(m));sp={...sp,m:keep.length?keep:["Chest","Back","Shoulders","Legs","Glutes","Core","Biceps","Triceps"].filter(m=>!exl.has(m))};
+    if(!keep.length)sp.n="Full body";why.push(`Leaving out ${[...exl].join(", ").toLowerCase()}, as you asked. Nothing that mainly works ${exl.size===1?"it":"them"} is programmed.`);}
+  const exBad=x=>{if(!exl.size)return false;const lib=exByName(x),lm=lib?lib.mus:guessMuscles(x);return lm.length&&(exl.has(lm[0])||(lm[0]==="Full body"&&lm.slice(1,3).some(m=>exl.has(m))));};
   const fresh=sp.m.filter(m=>mh[m]>=48),tired=MUSCLES.filter(m=>m!=="Full body"&&mh[m]<36&&!sp.m.includes(m));
   if(fresh.length)why.push(`${fresh.join(", ")} ${fresh.length===1?"is":"are"} fresh (${agoText(Math.min(...fresh.map(m=>mh[m])))}).`);
-  if(tired.length)why.push(`${tired.slice(0,3).join(", ")} still recovering, so ${tired.length===1?"it's":"they're"} left out today.`);
+  if(tired.length&&!o.noCoach&&tg!=="any"&&!Array.isArray(tg))why.push(`${tired.slice(0,3).join(", ")} still recovering, so ${tired.length===1?"it's":"they're"} left out today.`);
   const n=Math.max(2,Math.min(7,Math.floor((o.mins-8)/(focus==="strength"?12:9))));
   const pool=[];let idx=0;
   const ban=x=>caut.some(c=>BANNED[c]&&BANNED[c].test(x));
-  if(g){const gm=guessMuscles(g.ex);if(gm.some(m=>sp.m.includes(m))&&!ban(g.ex))pool.push({name:g.ex,m:gm[0]});}
+  if(g){const gm=guessMuscles(g.ex);if(gm.some(m=>sp.m.includes(m))&&!ban(g.ex)&&!exBad(g.ex))pool.push({name:g.ex,m:gm[0]});}
   const norm=x=>x.toLowerCase().replace(/barbell |dumbbell |machine |seated |standing /g,"").replace(/s$/,"").trim();
   const dup=x=>pool.some(p=>{const a=norm(p.name),c=norm(x);return a===c||((a.includes(c)||c.includes(a))&&!/wrist/.test(a+c));});
-  while(pool.length<n&&idx<40){const m=sp.m[idx%sp.m.length],opts=((climbDay?CLIMB_LIB:LIB)[m]||LIB[m]||{})[o.equip]||[];let pick=opts[(Math.floor(idx/sp.m.length)+o.seed)%Math.max(1,opts.length)];if(pick&&ban(pick))pick=SAFE_SWAP[m]&&!ban(SAFE_SWAP[m])?SAFE_SWAP[m]:null;if(pick&&!dup(pick))pool.push({name:pick,m});idx++;}
+  while(pool.length<n&&idx<40){const m=sp.m[idx%sp.m.length],opts=((climbDay?CLIMB_LIB:LIB)[m]||LIB[m]||{})[o.equip]||[];let pick=opts[(Math.floor(idx/sp.m.length)+o.seed)%Math.max(1,opts.length)];if(pick&&ban(pick))pick=SAFE_SWAP[m]&&!ban(SAFE_SWAP[m])?SAFE_SWAP[m]:null;if(pick&&exBad(pick))pick=null;if(pick&&!dup(pick))pool.push({name:pick,m});idx++;}
   const relC=caut.filter(c=>BANNED[c]);
   if(relC.length)why.push(`Skipping moves that load your ${relC.join(", ").toLowerCase()}.`);
   const S={strength:{main:[5,5,180],acc:[3,8,90]},muscle:{main:[4,8,90],acc:[3,12,60]},endurance:{main:[3,15,45],acc:[3,15,45]},power:{main:[5,3,150],acc:[3,6,90]}}[focus];
@@ -5153,7 +5157,7 @@ function genLift(o){
   const items=pool.map((p,i)=>{const [sets0,reps,rest]=i<2?S.main:S.acc;let sets=Math.max(2,sets0+eAdj);if(lvl==="beginner")sets=Math.min(sets,3);
     const rm=o.equip==="bw"?0:bestE1rm(p.name);const w=rm?round25(rm/(1+reps/30)*pct):null;
     const note=focus==="power"&&i<2?"Move the weight fast. Stop the set if speed drops.":o.effort==="max"&&i===0?"Then try one heavier top set of "+Math.max(1,reps-2)+" reps.":`Leave about ${10-rpe} rep${10-rpe===1?"":"s"} in the tank.`;
-    const hd=holdOf(p.name);if(hd){const fl=climbDay&&/hang|pinch/i.test(p.name)&&(hoursSince(s=>(s.type==="climb"||s.type==="hang")&&daysAgo(s)<=1)||99)<24;return {ex:p.name,sets:fl?Math.max(2,sets-1):sets,reps:hd[1],hold:true,w:null,rest:Math.min(rest,90),mus:guessMuscles(p.name).length?guessMuscles(p.name):[p.m],note:hd[2]};}
+    const hd=holdOf(p.name);if(hd){const fl=!o.noCoach&&climbDay&&/hang|pinch/i.test(p.name)&&(hoursSince(s=>(s.type==="climb"||s.type==="hang")&&daysAgo(s)<=1)||99)<24;return {ex:p.name,sets:fl?Math.max(2,sets-1):sets,reps:hd[1],hold:true,w:null,rest:Math.min(rest,90),mus:guessMuscles(p.name).length?guessMuscles(p.name):[p.m],note:hd[2]};}
     if(/finger extensor/i.test(p.name))return {ex:p.name,sets:3,reps:20,w:null,rest:45,mus:["Forearms"],note:"Open your fingers against the band, slow on the way back."};
     if(/wrist curl|wrist roller|pronation/i.test(p.name))return {ex:p.name,sets,reps:Math.max(12,reps),w:rm?w:null,rest:Math.min(rest,60),mus:["Forearms"],note:"Full range, slow lowering. Light weight is fine."};
     return {ex:p.name,sets,reps,w,rest,mus:guessMuscles(p.name).length?guessMuscles(p.name):[p.m],note};});
@@ -5266,10 +5270,10 @@ function genClimb(o){
   const g=goalFor("climb"),proj=projects().find(p=>!p.archived&&!projStats(p).sent&&(p.placeId||"")===pl);
   const fingerRisk=caut.includes("Fingers")||(lastC!=null&&lastC<40);
   if(last)why.push(`Grades use the ${sysName(last)}, where your hardest send is ${L[mx].label}.`);
-  if(lastC!=null&&lastC<40)why.push(`You climbed ${agoText(lastC)}, so fingers get an easier day.`);
+  if(!o.noCoach&&lastC!=null&&lastC<40)why.push(`You climbed ${agoText(lastC)}, so fingers get an easier day.`);
   if(caut.includes("Fingers"))why.push("You flagged your fingers, so no limit crimping today.");
   let kind;
-  if(o.feel==="sore"||o.effort==="easy"||(fingerRisk&&o.effort!=="moderate"))kind="technique";
+  if(o.feel==="sore"||o.effort==="easy"||(fingerRisk&&!o.noCoach&&o.effort!=="moderate"))kind="technique";
   else if(o.effort==="moderate")kind=["pyramid","flash"][o.seed%2];
   else if(o.effort==="hard")kind=o.mins>=75&&o.seed%3===2?"4x4":"limit";
   else kind=proj?"project":"limit";
@@ -5306,7 +5310,7 @@ function genClimb(o){
 function genHang(o){
   const why=[],lvl=LT().level||"intermediate",caut=cautionsNow(),lastC=hoursSince(s=>s.type==="climb"||s.type==="hang");
   const fingers=caut.includes("Fingers")||activePain().some(p=>p.area==="Fingers"||p.area==="Wrists");
-  if(fingers||(lastC!=null&&lastC<24)||o.feel==="sore"){why.push(fingers?"Your fingers are flagged, so no loaded hangs today.":"You trained fingers in the last 24 hours. Tendons need longer than muscles to recover.");
+  if(fingers||(!o.noCoach&&lastC!=null&&lastC<24)||o.feel==="sore"){why.push(fingers?"Your fingers are flagged, so no loaded hangs today.":"You trained fingers in the last 24 hours. Tendons need longer than muscles to recover.");
     return {type:"hang",title:"Finger recovery",why,rpe:3,est:20,blocks:[{n:"Recovery",items:[{text:"Rice bucket or finger extensor work with a rubber band: 3 × 30 seconds"},{text:"Very light open-hand dead hangs on a big edge, feet on the floor: 5 × 10 seconds at about 30% effort"},{text:"Forearm stretches, 2 × 30 seconds each direction"}]}]};}
   const grip=lvl==="beginner"?"Open hand":"Half crimp",edge=lvl==="advanced"?15:20,best=bestHangLoad(grip,edge);
   const maxH=lvl!=="beginner"&&(o.effort==="hard"||o.effort==="max");
@@ -5350,6 +5354,8 @@ function genCore(o){
       {n:"Cool-down",items:[{text:"2 minutes: child's pose and a gentle lying twist each side"}]}]};
 }
 function buildPlan(o){
+  if(o.coach==="off"){const pl=({lift:genLift,run:genRun,ride:genRide,climb:genClimb,hang:genHang,hike:genHike,core:genCore})[o.type]({...o,feel:"fresh",noCoach:true});
+    pl.why.unshift(`Coach adjustments are off, so this is built at the ${({easy:"easy",moderate:"moderate",hard:"hard",max:"all-out"})[o.effort]} effort you picked, with no cuts for how you feel or your recent load.${cautionsNow().length?" Aches you've logged are still worked around. Mark them healed in Coach to train those areas.":""}`);return pl;}
   const order=["easy","moderate","hard","max"],names={easy:"easy",moderate:"moderate",hard:"hard",max:"all out"};
   let eff=o.effort;
   if(o.feel==="sore")eff="easy";else if(o.feel==="tired")eff=order[Math.max(0,order.indexOf(o.effort)-1)];
@@ -5375,6 +5381,7 @@ function openPlanner(type){
   const lt=LT();
   const o=planPrefs?{...planPrefs}:{type:"lift",mins:lt.mins||60,effort:"moderate",feel:FEEL_DEF(),focus:"auto",equip:"gym",target:"auto",seed:0};
   if(type)o.type=type;o.feel=planPrefs&&planPrefs.feelSet?o.feel:FEEL_DEF();
+  if(!planPrefs){try{const sv=JSON.parse(localStorage.getItem("workouts-plan-prefs-v1")||"{}");if(Array.isArray(sv.exclude))o.exclude=sv.exclude;if(sv.coach)o.coach=sv.coach;}catch(e){}}
   let plan=null;
   const FOCUS={lift:[["auto","Auto"],["strength","Strength"],["muscle","Muscle"],["endurance","Endurance"],["power","Power"]]};
   const draw=()=>{
@@ -5392,18 +5399,24 @@ function openPlanner(type){
       <p class="hint">${rec.h>0?`Based on your logs, you have about ${Math.round(rec.h)} hours of recovery left from ${esc(titleOf(rec.s))}.`:"Your logs say you're recovered."}</p>
       ${o.type==="lift"?`<label>Target muscles</label><div class="tchips" id="pl-tg" style="--c:#F5F5F7;--ct:#000">${[["auto","Auto (recent training)"],["any","Any / full body"]].map(([v,n])=>`<button class="tchip" data-tg2="${v}" aria-pressed="${(o.target||"auto")===v}">${n}</button>`).join("")}${[["Chest","Chest"],["Back","Back"],["Shoulders","Shoulders"],["Arms","Arms"],["Forearms","Forearms and grip"],["Legs","Legs"],["Glutes","Glutes"],["Core","Core"],["Climbing","Climbing strength"]].map(([m,n])=>`<button class="tchip" data-tg2="${m}" aria-pressed="${Array.isArray(o.target)&&o.target.includes(m)}">${n}</button>`).join("")}</div>
       <p class="hint" style="margin-top:6px">${Array.isArray(o.target)&&o.target.includes("Climbing")?"Pulling, lock-offs, core tension and the antagonist work that keeps climbers' shoulders and elbows healthy.":Array.isArray(o.target)&&o.target.length?`Session built around ${o.target.join(", ").toLowerCase()}.`:o.target==="any"?"A full-body session.":"Picks whatever has had the most rest since your recent lifts, climbs, and runs."}</p>
+      <label>Leave out</label><div class="tchips" id="pl-ex" style="--c:#FF453A;--ct:#fff">${["Chest","Back","Shoulders","Biceps","Triceps","Forearms","Legs","Glutes","Core","Calves"].map(m=>`<button class="tchip" data-ex2="${m}" aria-pressed="${(o.exclude||[]).includes(m)}">${m}</button>`).join("")}</div>
+      <p class="hint" style="margin-top:6px">${(o.exclude||[]).length?`No exercises that mainly work ${o.exclude.join(", ").toLowerCase()}.`:"Tap any muscle group you want to skip today, for an injury or because it's sore."}</p>
       <label>Focus</label><div class="seg" data-po="focus">${FOCUS.lift.map(([v,n])=>`<button data-v="${v}" aria-pressed="${o.focus===v}">${n}</button>`).join("")}</div>
       <label>Equipment</label><div class="seg" data-po="equip">${[["gym","Full gym"],["db","Dumbbells"],["bw","Bodyweight"]].map(([v,n])=>`<button data-v="${v}" aria-pressed="${o.equip===v}">${n}</button>`).join("")}</div>`:""}
       ${g?`<p class="hint">Working toward: ${esc(ltTitle(g))}. Suggestions lean toward this goal.</p>`:longGoals().length?"":`<p class="hint">Set a long-term goal in Coach for more targeted workouts.</p>`}
+      <label>Coach adjustments</label><div class="seg" data-po="coach">${[["on","On"],["off","Off"]].map(([v,n])=>`<button data-v="${v}" aria-pressed="${(o.coach||"on")===v}">${n}</button>`).join("")}</div>
+      <p class="hint" style="margin-top:6px">${o.coach==="off"?"Built exactly as you pick it. Effort and sets won't be cut for tiredness, soreness or a load spike.":"The coach can lower effort or sets when you're tired, sore, or your load jumped."}</p>
       <div class="row"><button class="btn" id="pl-cancel">Cancel</button><button class="btn primary" id="pl-build">${plan?"Rebuild":"Build my workout"}</button></div>
       <div id="pl-out">${plan?planHTML(plan)+`<div class="row"><button class="btn" id="pl-again">Try another</button><button class="btn go" id="pl-start">Start this workout</button></div><div class="row" style="margin-top:8px"><button class="btn" id="pl-save">Save as routine</button></div>`:""}</div>`);
     document.querySelectorAll("[data-po]").forEach(el=>el.querySelectorAll("button").forEach(b=>b.onclick=()=>{const k=el.dataset.po;o[k]=k==="mins"?+b.dataset.v:b.dataset.v;if(k==="feel")o.feelSet=true;el.querySelectorAll("button").forEach(z=>z.setAttribute("aria-pressed",z===b));if(k==="type"){plan=null;draw();}}));
     document.querySelectorAll("[data-pw]").forEach(b=>b.onclick=()=>{o.placeId=b.dataset.pw||null;const pl=o.placeId&&placeById(o.placeId);if(pl&&pl.terrain)o.terrain=pl.terrain;haptic("light");const t=$("sheet").scrollTop;draw();$("sheet").scrollTop=t;});
     document.querySelectorAll('[data-po="terrain"] button').forEach(b=>{const f=b.onclick;b.onclick=()=>{f();const t=$("sheet").scrollTop;draw();$("sheet").scrollTop=t;};});
+    document.querySelectorAll("[data-ex2]").forEach(b=>b.onclick=()=>{const v=b.dataset.ex2,a=[...(o.exclude||[])],i=a.indexOf(v);if(i>=0)a.splice(i,1);else a.push(v);o.exclude=a;if(Array.isArray(o.target)){o.target=o.target.filter(t=>t!==v);if(!o.target.length)o.target="auto";}haptic("light");const t=$("sheet").scrollTop;draw();$("sheet").scrollTop=t;});
+    document.querySelectorAll('[data-po="coach"] button').forEach(b=>{const f=b.onclick;b.onclick=()=>{f();const t=$("sheet").scrollTop;draw();$("sheet").scrollTop=t;};});
     document.querySelectorAll("[data-tg2]").forEach(b=>b.onclick=()=>{const v=b.dataset.tg2;if(v==="auto"||v==="any")o.target=v;else{let a=Array.isArray(o.target)?[...o.target]:[];const i=a.indexOf(v);if(i>=0)a.splice(i,1);else a.push(v);o.target=a.length?a:"auto";}haptic("light");const t=$("sheet").scrollTop;draw();$("sheet").scrollTop=t;});
     $("pl-custom").onchange=()=>{const h=num($("pl-custom").value);if(h>0){o.mins=Math.round(h*60);document.querySelectorAll('[data-po="mins"] button').forEach(z=>z.setAttribute("aria-pressed","false"));}};
     $("pl-cancel").onclick=closeSheet;
-    $("pl-build").onclick=()=>{plan=buildPlan(o);planPrefs={...o};const top=$("sheet").scrollTop;draw();setTimeout(()=>{const el=$("pl-out");if(el)el.scrollIntoView({behavior:"smooth",block:"start"});},60);};
+    $("pl-build").onclick=()=>{plan=buildPlan(o);planPrefs={...o};try{localStorage.setItem("workouts-plan-prefs-v1",JSON.stringify({exclude:o.exclude||[],coach:o.coach||"on"}));}catch(e){}const top=$("sheet").scrollTop;draw();setTimeout(()=>{const el=$("pl-out");if(el)el.scrollIntoView({behavior:"smooth",block:"start"});},60);};
     if($("pl-again"))$("pl-again").onclick=()=>{o.seed++;plan=buildPlan(o);draw();setTimeout(()=>$("pl-out").scrollIntoView({block:"start"}),60);};
     if($("pl-start"))$("pl-start").onclick=()=>startActive(plan);
     if($("pl-save"))$("pl-save").onclick=()=>savePlanAsRoutine(plan);
