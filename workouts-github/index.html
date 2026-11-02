@@ -2849,9 +2849,188 @@ const RECIPES=[
   i:[[2,"slice","wholegrain bread"],[1,"","saba banana, boiled"],[1,"tbsp","peanut butter"]],
   s:["Toast the bread, spread peanut butter, and top with sliced saba. A good pre-run snack."]},
 ];
+/* more recipes: soups (ty:"soup"), pasta with jarred sauces (ty:"pasta"), and more everyday mains. pr = pesos a serving */
+const RECIPES2=[
+ // ---------- soups ----------
+ {id:"bulalo",n:"Bulalo",cu:"Filipino",ty:"soup",d:2,t:150,sv:5,m:["lunch","dinner"],prep:1,fl:["beef"],al:["fish"],k:520,p:40,c:42,f:21,pr:145,
+  i:[[1,"kg","beef shank with marrow bone"],[1,"","onion"],[1,"tbsp","black peppercorns"],[2,"","corn on the cob, halved"],[1,"head","pechay or napa cabbage"],[200,"g","string beans"],[2,"tbsp","fish sauce"],[500,"g","cooked rice"]],
+  s:["Boil the shank 10 minutes, drain and rinse to keep the broth clear.","Cover with 2.5 L fresh water, add onion and peppercorns, and simmer 2 hours until tender.","Add corn for 10 minutes, then beans and pechay for 3. Season with fish sauce. Skim the fat if you want it leaner."]},
+ {id:"sinihipon",n:"Shrimp sinigang",cu:"Filipino",ty:"soup",d:1,t:30,sv:4,m:["lunch","dinner"],prep:1,fl:["pesc"],al:["shellfish","fish"],k:330,p:26,c:44,f:4,pr:88,
+  i:[[500,"g","shrimp, shell on"],[1,"pack","tamarind soup mix (40 g)"],[2,"","tomatoes"],[1,"","onion"],[1,"","radish (labanos)"],[150,"g","string beans"],[1,"bunch","kangkong"],[1,"tbsp","fish sauce"],[500,"g","cooked rice"]],
+  s:["Boil tomatoes and onion in 1.5 L water for 5 minutes.","Add radish for 5 minutes, then beans and the tamarind mix.","Add shrimp and cook 3 minutes until pink, then kangkong. Season with fish sauce."]},
+ {id:"misosinigang",n:"Salmon sinigang sa miso",cu:"Filipino",ty:"soup",d:2,t:35,sv:4,m:["lunch","dinner"],prep:0,fl:["pesc"],al:["fish","soy"],k:420,p:30,c:40,f:15,pr:120,
+  i:[[500,"g","salmon belly or head"],[3,"tbsp","miso"],[1,"pack","tamarind soup mix (20 g)"],[2,"","tomatoes"],[1,"","onion"],[1,"","eggplant"],[1,"bunch","mustard greens or kangkong"],[2,"","long green chilies"],[500,"g","cooked rice"]],
+  s:["Sauté onion and tomatoes, add the miso and fry 1 minute.","Add 1.2 L water and the tamarind mix, simmer 5 minutes.","Add eggplant, chilies and salmon and simmer 6 minutes. Finish with the greens."]},
+ {id:"sotanghon",n:"Chicken sotanghon soup",cu:"Filipino",ty:"soup",d:1,t:35,sv:4,m:["lunch","dinner","snack"],prep:1,fl:[],al:["fish"],k:360,p:28,c:44,f:8,pr:55,
+  i:[[400,"g","chicken breast"],[100,"g","sotanghon (glass noodles)"],[1,"","carrot"],[1,"cup","cabbage, shredded"],[1,"","onion"],[4,"clove","garlic"],[1,"tsp","annatto powder"],[1,"tbsp","fish sauce"],[2,"","spring onions"]],
+  s:["Boil the chicken in 1.5 L water for 15 minutes, then shred it and keep the broth.","Sauté garlic and onion, add the broth, annatto and fish sauce.","Add carrot and noodles for 5 minutes, then cabbage and chicken. Top with spring onions and fried garlic."]},
+ {id:"molo",n:"Pancit molo",cu:"Filipino",ty:"soup",d:3,t:75,sv:5,m:["lunch","dinner"],prep:1,fl:["pork"],al:["gluten","fish","egg"],k:400,p:30,c:34,f:16,pr:70,
+  i:[[400,"g","lean ground pork"],[200,"g","shrimp, minced"],[1,"","egg"],[40,"","molo or wonton wrappers"],[1.5,"L","chicken stock"],[1,"","onion"],[4,"clove","garlic"],[1,"tbsp","fish sauce"],[3,"","spring onions"]],
+  s:["Mix pork, shrimp, egg, half the onion, salt and pepper. Put a teaspoon in each wrapper and pinch closed.","Sauté garlic and the rest of the onion, add stock and fish sauce, bring to a boil.","Drop in the dumplings and simmer 10 minutes until they float and the filling is cooked. Top with spring onions and fried garlic."]},
+ {id:"nilaga",n:"Nilagang baka",cu:"Filipino",ty:"soup",d:1,t:120,sv:5,m:["lunch","dinner"],prep:1,fl:["beef"],al:["fish"],k:470,p:36,c:44,f:16,pr:120,
+  i:[[800,"g","beef brisket or shank, cubed"],[1,"","onion"],[1,"tsp","black peppercorns"],[3,"","potatoes"],[1,"","small cabbage"],[2,"","saba bananas"],[2,"tbsp","fish sauce"],[500,"g","cooked rice"]],
+  s:["Simmer the beef with onion and peppercorns in 2 L water for 90 minutes, skimming.","Add potatoes and saba for 12 minutes, then cabbage for 4.","Season with fish sauce and serve with rice."]},
+ {id:"sopas",n:"Chicken sopas",cu:"Filipino",ty:"soup",d:1,t:35,sv:5,m:["breakfast","lunch","dinner"],prep:1,fl:[],al:["dairy","gluten","fish"],k:430,p:32,c:46,f:12,pr:58,
+  i:[[500,"g","chicken breast"],[200,"g","elbow macaroni"],[250,"ml","evaporated milk, light"],[1,"","carrot"],[1,"cup","cabbage, shredded"],[1,"","onion"],[4,"clove","garlic"],[1,"tbsp","fish sauce"],[1,"tbsp","butter"]],
+  s:["Boil chicken in 1.5 L water 15 minutes, shred, and keep the broth.","Sauté garlic and onion in butter, add broth and macaroni and cook 8 minutes.","Add carrot, chicken and evaporated milk for 3 minutes, then cabbage. Season with fish sauce and pepper."]},
+ {id:"misosoup",n:"Miso soup with tofu",cu:"Japanese",ty:"soup",d:1,t:10,sv:2,m:["side"],prep:0,fl:["veg","vegan"],al:["soy"],k:110,p:9,c:8,f:5,pr:35,
+  i:[[2,"tbsp","miso"],[600,"ml","dashi or water"],[150,"g","silken tofu"],[1,"tbsp","dried wakame"],[1,"","spring onion"]],
+  s:["Warm the dashi, add wakame for 1 minute.","Take off the heat, whisk in the miso, then add tofu and spring onion. Don't boil once the miso is in."]},
+ {id:"ramen",n:"Shoyu chicken ramen",cu:"Japanese",ty:"soup",d:2,t:40,sv:2,m:["lunch","dinner"],prep:0,fl:[],al:["gluten","egg","soy","sesame"],k:640,p:46,c:72,f:17,pr:150,
+  i:[[300,"g","chicken thigh, skinless"],[2,"pack","ramen noodles (fresh or instant, no packet)"],[1,"L","chicken stock"],[3,"tbsp","soy sauce"],[1,"tbsp","mirin"],[1,"thumb","ginger"],[2,"","eggs, soft-boiled"],[1,"cup","pechay or spinach"],[1,"tsp","sesame oil"],[2,"","spring onions"]],
+  s:["Simmer stock with soy, mirin and sliced ginger 10 minutes.","Pan-sear the chicken 6 minutes a side, rest and slice.","Cook the noodles and greens. Assemble bowls with broth, noodles, chicken, halved eggs, spring onion and a drop of sesame oil."]},
+ {id:"tomyum",n:"Tom yum goong",cu:"Thai",ty:"soup",d:2,t:30,sv:3,m:["lunch","dinner"],prep:0,fl:["pesc"],al:["shellfish","fish"],k:300,p:28,c:30,f:8,pr:110,
+  i:[[400,"g","shrimp"],[2,"stalk","lemongrass"],[4,"slice","galangal or ginger"],[4,"","kaffir lime leaves"],[200,"g","mushrooms"],[2,"","tomatoes"],[2,"tbsp","fish sauce"],[2,"","limes"],[2,"tbsp","chili paste (nam prik pao)"],[300,"g","cooked rice"]],
+  s:["Simmer 1.2 L water with bruised lemongrass, galangal and lime leaves 8 minutes.","Add mushrooms, tomatoes and chili paste for 3 minutes.","Add shrimp for 2 to 3 minutes. Off the heat, season with fish sauce and lime juice."]},
+ {id:"tomkha",n:"Tom kha gai",cu:"Thai",ty:"soup",d:2,t:30,sv:3,m:["lunch","dinner"],prep:0,fl:[],al:["fish"],k:420,p:30,c:34,f:19,pr:95,
+  i:[[400,"g","chicken breast, sliced"],[400,"ml","light coconut milk"],[500,"ml","chicken stock"],[2,"stalk","lemongrass"],[4,"slice","galangal or ginger"],[4,"","kaffir lime leaves"],[200,"g","mushrooms"],[2,"tbsp","fish sauce"],[1,"","lime"],[300,"g","cooked rice"]],
+  s:["Simmer stock, coconut milk, lemongrass, galangal and lime leaves 8 minutes.","Add chicken and mushrooms and cook 6 minutes.","Season with fish sauce and lime juice. Serve with rice."]},
+ {id:"kimchijjigae",n:"Kimchi jjigae",cu:"Korean",ty:"soup",d:1,t:30,sv:3,m:["lunch","dinner"],prep:1,fl:["pork"],al:["soy","fish"],k:430,p:28,c:44,f:16,pr:85,
+  i:[[200,"g","pork belly or shoulder, sliced"],[300,"g","well-fermented kimchi"],[300,"g","firm tofu"],[1,"tbsp","gochugaru or gochujang"],[1,"","onion"],[700,"ml","water or anchovy stock"],[2,"","spring onions"],[450,"g","cooked rice"]],
+  s:["Fry pork until it renders, add kimchi and onion and fry 5 minutes.","Add gochugaru and stock and simmer 15 minutes.","Add sliced tofu for 5 minutes and top with spring onions. Serve with rice."]},
+ {id:"pho",n:"Chicken pho",cu:"Vietnamese",ty:"soup",d:2,t:60,sv:4,m:["lunch","dinner"],prep:0,fl:[],al:["fish"],k:480,p:36,c:62,f:8,pr:90,
+  i:[[700,"g","chicken breast or thighs"],[1.5,"L","chicken stock"],[1,"","onion, halved and charred"],[1,"thumb","ginger, charred"],[2,"","star anise"],[1,"","cinnamon stick"],[2,"tbsp","fish sauce"],[300,"g","rice noodles"],[2,"cup","bean sprouts and Thai basil"],[2,"","limes"]],
+  s:["Simmer stock with charred onion, ginger, star anise and cinnamon 20 minutes. Add chicken and poach 15 minutes, then slice it.","Strain the broth and season with fish sauce.","Soak or cook the noodles. Pour hot broth over noodles and chicken, and top with sprouts, basil and lime."]},
+ {id:"minestrone",n:"Minestrone",cu:"Italian",ty:"soup",d:1,t:40,sv:5,m:["lunch","dinner"],prep:1,fl:["veg","vegan"],al:["gluten"],k:340,p:14,c:58,f:6,pr:45,
+  i:[[1,"jar","marinara sauce (500 g)"],[1,"can","cannellini or kidney beans"],[100,"g","small pasta"],[1,"","onion"],[2,"","carrots"],[2,"stalk","celery"],[1,"","zucchini"],[2,"cup","spinach"],[1,"L","vegetable stock"],[1,"tbsp","olive oil"]],
+  s:["Soften onion, carrot and celery in oil 6 minutes.","Add the jarred sauce, stock and zucchini and simmer 10 minutes.","Add pasta and beans for 9 minutes, then spinach. Freezes well."]},
+ {id:"lentilsoup",n:"Lentil and vegetable soup",cu:"Mediterranean",ty:"soup",d:1,t:40,sv:5,m:["lunch","dinner"],prep:1,fl:["veg","vegan"],al:[],k:330,p:18,c:52,f:6,pr:32,
+  i:[[300,"g","brown or green lentils"],[1,"","onion"],[2,"","carrots"],[2,"stalk","celery"],[1,"can","chopped tomatoes"],[1,"tsp","cumin"],[1.5,"L","vegetable stock"],[1,"","lemon"],[1,"tbsp","olive oil"]],
+  s:["Soften onion, carrot and celery in oil.","Add cumin, lentils, tomatoes and stock and simmer 30 minutes.","Blend a third of it for body and finish with lemon juice."]},
+ {id:"tortillasoup",n:"Chicken tortilla soup",cu:"Mexican",ty:"soup",d:1,t:35,sv:4,m:["lunch","dinner"],prep:1,fl:[],al:["gluten"],k:420,p:36,c:40,f:12,pr:85,
+  i:[[500,"g","chicken breast"],[1,"can","black beans"],[1,"jar","salsa (400 g)"],[1,"cup","corn"],[1,"L","chicken stock"],[1,"tsp","cumin"],[4,"","small tortillas, baked into strips"],[1,"","lime"]],
+  s:["Simmer stock, salsa, cumin and chicken 15 minutes, then shred the chicken.","Add beans and corn for 5 minutes.","Serve with crisp tortilla strips and lime."]},
+ {id:"eggdrop",n:"Chicken egg drop soup",cu:"Chinese",ty:"soup",d:1,t:20,sv:3,m:["lunch","dinner","snack"],prep:0,fl:[],al:["egg","soy"],k:260,p:28,c:14,f:10,pr:45,
+  i:[[1.2,"L","chicken stock"],[250,"g","chicken breast, shredded"],[3,"","eggs, beaten"],[1,"cup","corn"],[2,"tbsp","cornstarch"],[1,"tbsp","soy sauce"],[1,"tsp","sesame oil"],[2,"","spring onions"]],
+  s:["Bring stock, soy, corn and chicken to a simmer. Thicken with the cornstarch slurry.","Stir the soup in a circle and drizzle in the eggs slowly.","Finish with sesame oil and spring onions."]},
+ {id:"hotsour",n:"Hot and sour soup",cu:"Chinese",ty:"soup",d:2,t:30,sv:4,m:["lunch","dinner"],prep:1,fl:["pork"],al:["soy","egg"],k:280,p:22,c:20,f:12,pr:55,
+  i:[[150,"g","lean pork, thin strips"],[300,"g","firm tofu"],[150,"g","shiitake or wood ear mushrooms"],[1.2,"L","chicken stock"],[3,"tbsp","rice or black vinegar"],[2,"tbsp","soy sauce"],[1,"tsp","white pepper"],[2,"","eggs"],[2,"tbsp","cornstarch"]],
+  s:["Simmer stock with pork and mushrooms 8 minutes.","Add tofu, soy, vinegar and pepper, then thicken with the slurry.","Drizzle in beaten egg and serve hot."]},
+ {id:"kalabasasoup",n:"Squash and coconut soup",cu:"Filipino",ty:"soup",d:1,t:35,sv:4,m:["lunch","dinner","snack"],prep:1,fl:["veg"],al:[],k:260,p:6,c:36,f:11,pr:35,
+  i:[[800,"g","squash (kalabasa)"],[1,"","onion"],[3,"clove","garlic"],[1,"thumb","ginger"],[200,"ml","light coconut milk"],[800,"ml","vegetable stock"],[0,"","salt and pepper"]],
+  s:["Soften onion, garlic and ginger.","Add cubed squash and stock and simmer 20 minutes.","Blend with the coconut milk. Add shredded chicken or a boiled egg for more protein."]},
+ {id:"tomsoup",n:"Tomato soup with tuna melt",cu:"Western",ty:"soup",d:1,t:20,sv:2,m:["lunch","dinner"],prep:0,fl:["pesc"],al:["gluten","dairy","fish"],k:520,p:36,c:52,f:17,pr:95,
+  i:[[1,"jar","tomato basil pasta sauce (500 g)"],[300,"ml","vegetable stock"],[1,"can","tuna in water"],[2,"tbsp","light mayonnaise"],[4,"slice","wholegrain bread"],[60,"g","cheese"]],
+  s:["Simmer the jarred sauce with stock 8 minutes and blend smooth if you like.","Mix tuna with mayo, sandwich with cheese, and toast in a pan until golden.","Dip the melt in the soup."]},
+ // ---------- pasta with jarred sauces ----------
+ {id:"bolognese",n:"Spaghetti bolognese",cu:"Italian",ty:"pasta",d:1,t:30,sv:4,m:["lunch","dinner"],prep:1,fl:["beef"],al:["gluten"],k:600,p:38,c:72,f:16,pr:88,
+  i:[[320,"g","spaghetti"],[500,"g","lean ground beef"],[1,"jar","marinara or bolognese sauce (680 g)"],[1,"","onion"],[1,"","carrot, grated"],[2,"clove","garlic"],[20,"g","parmesan"]],
+  s:["Brown beef with onion, carrot and garlic.","Add the jarred sauce and simmer 12 minutes.","Toss with cooked spaghetti and a little pasta water. Top with parmesan."]},
+ {id:"pinoyspag",n:"Filipino sweet spaghetti (lighter)",cu:"Filipino",ty:"pasta",d:1,t:30,sv:5,m:["lunch","dinner"],prep:1,fl:["pork"],al:["gluten","dairy"],k:560,p:30,c:76,f:15,pr:60,
+  i:[[400,"g","spaghetti"],[400,"g","lean ground pork"],[3,"","hot dogs or chicken franks, sliced"],[1,"pack","Filipino-style spaghetti sauce (900 g)"],[2,"tbsp","banana ketchup"],[1,"","onion"],[3,"clove","garlic"],[40,"g","quick-melt cheese"]],
+  s:["Brown pork with onion and garlic, add the franks.","Add the sauce and ketchup and simmer 15 minutes.","Serve over spaghetti with grated cheese."]},
+ {id:"alfredo",n:"Chicken and broccoli alfredo",cu:"Italian",ty:"pasta",d:1,t:25,sv:4,m:["lunch","dinner"],prep:1,fl:[],al:["gluten","dairy"],k:640,p:44,c:66,f:21,pr:110,
+  i:[[320,"g","fettuccine"],[500,"g","chicken breast"],[1,"jar","alfredo sauce (425 g)"],[1,"head","broccoli"],[100,"ml","milk"],[2,"clove","garlic"]],
+  s:["Cook pasta, adding broccoli for the last 3 minutes.","Pan-cook the chicken and slice it.","Warm the jarred sauce with milk and garlic to loosen it, then toss everything together."]},
+ {id:"arrabbiata",n:"Penne arrabbiata with chicken sausage",cu:"Italian",ty:"pasta",d:1,t:25,sv:4,m:["lunch","dinner"],prep:1,fl:[],al:["gluten"],k:580,p:34,c:74,f:15,pr:95,
+  i:[[320,"g","penne"],[400,"g","chicken sausage, sliced"],[1,"jar","arrabbiata sauce (500 g)"],[1,"","bell pepper"],[2,"cup","spinach"],[20,"g","parmesan"]],
+  s:["Brown sausage and pepper in a pan.","Add the jarred sauce and simmer 8 minutes, then the spinach.","Toss with cooked penne and parmesan."]},
+ {id:"bakedziti",n:"Baked ziti with turkey",cu:"Italian",ty:"pasta",d:2,t:50,sv:6,m:["dinner"],prep:1,fl:[],al:["gluten","dairy"],k:590,p:40,c:62,f:18,pr:105,
+  i:[[450,"g","ziti or penne"],[600,"g","lean ground turkey or chicken"],[1,"jar","marinara sauce (680 g)"],[250,"g","cottage cheese or ricotta, low-fat"],[150,"g","mozzarella"],[1,"","onion"],[2,"clove","garlic"]],
+  s:["Brown meat with onion and garlic, add the sauce.","Mix with par-cooked pasta and cottage cheese and spread in a dish.","Top with mozzarella and bake at 200°C for 20 minutes."]},
+ {id:"mushroompasta",n:"Creamy mushroom chicken pasta",cu:"Italian",ty:"pasta",d:1,t:25,sv:4,m:["lunch","dinner"],prep:1,fl:[],al:["gluten","dairy","egg"],k:620,p:42,c:68,f:19,pr:105,
+  i:[[320,"g","spaghetti or linguine"],[500,"g","chicken breast"],[250,"g","mushrooms"],[1,"jar","carbonara or alfredo sauce (425 g)"],[3,"clove","garlic"],[100,"ml","milk"],[20,"g","parmesan"]],
+  s:["Cook pasta. Sear the chicken and slice.","Brown mushrooms and garlic, add the jarred sauce and milk.","Toss with pasta and chicken and top with parmesan."]},
+ {id:"shrimppesto",n:"Shrimp pesto linguine",cu:"Italian",ty:"pasta",d:1,t:20,sv:3,m:["lunch","dinner"],prep:0,fl:["pesc"],al:["gluten","shellfish","nuts","dairy"],k:610,p:36,c:70,f:20,pr:130,
+  i:[[270,"g","linguine"],[400,"g","shrimp, peeled"],[100,"g","basil pesto (jar)"],[200,"g","cherry tomatoes"],[2,"clove","garlic"],[1,"","lemon"]],
+  s:["Cook the linguine.","Sauté garlic and shrimp 3 minutes, add tomatoes for 1 minute.","Toss with pasta, pesto, a splash of pasta water and lemon."]},
+ {id:"vodkarigatoni",n:"Vodka-sauce rigatoni with chicken",cu:"Italian",ty:"pasta",d:1,t:25,sv:4,m:["lunch","dinner"],prep:1,fl:[],al:["gluten","dairy"],k:630,p:42,c:70,f:19,pr:120,
+  i:[[320,"g","rigatoni"],[500,"g","chicken breast"],[1,"jar","vodka sauce (680 g)"],[2,"cup","spinach"],[20,"g","parmesan"],[0.5,"tsp","chili flakes"]],
+  s:["Cook rigatoni. Sear and slice the chicken.","Warm the sauce with chili flakes and spinach.","Toss everything with a splash of pasta water and parmesan."]},
+ {id:"sausagepenne",n:"One-pan sausage and veg penne",cu:"Italian",ty:"pasta",d:1,t:30,sv:4,m:["lunch","dinner"],prep:1,fl:["pork"],al:["gluten","dairy"],k:610,p:30,c:72,f:22,pr:90,
+  i:[[320,"g","penne"],[300,"g","Italian sausage"],[1,"jar","tomato basil sauce (680 g)"],[1,"","zucchini"],[1,"","bell pepper"],[700,"ml","water"],[30,"g","parmesan"]],
+  s:["Brown the sausage in a deep pan, add vegetables.","Add the sauce, water and dry penne. Simmer covered, stirring, 14 minutes until the pasta is cooked.","Rest 3 minutes and top with parmesan."]},
+ {id:"proteinmac",n:"High-protein mac and cheese",cu:"Western",ty:"pasta",d:1,t:20,sv:3,m:["lunch","dinner"],prep:1,fl:["veg"],al:["gluten","dairy"],k:560,p:38,c:60,f:17,pr:85,
+  i:[[240,"g","elbow macaroni"],[250,"g","cottage cheese"],[120,"g","cheddar, grated"],[120,"ml","milk"],[1,"tsp","mustard"],[1,"cup","broccoli or peas"]],
+  s:["Cook the macaroni with the broccoli.","Blend cottage cheese, milk and mustard smooth, warm in the pot, and melt in the cheddar.","Stir through the pasta."]},
+ {id:"puttanesca",n:"Tuna puttanesca",cu:"Italian",ty:"pasta",d:1,t:20,sv:3,m:["lunch","dinner"],prep:1,fl:["pesc"],al:["gluten","fish"],k:560,p:36,c:74,f:12,pr:80,
+  i:[[270,"g","spaghetti"],[1,"jar","marinara sauce (500 g)"],[2,"can","tuna in water"],[60,"g","olives, sliced"],[1,"tbsp","capers"],[0.5,"tsp","chili flakes"],[2,"clove","garlic"]],
+  s:["Warm garlic and chili in a pan, add the sauce, olives and capers and simmer 6 minutes.","Stir in the tuna.","Toss with the spaghetti."]},
+ {id:"chickpeapesto",n:"Pesto chickpea pasta",cu:"Italian",ty:"pasta",d:1,t:20,sv:4,m:["lunch","dinner"],prep:1,fl:["veg"],al:["gluten","nuts","dairy"],k:560,p:22,c:78,f:18,pr:70,
+  i:[[320,"g","fusilli"],[1,"can","chickpeas, drained"],[100,"g","basil pesto (jar)"],[200,"g","cherry tomatoes"],[2,"cup","spinach"],[30,"g","parmesan"]],
+  s:["Cook the pasta.","Warm the chickpeas, tomatoes and spinach in a pan.","Toss with pasta, pesto and parmesan."]},
+ {id:"aglio",n:"Garlic shrimp aglio olio",cu:"Italian",ty:"pasta",d:1,t:20,sv:2,m:["lunch","dinner"],prep:0,fl:["pesc"],al:["gluten","shellfish"],k:560,p:34,c:68,f:16,pr:125,
+  i:[[180,"g","spaghetti"],[300,"g","shrimp, peeled"],[6,"clove","garlic, sliced"],[0.5,"tsp","chili flakes"],[2,"tbsp","olive oil"],[1,"handful","parsley"],[1,"","lemon"]],
+  s:["Cook the spaghetti.","Gently fry garlic and chili in oil until pale gold, add shrimp for 3 minutes.","Toss with pasta, a splash of pasta water, parsley and lemon."]},
+ // ---------- more mains, breakfasts, snacks ----------
+ {id:"afritada",n:"Chicken afritada",cu:"Filipino",d:1,t:45,sv:4,m:["lunch","dinner"],prep:1,fl:[],al:["fish"],k:520,p:38,c:56,f:15,pr:62,
+  i:[[800,"g","chicken thigh, skinless"],[1,"pack","tomato sauce (250 g)"],[2,"","potatoes"],[1,"","carrot"],[1,"","bell pepper"],[1,"","onion"],[4,"clove","garlic"],[1,"tbsp","fish sauce"],[500,"g","cooked rice"]],
+  s:["Brown chicken, then sauté onion and garlic.","Add tomato sauce, fish sauce and 200 ml water and simmer 15 minutes.","Add potatoes and carrot for 12 minutes and pepper for 3. Serve with rice."]},
+ {id:"menudo",n:"Pork menudo",cu:"Filipino",d:2,t:60,sv:5,m:["lunch","dinner"],prep:1,fl:["pork"],al:["soy"],k:540,p:32,c:54,f:21,pr:78,
+  i:[[600,"g","pork shoulder, small cubes"],[200,"g","pork liver (optional)"],[1,"pack","tomato sauce (250 g)"],[2,"","potatoes"],[1,"","carrot"],[60,"g","raisins"],[2,"tbsp","soy sauce"],[1,"","onion"],[500,"g","cooked rice"]],
+  s:["Marinate pork in soy 15 minutes, then brown with onion.","Add tomato sauce and 300 ml water and simmer 30 minutes.","Add potatoes, carrot and liver for 12 minutes, then raisins. Serve with rice."]},
+ {id:"bistek",n:"Bistek tagalog",cu:"Filipino",d:1,t:30,sv:4,m:["lunch","dinner"],prep:1,fl:["beef"],al:["soy"],k:560,p:42,c:52,f:19,pr:118,
+  i:[[600,"g","beef sirloin, thin slices"],[60,"ml","soy sauce"],[60,"ml","calamansi juice"],[2,"","onions, in rings"],[4,"clove","garlic"],[1,"tbsp","cooking oil"],[500,"g","cooked rice"]],
+  s:["Marinate beef in soy, calamansi and garlic 30 minutes.","Fry the onion rings until just soft and set aside.","Sear the beef in batches, add the marinade and 100 ml water and simmer 10 minutes. Top with the onions."]},
+ {id:"bangsilog",n:"Daing na bangus with egg and rice",cu:"Filipino",d:1,t:25,sv:2,m:["breakfast","lunch"],prep:0,fl:["pesc"],al:["fish","egg"],k:590,p:40,c:56,f:22,pr:95,
+  i:[[2,"","boneless bangus (milkfish), butterflied"],[80,"ml","cane vinegar"],[6,"clove","garlic"],[1,"tsp","black pepper"],[2,"","eggs"],[400,"g","cooked rice"],[2,"","tomatoes"]],
+  s:["Marinate the fish in vinegar, crushed garlic and pepper overnight.","Pan-fry skin side down 5 minutes, flip for 3.","Serve with eggs, garlic rice and tomatoes, with spiced vinegar to dip."]},
+ {id:"tortang",n:"Tortang talong",cu:"Filipino",d:1,t:25,sv:2,m:["breakfast","lunch","dinner"],prep:0,fl:["veg"],al:["egg"],k:340,p:18,c:36,f:14,pr:40,
+  i:[[2,"","long eggplants"],[4,"","eggs"],[1,"","onion, minced"],[1,"tbsp","cooking oil"],[300,"g","cooked rice"],[0,"","salt and pepper"]],
+  s:["Grill or broil the eggplants until charred and soft, then peel, keeping the stem.","Flatten each with a fork and dip in beaten seasoned egg.","Pan-fry 2 to 3 minutes a side. Serve with rice and banana ketchup."]},
+ {id:"pinoycurry",n:"Filipino chicken curry",cu:"Filipino",d:1,t:45,sv:4,m:["lunch","dinner"],prep:1,fl:[],al:["fish"],k:560,p:38,c:56,f:19,pr:72,
+  i:[[800,"g","chicken thigh, skinless"],[400,"ml","light coconut milk"],[2,"tbsp","curry powder"],[2,"","potatoes"],[1,"","carrot"],[1,"","bell pepper"],[1,"","onion"],[1,"tbsp","fish sauce"],[500,"g","cooked rice"]],
+  s:["Brown the chicken with onion and curry powder.","Add coconut milk, fish sauce, potatoes and carrot and simmer 20 minutes.","Add pepper for 3 minutes. Serve with rice."]},
+ {id:"ginataangsitaw",n:"Ginataang kalabasa at sitaw with shrimp",cu:"Filipino",d:1,t:30,sv:4,m:["lunch","dinner"],prep:1,fl:["pesc"],al:["shellfish","fish"],k:380,p:22,c:42,f:14,pr:75,
+  i:[[300,"g","shrimp"],[500,"g","squash (kalabasa), cubed"],[200,"g","string beans (sitaw)"],[400,"ml","light coconut milk"],[1,"","onion"],[3,"clove","garlic"],[1,"tbsp","shrimp paste or fish sauce"],[400,"g","cooked rice"]],
+  s:["Sauté garlic, onion and shrimp paste.","Add coconut milk and squash and simmer 10 minutes.","Add beans for 4 minutes and shrimp for 3."]},
+ {id:"katsucurry",n:"Chicken katsu curry",cu:"Japanese",d:3,t:50,sv:4,m:["lunch","dinner"],prep:0,fl:[],al:["gluten","egg"],k:690,p:44,c:82,f:19,pr:105,
+  i:[[600,"g","chicken breast, butterflied"],[1,"","egg"],[60,"g","panko"],[4,"cube","Japanese curry roux"],[1,"","onion"],[1,"","carrot"],[1,"","potato"],[600,"g","cooked rice"]],
+  s:["Simmer onion, carrot and potato in 700 ml water 15 minutes, then melt in the roux.","Dip chicken in egg then panko and air-fry or bake at 220°C for 15 minutes.","Slice and serve over rice with the curry."]},
+ {id:"japchae",n:"Beef japchae",cu:"Korean",d:2,t:35,sv:3,m:["lunch","dinner"],prep:1,fl:["beef"],al:["soy","sesame"],k:520,p:28,c:70,f:14,pr:110,
+  i:[[200,"g","sweet potato glass noodles"],[250,"g","beef sirloin, thin strips"],[1,"","carrot"],[1,"","onion"],[150,"g","spinach"],[100,"g","mushrooms"],[4,"tbsp","soy sauce"],[1,"tbsp","sesame oil"],[1,"tbsp","sugar"]],
+  s:["Cook noodles 6 minutes, drain, and toss with a little sesame oil.","Stir-fry beef, then each vegetable quickly.","Toss everything with soy, sugar and sesame oil. Good warm or cold."]},
+ {id:"peanutchicken",n:"Thai peanut chicken",cu:"Thai",d:1,t:25,sv:4,m:["lunch","dinner"],prep:1,fl:[],al:["nuts","soy"],k:590,p:44,c:56,f:20,pr:85,
+  i:[[700,"g","chicken breast"],[3,"tbsp","peanut butter"],[3,"tbsp","soy sauce"],[1,"","lime"],[1,"tbsp","honey"],[1,"tbsp","sriracha"],[2,"cup","shredded cabbage and carrot"],[600,"g","cooked rice"]],
+  s:["Whisk peanut butter, soy, lime, honey, sriracha and a splash of hot water.","Stir-fry the chicken until cooked, add the sauce to coat.","Serve over rice with the crunchy slaw."]},
+ {id:"kungpao",n:"Kung pao chicken",cu:"Chinese",d:2,t:25,sv:3,m:["lunch","dinner"],prep:0,fl:[],al:["nuts","soy"],k:580,p:42,c:56,f:20,pr:80,
+  i:[[500,"g","chicken thigh, skinless, cubed"],[40,"g","roasted peanuts"],[8,"","dried chilies"],[1,"","bell pepper"],[3,"","spring onions"],[3,"tbsp","soy sauce"],[2,"tbsp","black or rice vinegar"],[1,"tbsp","cornstarch"],[450,"g","cooked rice"]],
+  s:["Toss chicken with 1 tbsp soy and the cornstarch.","Fry chilies briefly, add chicken and cook 6 minutes, then pepper and spring onions.","Add the rest of the soy and vinegar, toss with peanuts. Serve with rice."]},
+ {id:"garlicshrimp",n:"Garlic butter shrimp rice",cu:"Western",d:1,t:15,sv:2,m:["lunch","dinner"],prep:0,fl:["pesc"],al:["shellfish","dairy"],k:540,p:36,c:62,f:15,pr:125,
+  i:[[400,"g","shrimp, peeled"],[6,"clove","garlic"],[1,"tbsp","butter"],[1,"","lemon"],[400,"g","cooked rice"],[2,"cup","broccoli"]],
+  s:["Steam the broccoli.","Melt butter, fry garlic 30 seconds, add shrimp for 3 minutes, then lemon.","Spoon over rice with the broccoli."]},
+ {id:"shawarma",n:"Chicken shawarma bowl",cu:"Mediterranean",d:1,t:30,sv:4,m:["lunch","dinner"],prep:1,fl:[],al:["dairy","sesame"],k:560,p:46,c:54,f:16,pr:105,
+  i:[[800,"g","chicken thigh, skinless"],[2,"tsp","shawarma spice"],[1,"","lemon"],[600,"g","cooked rice"],[1,"","cucumber"],[2,"","tomatoes"],[150,"g","Greek yogurt"],[1,"tbsp","tahini"]],
+  s:["Rub chicken with spice, lemon and a little oil and grill or bake 20 minutes.","Mix yogurt, tahini, lemon and garlic for the sauce.","Slice and serve over rice with the salad and sauce."]},
+ {id:"kofta",n:"Beef kofta with couscous",cu:"Mediterranean",d:2,t:35,sv:4,m:["lunch","dinner"],prep:1,fl:["beef"],al:["gluten","dairy"],k:590,p:38,c:58,f:22,pr:115,
+  i:[[500,"g","lean ground beef"],[1,"","onion, grated"],[2,"tsp","cumin and coriander"],[1,"handful","parsley"],[240,"g","couscous"],[1,"","cucumber"],[150,"g","Greek yogurt"]],
+  s:["Mix beef, onion, spices and parsley and shape into 12 logs.","Grill or bake at 220°C for 12 minutes.","Serve with couscous, cucumber and yogurt."]},
+ {id:"butterchicken",n:"Butter chicken (lighter)",cu:"Indian",d:2,t:45,sv:4,m:["lunch","dinner"],prep:1,fl:[],al:["dairy"],k:580,p:44,c:58,f:18,pr:105,
+  i:[[800,"g","chicken thigh, skinless"],[150,"g","Greek yogurt"],[2,"tbsp","tikka or butter chicken paste"],[1,"can","chopped tomatoes"],[100,"ml","light cream or evaporated milk"],[1,"tbsp","butter"],[600,"g","cooked basmati rice"]],
+  s:["Marinate chicken in yogurt and half the paste for 30 minutes, then sear it.","Cook the rest of the paste in butter, add tomatoes and simmer 10 minutes.","Add chicken and cream and simmer 10 minutes. Serve with rice."]},
+ {id:"fishtacos",n:"Fish tacos",cu:"Mexican",d:1,t:25,sv:3,m:["lunch","dinner"],prep:0,fl:["pesc"],al:["fish","gluten","dairy"],k:520,p:36,c:52,f:17,pr:110,
+  i:[[450,"g","white fish (cream dory or tilapia)"],[2,"tsp","taco seasoning"],[9,"","small tortillas"],[2,"cup","shredded cabbage"],[100,"g","Greek yogurt"],[1,"","lime"],[1,"cup","salsa"]],
+  s:["Season the fish and pan-cook 3 minutes a side, then flake it.","Mix yogurt with lime for a sauce.","Fill warm tortillas with fish, cabbage, salsa and sauce."]},
+ {id:"quesadilla",n:"Chicken quesadillas",cu:"Mexican",d:1,t:20,sv:2,m:["lunch","dinner","snack"],prep:0,fl:[],al:["gluten","dairy"],k:560,p:44,c:46,f:20,pr:95,
+  i:[[300,"g","cooked chicken, shredded"],[4,"","flour tortillas"],[80,"g","cheese, grated"],[1,"","bell pepper"],[0.5,"cup","salsa"]],
+  s:["Fill tortillas with chicken, cheese and pepper and fold.","Toast in a dry pan 2 to 3 minutes a side until crisp.","Cut and serve with salsa."]},
+ {id:"bfburrito",n:"Breakfast burritos (freezer)",cu:"Mexican",d:1,t:30,sv:6,m:["breakfast"],prep:1,fl:["veg"],al:["gluten","egg","dairy"],k:420,p:26,c:40,f:17,pr:60,
+  i:[[10,"","eggs"],[1,"can","black beans"],[1,"","bell pepper"],[100,"g","cheese"],[6,"","large tortillas"],[1,"cup","salsa"]],
+  s:["Scramble eggs with pepper. Warm the beans.","Fill tortillas with egg, beans, cheese and salsa, and roll tight.","Wrap each in foil and freeze. Reheat 2 minutes in the microwave or 15 in the oven."]},
+ {id:"longsilog",n:"Chicken longganisa, egg and rice",cu:"Filipino",d:1,t:20,sv:2,m:["breakfast"],prep:0,fl:[],al:["egg"],k:600,p:34,c:64,f:22,pr:85,
+  i:[[6,"","chicken longganisa"],[2,"","eggs"],[400,"g","cooked rice"],[4,"clove","garlic"],[2,"","tomatoes"]],
+  s:["Simmer the longganisa in a little water until it evaporates, then fry until browned.","Fry garlic, add rice and toss.","Serve with fried eggs and tomatoes."]},
+ {id:"champorado",n:"Protein champorado",cu:"Filipino",d:1,t:25,sv:2,m:["breakfast","snack"],prep:0,fl:["veg"],al:["dairy"],k:420,p:24,c:68,f:6,pr:50,
+  i:[[120,"g","glutinous rice"],[2,"tbsp","cocoa powder (tablea if you have it)"],[2,"tbsp","sugar"],[30,"g","chocolate whey protein"],[200,"ml","milk"]],
+  s:["Simmer rice in 800 ml water for 18 minutes, stirring.","Stir in cocoa and sugar, then take off the heat and whisk in the protein.","Top with milk."]},
+ {id:"tunasandwich",n:"Tuna salad sandwich",cu:"Western",d:1,t:10,sv:2,m:["lunch","snack"],prep:1,fl:["pesc"],al:["fish","gluten","egg"],k:410,p:32,c:38,f:13,pr:60,
+  i:[[2,"can","tuna in water"],[2,"tbsp","light mayonnaise"],[2,"tbsp","Greek yogurt"],[1,"stalk","celery or cucumber"],[4,"slice","wholegrain bread"],[1,"cup","lettuce"]],
+  s:["Mix tuna, mayo, yogurt and diced celery with pepper.","Pile onto bread with lettuce."]},
+ {id:"caesarwrap",n:"Chicken caesar wrap",cu:"Western",d:1,t:15,sv:2,m:["lunch","snack"],prep:1,fl:[],al:["gluten","dairy","fish","egg"],k:520,p:42,c:40,f:20,pr:95,
+  i:[[300,"g","cooked chicken breast"],[2,"","large tortillas"],[2,"cup","romaine"],[3,"tbsp","light caesar dressing"],[20,"g","parmesan"]],
+  s:["Toss lettuce, chicken, dressing and parmesan.","Roll tightly in the tortillas and cut in half."]},
+ {id:"cottagebowl",n:"Cottage cheese and fruit bowl",cu:"Western",d:1,t:3,sv:1,m:["snack","breakfast"],prep:0,fl:["veg"],al:["dairy"],k:260,p:28,c:26,f:5,pr:75,
+  i:[[200,"g","cottage cheese"],[1,"cup","pineapple or mango"],[1,"tsp","honey"]],
+  s:["Top cottage cheese with fruit and honey."]},
+ {id:"boiledeggs",n:"Eggs and banana",cu:"Filipino",d:1,t:12,sv:1,m:["snack","breakfast"],prep:1,fl:["veg"],al:["egg"],k:250,p:13,c:28,f:10,pr:30,
+  i:[[2,"","eggs, hard-boiled"],[1,"","banana (lakatan or saba)"]],
+  s:["Boil eggs 10 minutes, cool in water and peel. Good pre- or post-run when you're on the go."]},
+];
+RECIPES.push(...RECIPES2);
+for(const [id,t] of [["tunapasta","pasta"],["pestopasta","pasta"],["lasagnalite","pasta"],["sinigang","soup"],["tinola","soup"],["arrozcaldo","soup"]]){const r=RECIPES.find(x=>x.id===id);if(r)r.ty=t;}
 /* rough Metro Manila supermarket cost per serving, in pesos (late 2026) */
 const PRICE={adobo:56,sinigang:91,tinola:50,inasal:63,monggo:20,arrozcaldo:45,tapsilog:102,pinakbet:66,oats:120,eggmuffins:43,pancakes:118,chili:73,burritobowl:97,fajitas:130,teriyakisalmon:205,oyakodon:67,bibimbap:122,bulgogi:75,kraopao:80,greencurry:61,beefbroc:116,mapotofu:67,tikka:92,chana:59,dal:23,greekbowl:127,shakshuka:83,tunapasta:77,pestopasta:104,lasagnalite:128,salmonsheet:233,proteinshake:83,yogurtbowl:140,tofuscramble:80,turon:30};
-RECIPES.forEach(r=>{r.pr=PRICE[r.id]||80;});
+RECIPES.forEach(r=>{r.pr=r.pr||PRICE[r.id]||80;});
 const peso=v=>"₱"+Math.round(v).toLocaleString();
 const BUDGETS=[[null,"No limit"],[[40,80],"₱40–80"],[[80,150],"₱80–150"],[[150,250],"₱150–250"],[[250,450],"₱250+"]];
 /* maintenance: resting burn + daily life + your average training over the last 7 days */
@@ -2862,7 +3041,7 @@ const costAt=(r,serv)=>r.pr*serv;
 /* what one of your meals of this recipe costs, sized to your TDEE */
 const tdeeMealCost=r=>{const serv=Math.max(.5,Math.min(3,Math.round(mealKcalRef()/r.k*2)/2));return {serv,cost:costAt(r,serv)};};
 const inBudget=(cost,N)=>{const B=(N||nutr()).budget;return !B||cost<=B[1]*1.05;};
-const CUISINES=["Filipino","Japanese","Korean","Thai","Chinese","Indian","Mediterranean","Mexican","Italian","Western"];
+const CUISINES=["Filipino","Japanese","Korean","Thai","Vietnamese","Chinese","Indian","Mediterranean","Mexican","Italian","Western"];
 const DIFF=["","Easy","Medium","Hard"];
 const ALLERGENS=[["dairy","Dairy"],["gluten","Gluten"],["egg","Egg"],["nuts","Nuts and peanuts"],["soy","Soy"],["fish","Fish"],["shellfish","Shellfish"],["sesame","Sesame"]];
 const DIETS=[["any","No restriction"],["pesc","Pescatarian"],["veg","Vegetarian"],["vegan","Vegan"],["nopork","No pork"],["halal","Halal (no pork)"]];
@@ -2945,11 +3124,11 @@ function shoppingList(items){ // items: [{id, batch servings}]
   const P=(nutr().pantry||[]).map(x=>x.toLowerCase());
   return [...m.values()].map(x=>({...x,have:P.some(p=>x.n.includes(p)||p.includes(x.n)),staple:STAPLES.test(x.n)})).sort((a,b)=>a.have-b.have||a.n.localeCompare(b.n));}
 /* ---------- food UI: Coach > Food ---------- */
-let foodView={cu:"",diff:0,meal:"",q:"",prep:false};
+let foodView={cu:"",diff:0,meal:"",q:"",prep:false,ty:"",lim:24};
 const mbar=(v,t,cls)=>{const pct=t?Math.min(100,v/t*100):0;return `<div class="nu-bar ${cls||""}"><i style="width:${pct.toFixed(1)}%"></i></div>`;};
 function renderFood(){
   const N=nutr(),today=keyOf(new Date());
-  if(!N.goal)return `<div class="ins nu-hero"><h3>Eat for your training</h3><p class="xpinfo">Daily calories and macros that follow your workouts, recipes from ten cuisines you can scale, a meal-prep planner with a shopping list, and a pantry that suggests what to cook.</p>
+  if(!N.goal)return `<div class="ins nu-hero"><h3>Eat for your training</h3><p class="xpinfo">Daily calories and macros that follow your workouts, over 90 recipes from eleven cuisines you can scale, soups and jarred-sauce pastas included, a meal-prep planner with a shopping list, and a pantry that suggests what to cook.</p>
     <button class="btn primary" data-act="fd-setup" style="width:100%;margin-top:12px">Set up food goals</button>
     <p class="hint">Takes a minute. Uses your weight, height, age and sex from Settings.</p></div>`+recipeBrowser();
   const T=foodTargets(today),E=dayEaten(today),left=Math.round(T.kcal-E.k);
@@ -2987,12 +3166,14 @@ function renderFood(){
 }
 function recipeBrowser(){
   const N=nutr(),v=foodView,q=v.q.trim().toLowerCase();
-  const L=RECIPES.filter(r=>(!N.goal||recipeOK(r,{...N,maxDiff:3}))&&(!v.cu||r.cu===v.cu)&&(!v.diff||r.d===v.diff)&&(!v.meal||r.m.includes(v.meal))&&(!v.prep||r.prep)&&(!v.bud||!N.budget||inBudget(tdeeMealCost(r).cost,N))&&(!q||r.n.toLowerCase().includes(q)||r.i.some(x=>x[2].toLowerCase().includes(q))));
+  const L=RECIPES.filter(r=>(!N.goal||recipeOK(r,{...N,maxDiff:3}))&&(!v.cu||r.cu===v.cu)&&(!v.diff||r.d===v.diff)&&(!v.meal||r.m.includes(v.meal))&&(!v.ty||r.ty===v.ty)&&(!v.prep||r.prep)&&(!v.bud||!N.budget||inBudget(tdeeMealCost(r).cost,N))&&(!q||r.n.toLowerCase().includes(q)||r.i.some(x=>x[2].toLowerCase().includes(q))));
   return `<h2 class="sec" style="margin-top:20px">Recipes</h2>
     <div class="lsearch" style="margin-bottom:8px"><span class="lsi">${icon("search")}</span><input id="fd-q" type="search" placeholder="Search recipes or ingredients" value="${esc(v.q)}" aria-label="Search recipes"></div>
     <div class="chips">${[["","All cuisines"],...CUISINES.map(c=>[c,c])].map(([k,n])=>`<button class="chip" data-act="fd-f" data-k="cu" data-v="${k}" aria-pressed="${v.cu===k}">${n}</button>`).join("")}</div>
+    <div class="chips">${[["soup","Soups"],["pasta","Pasta"]].map(([k,n])=>`<button class="chip" data-act="fd-f" data-k="ty" data-v="${k}" aria-pressed="${v.ty===k}">${n}</button>`).join("")}</div>
     <div class="chips">${[["","Any meal"],["breakfast","Breakfast"],["lunch","Lunch"],["dinner","Dinner"],["snack","Snack"]].map(([k,n])=>`<button class="chip sm" data-act="fd-f" data-k="meal" data-v="${k}" aria-pressed="${v.meal===k}">${n}</button>`).join("")}${[[0,"Any level"],[1,"Easy"],[2,"Medium"],[3,"Hard"]].map(([k,n])=>`<button class="chip sm" data-act="fd-f" data-k="diff" data-v="${k}" aria-pressed="${v.diff===k}">${n}</button>`).join("")}<button class="chip sm" data-act="fd-f" data-k="prep" data-v="1" aria-pressed="${v.prep}">Meal-prep friendly</button>${N.budget?`<button class="chip sm" data-act="fd-f" data-k="bud" data-v="1" aria-pressed="${!!v.bud}">Within budget</button>`:""}</div>
-    <div class="nu-grid">${L.map(r=>`<button class="nu-card" data-act="fd-recipe" data-rid="${r.id}"><span class="nu-cu">${esc(r.cu)}</span><b>${esc(r.n)}</b><span class="nu-meta">${r.t} min, ${DIFF[r.d].toLowerCase()}</span><span class="nu-mac"><b>${r.k}</b> kcal <b>${r.p}</b> g protein</span><span class="nu-cost${nutr().budget&&!inBudget(tdeeMealCost(r).cost)?" over":""}">${peso(r.pr)} a serving${nutr().goal?`, ${peso(tdeeMealCost(r).cost)} for your meal size`:""}</span></button>`).join("")||`<p class="hint">No recipes match. Try fewer filters${N.goal?", or check your diet and allergy settings":""}.</p>`}</div>`;
+    <p class="hint" style="margin:0 0 8px">${L.length} recipe${L.length===1?"":"s"}</p>
+    <div class="nu-grid">${L.slice(0,v.lim).map(r=>`<button class="nu-card" data-act="fd-recipe" data-rid="${r.id}"><span class="nu-cu">${esc(r.cu)}</span><b>${esc(r.n)}</b><span class="nu-meta">${r.t} min, ${DIFF[r.d].toLowerCase()}</span><span class="nu-mac"><b>${r.k}</b> kcal <b>${r.p}</b> g protein</span><span class="nu-cost${nutr().budget&&!inBudget(tdeeMealCost(r).cost)?" over":""}">${peso(r.pr)} a serving${nutr().goal?`, ${peso(tdeeMealCost(r).cost)} for your meal size`:""}</span></button>`).join("")||`<p class="hint">No recipes match. Try fewer filters${N.goal?", or check your diet and allergy settings":""}.</p>`}</div>${L.length>v.lim?`<button class="btn" data-act="fd-more" style="width:100%;margin-bottom:16px">Show ${Math.min(24,L.length-v.lim)} more</button>`:""}`;
 }
 function openRecipe(id,serv,back){
   const r=RECIPES.find(x=>x.id===id);if(!r)return;let sv=serv||r.sv;
@@ -3080,7 +3261,7 @@ function openMealPrep(o){
   $("mp-again").onclick=()=>openMealPrep({...o,seed:o.seed+1});
   $("mp-copy").onclick=async()=>{const txt="Shopping list\n"+list.filter(x=>!x.staple&&!x.have).map(x=>`- ${x.q?fmtQty(x.q,x.u)+" ":""}${x.label}`).join("\n");try{await navigator.clipboard.writeText(txt);toast("Shopping list copied");}catch(e){toast("Couldn't copy here");}};
 }
-const PANTRY_SUGGEST=["chicken thigh","chicken breast","ground chicken","pork shoulder","ground beef","beef sirloin","salmon","tuna","shrimp","tofu","eggs","Greek yogurt","milk","cheese","whey protein","rice","cooked rice","rolled oats","pasta","bread","tortillas","potatoes","quinoa","mung beans","red lentils","chickpeas","black beans","kidney beans","onion","garlic","ginger","tomatoes","chopped tomatoes","bell pepper","spinach","kangkong","malunggay","eggplant","string beans","broccoli","carrot","cucumber","squash","okra","banana","mango","calamansi","lemon","lime","soy sauce","cane vinegar","fish sauce","oyster sauce","coconut milk","curry paste","gochujang","peanut butter","bay leaves","chili powder","cumin","garam masala"];
+const PANTRY_SUGGEST=["chicken thigh","chicken breast","ground chicken","pork shoulder","ground beef","beef sirloin","salmon","tuna","shrimp","tofu","eggs","Greek yogurt","milk","cheese","whey protein","rice","cooked rice","rolled oats","pasta","bread","tortillas","potatoes","quinoa","mung beans","red lentils","chickpeas","black beans","kidney beans","onion","garlic","ginger","tomatoes","chopped tomatoes","bell pepper","spinach","kangkong","malunggay","eggplant","string beans","broccoli","carrot","cucumber","squash","okra","banana","mango","calamansi","lemon","lime","soy sauce","cane vinegar","fish sauce","oyster sauce","coconut milk","curry paste","gochujang","peanut butter","bay leaves","chili powder","cumin","garam masala","marinara sauce","tomato basil sauce","alfredo sauce","basil pesto","chicken stock","spaghetti","penne","rice noodles","miso","tamarind soup mix","cabbage","pechay","mushrooms","potatoes","tomato sauce"];
 function openPantry(){
   const N=nutr(),P=new Set(N.pantry||[]);
   const draw=()=>{openSheet(`<h3>Pantry</h3><p class="sub">Tap what you have. Recipes that use it get suggested first, and shopping lists skip it.</p>
@@ -3110,8 +3291,9 @@ function foodAct(a,t){
   else if(a==="fd-pantry")openPantry();
   else if(a==="fd-cookpantry")openCookPantry();
   else if(a==="fd-recipe")openRecipe(t.dataset.rid,t.dataset.serv?+t.dataset.serv:null);
+  else if(a==="fd-more"){foodView.lim+=24;const y=window.scrollY;render();window.scrollTo(0,y);}
   else if(a==="fd-del"){const d=keyOf(new Date()),L=dayFood(d);L.splice(+t.dataset.i,1);setDayFood(d,L);render();}
-  else if(a==="fd-f"){const k=t.dataset.k;foodView[k]=k==="diff"?+t.dataset.v:k==="prep"?!foodView.prep:k==="bud"?!foodView.bud:t.dataset.v;const y=window.scrollY;render();window.scrollTo(0,y);}
+  else if(a==="fd-f"){const k=t.dataset.k;foodView[k]=k==="diff"?+t.dataset.v:k==="prep"?!foodView.prep:k==="bud"?!foodView.bud:k==="ty"?(foodView.ty===t.dataset.v?"":t.dataset.v):t.dataset.v;foodView.lim=24;const y=window.scrollY;render();window.scrollTo(0,y);}
 }
 let coachTab="today",coachAllRecs=false;
 function renderInsights(){
