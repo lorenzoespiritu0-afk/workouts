@@ -21,6 +21,41 @@
 #sopts:not([data-style="classic"]) .conly,#sopts:not([data-bg="photo"]) #o-ptog [data-t="bw"],#sopts:not([data-bg="photo"]):not([data-style="splits"]) #o-ptog [data-t="motion"],#sopts[data-bg="none"] #o-ptog [data-t="grain"],#sopts[data-bg="glass"] #o-ptog [data-t="grain"]{display:none}
 
 #sopts[data-style="splits"] #o-tog [data-t="route"]{display:none}
+
+/* v51 food */
+.nu-hero h3{font-size:2.6rem!important;line-height:1}
+.nu-bar{height:8px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden;margin-top:8px}
+.nu-bar i{display:block;height:100%;border-radius:4px;background:var(--accent)}
+.nu-bar.p i{background:#4F8DFF}.nu-bar.c i{background:#E8A93A}.nu-bar.f i{background:#FF5C8A}
+.nu-macros{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:14px}
+.nu-macros span{display:block;font-size:.76rem;color:var(--muted);font-weight:600}
+.nu-macros b{font-family:var(--num);font-size:1.3rem;font-variant-numeric:tabular-nums}
+.nu-macros small{font-size:.75rem;color:var(--muted);font-family:var(--font);font-weight:500}
+.nu-why{margin-top:12px}.nu-why summary{font-size:.85rem;color:var(--muted);cursor:pointer;min-height:32px;display:flex;align-items:center}
+.nu-calc>div{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:.9rem}
+.nu-calc>div span{color:var(--muted)}.nu-calc>div b{font-variant-numeric:tabular-nums}
+.nu-tip{border-left:3px solid var(--c)}.nu-tip b{display:block;margin-bottom:4px}.nu-tip span{color:var(--muted);font-size:.9rem;line-height:1.45}
+.nu-slot{width:32px;height:32px;border-radius:10px;background:var(--chip);display:grid;place-items:center;font-weight:700;font-size:.8rem;flex:none}
+.nu-pct{min-width:48px;font-family:var(--num);font-weight:700;color:#2FC48D}
+.nu-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:16px}
+.nu-card{background:var(--surface);border-radius:16px;padding:14px;text-align:left;display:flex;flex-direction:column;gap:4px;min-height:132px}
+.nu-card b{font-size:1rem;line-height:1.25}
+.nu-cu{font-size:.72rem;color:var(--accent);font-weight:700}
+.nu-meta{font-size:.78rem;color:var(--muted)}
+.nu-mac{margin-top:auto;font-size:.78rem;color:var(--muted)}.nu-mac b{color:var(--ink);font-size:.95rem}
+.nu-rec h3{margin:4px 0 12px}
+.nu-per{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.nu-per div{background:var(--bg);border-radius:12px;padding:10px;text-align:center}.nu-per b{display:block;font-family:var(--num);font-size:1.2rem}.nu-per span{font-size:.72rem;color:var(--muted)}
+.nu-serv{display:flex;justify-content:space-between;align-items:center;margin:14px 0 4px;font-weight:600}
+.nu-ing,.nu-shop{list-style:none;padding:0;margin:0}
+.nu-ing li,.nu-shop li{display:grid;grid-template-columns:96px 1fr;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.nu-ing li b,.nu-shop li b{font-variant-numeric:tabular-nums}
+.nu-ing li.have span,.nu-shop li.have{color:var(--muted)}.nu-ing em,.nu-shop em{font-style:normal;font-size:.75rem;color:#2FC48D;margin-left:6px}
+.nu-shop li.have b,.nu-shop li.have span{text-decoration:line-through;text-decoration-color:rgba(255,255,255,.3)}
+.nu-steps{padding-left:22px;margin:0}.nu-steps li{padding:6px 0;line-height:1.5}
+
+#sheet .tlist .trow .tx span{white-space:normal}
+.nu-mini{display:block;width:100%;text-align:left}.nu-mini b{font-family:var(--num);font-size:1.3rem;display:block}.nu-mini span{font-size:.85rem;color:var(--muted)}
 </style></head><body>
 <!doctype html>
 <html lang="en">
@@ -2605,6 +2640,7 @@ function openChooser(){
 $("app").addEventListener("click",e=>{
   const t=e.target.closest("[data-open],[data-filter],[data-period],[data-metric],[data-act],[data-go],[data-seg],[data-acc],[data-place],[data-newplace],[data-logmode],[data-cal],[data-day],[data-recap],[data-proj],[data-newproj],[data-ctab],[data-plan],[data-lg],[data-gear],[data-pain],[data-ev],[data-pday],[data-pstart],[data-tstart],[data-tdel]");if(!t)return;
   const d=t.dataset;
+  if(d.act&&d.act.startsWith("fd-")){foodAct(d.act,t);return;}
   if(d.open)openDetail(sessions[d.open]);
   else if(d.filter){filter=d.filter;render();}
   else if(d.period){period=d.period;render();}
@@ -2655,6 +2691,7 @@ $("app").addEventListener("click",e=>{
   else if(d.newplace!==undefined)openPlaceEditor(null,()=>{view="places";render();});
 });
 $("app").addEventListener("change",e=>{if(e.target.id==="pfilter"){placeFilter=e.target.value;render();}});
+let fqT;$("app").addEventListener("input",e=>{if(e.target.id!=="fd-q")return;foodView.q=e.target.value;clearTimeout(fqT);fqT=setTimeout(()=>{const y=window.scrollY;render();const i=$("fd-q");if(i){i.focus();const n=i.value.length;try{i.setSelectionRange(n,n);}catch(_){}}window.scrollTo(0,y);},180);});
 let lqT;$("app").addEventListener("input",e=>{if(e.target.id!=="lq")return;logQ=e.target.value;clearTimeout(lqT);lqT=setTimeout(()=>{const y=window.scrollY;render();const i=$("lq");if(i){i.focus();const n=i.value.length;try{i.setSelectionRange(n,n);}catch(_){}}window.scrollTo(0,y);},160);});
 $("app").addEventListener("keydown",e=>{if(e.target.id==="lq"&&e.key==="Escape"){e.stopPropagation();logSearch=false;logQ="";render();}});
 
@@ -2699,15 +2736,372 @@ function sparkline(vals){
   const pts=vals.map((v,i)=>[i/(vals.length-1)*(W-8)+4,H-6-(v-mn)/r*(H-12)]);
   return `<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><polyline points="${pts.map(p=>p.join(",")).join(" ")}" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>`;
 }
+/* ================= food: targets that follow your training, recipes, meal prep, pantry ================= */
+/* Recipe fields: id, n name, cu cuisine, d difficulty 1 easy / 2 medium / 3 hard, t minutes, sv servings, m meals, prep keeps for meal prep,
+   fl diet flags (veg vegetarian, vegan, pesc fish or seafood, pork, beef), al allergens, macros per serving k p c f,
+   i ingredients [qty, unit, name] (qty 0 = to taste), s steps. */
+const RECIPES=[
+ {id:"adobo",n:"Chicken adobo",cu:"Filipino",d:1,t:45,sv:4,m:["lunch","dinner"],prep:1,fl:[],al:["soy"],k:520,p:42,c:48,f:16,
+  i:[[800,"g","chicken thigh, skinless"],[80,"ml","soy sauce"],[80,"ml","cane vinegar"],[8,"clove","garlic"],[3,"","bay leaves"],[1,"tsp","black peppercorns"],[1,"tbsp","brown sugar"],[1,"tbsp","cooking oil"],[600,"g","cooked rice"]],
+  s:["Mix soy sauce, vinegar, crushed garlic, bay leaves and peppercorns. Marinate the chicken for at least 20 minutes.","Sear the chicken in oil until browned, about 4 minutes a side.","Pour in the marinade with 120 ml water and the sugar. Simmer covered for 25 minutes.","Uncover and reduce the sauce until glossy, about 8 minutes. Serve over rice."]},
+ {id:"sinigang",n:"Pork sinigang",cu:"Filipino",d:1,t:60,sv:4,m:["lunch","dinner"],prep:1,fl:["pork"],al:["fish"],k:480,p:32,c:44,f:19,
+  i:[[600,"g","pork shoulder, cubed"],[1,"pack","tamarind soup mix (40 g)"],[2,"","tomatoes"],[1,"","onion"],[1,"","radish (labanos)"],[150,"g","string beans"],[1,"bunch","kangkong"],[2,"","long green chilies"],[1,"tbsp","fish sauce"],[600,"g","cooked rice"]],
+  s:["Boil the pork with onion and tomatoes in 1.5 L water. Skim, then simmer 40 minutes until tender.","Add the radish and cook 5 minutes, then the string beans and chilies for 3 minutes.","Stir in the tamarind mix and fish sauce. Taste and adjust sourness.","Add kangkong last and turn off the heat. Serve with rice."]},
+ {id:"tinola",n:"Chicken tinola",cu:"Filipino",d:1,t:40,sv:4,m:["lunch","dinner"],prep:1,fl:[],al:["fish"],k:410,p:36,c:40,f:11,
+  i:[[700,"g","chicken, bone-in pieces"],[1,"thumb","ginger, sliced"],[1,"","onion"],[4,"clove","garlic"],[1,"","green papaya or sayote"],[1,"cup","malunggay or chili leaves"],[1.5,"tbsp","fish sauce"],[1,"tbsp","cooking oil"],[500,"g","cooked rice"]],
+  s:["Sauté ginger, garlic and onion in oil until fragrant.","Add chicken and fish sauce, cook 5 minutes, then add 1.2 L water and simmer 20 minutes.","Add papaya and cook until tender, about 8 minutes.","Stir in the leaves and serve hot with rice."]},
+ {id:"inasal",n:"Chicken inasal rice bowl",cu:"Filipino",d:2,t:50,sv:4,m:["lunch","dinner"],prep:1,fl:[],al:[],k:560,p:44,c:58,f:15,
+  i:[[800,"g","chicken thigh, skinless"],[3,"stalk","lemongrass"],[1,"thumb","ginger"],[8,"clove","garlic"],[80,"ml","calamansi juice"],[60,"ml","cane vinegar"],[1,"tbsp","brown sugar"],[2,"tbsp","annatto oil"],[700,"g","cooked rice"],[1,"","cucumber"]],
+  s:["Blend lemongrass, ginger, garlic, calamansi, vinegar and sugar. Marinate the chicken at least 1 hour.","Grill or pan-grill over medium-high heat, basting with annatto oil, 6 to 7 minutes a side.","Rest 5 minutes, slice, and serve over rice with sliced cucumber and a dip of soy, calamansi and chili."]},
+ {id:"monggo",n:"Ginisang monggo",cu:"Filipino",d:1,t:50,sv:4,m:["lunch","dinner"],prep:1,fl:["veg","vegan"],al:[],k:380,p:20,c:62,f:6,
+  i:[[250,"g","mung beans, dry"],[1,"","onion"],[4,"clove","garlic"],[2,"","tomatoes"],[2,"cup","spinach or malunggay"],[1,"tbsp","cooking oil"],[0,"","salt and pepper"],[400,"g","cooked rice"]],
+  s:["Simmer the mung beans in 1.2 L water for 35 minutes until soft.","Sauté garlic, onion and tomatoes in oil, then add to the beans.","Season, add the greens, and cook 2 more minutes. Serve with rice."]},
+ {id:"arrozcaldo",n:"Arroz caldo",cu:"Filipino",d:1,t:45,sv:4,m:["breakfast","lunch","dinner"],prep:1,fl:[],al:["egg","fish"],k:430,p:30,c:52,f:11,
+  i:[[500,"g","chicken thigh, skinless"],[200,"g","glutinous or jasmine rice, uncooked"],[1,"thumb","ginger"],[6,"clove","garlic"],[1,"","onion"],[1.5,"tbsp","fish sauce"],[4,"","eggs, boiled"],[2,"","spring onions"],[1,"tbsp","cooking oil"]],
+  s:["Sauté ginger, garlic and onion in oil, add the chicken and fish sauce and cook 5 minutes.","Add the rice and toast 2 minutes, then 1.5 L water. Simmer 30 minutes, stirring often.","Serve topped with halved eggs, spring onions and fried garlic."]},
+ {id:"tapsilog",n:"Lean beef tapa with garlic rice and egg",cu:"Filipino",d:2,t:30,sv:2,m:["breakfast","lunch"],prep:0,fl:["beef"],al:["soy","egg"],k:610,p:45,c:62,f:19,
+  i:[[300,"g","beef sirloin, thinly sliced"],[2,"tbsp","soy sauce"],[1,"tbsp","calamansi juice"],[1,"tsp","brown sugar"],[6,"clove","garlic"],[400,"g","cooked rice, day-old"],[2,"","eggs"],[1,"tbsp","cooking oil"]],
+  s:["Marinate beef in soy, calamansi, sugar and half the garlic for 30 minutes or overnight.","Fry the rest of the garlic in oil until golden, add rice and stir-fry 3 minutes.","Sear the beef in a hot pan 2 to 3 minutes. Fry the eggs.","Plate beef, garlic rice and egg. Serve with vinegar."]},
+ {id:"pinakbet",n:"Pinakbet with shrimp",cu:"Filipino",d:2,t:35,sv:4,m:["lunch","dinner"],prep:1,fl:["pesc"],al:["shellfish","fish"],k:320,p:24,c:34,f:10,
+  i:[[300,"g","shrimp, peeled"],[1,"","bitter melon"],[1,"","eggplant"],[150,"g","squash (kalabasa)"],[150,"g","okra"],[100,"g","string beans"],[2,"","tomatoes"],[1,"","onion"],[1,"tbsp","shrimp paste (bagoong)"],[1,"tbsp","cooking oil"]],
+  s:["Sauté onion and tomatoes in oil, then the bagoong.","Add squash and 200 ml water, cook 5 minutes.","Add the remaining vegetables, cover and cook 6 minutes without stirring too much.","Add shrimp and cook until pink, 2 to 3 minutes. Serve with a small cup of rice."]},
+ {id:"oats",n:"Overnight protein oats",cu:"Western",d:1,t:5,sv:1,m:["breakfast"],prep:1,fl:["veg"],al:["dairy","gluten"],k:420,p:34,c:52,f:9,
+  i:[[60,"g","rolled oats"],[200,"g","Greek yogurt, low-fat"],[100,"ml","milk"],[15,"g","whey or 1 scoop protein (optional)"],[1,"","banana or mango"],[1,"tsp","chia seeds"]],
+  s:["Stir oats, yogurt, milk, protein and chia in a jar.","Refrigerate overnight. Top with fruit before eating."]},
+ {id:"eggmuffins",n:"Egg and veggie muffins",cu:"Western",d:1,t:30,sv:4,m:["breakfast","snack"],prep:1,fl:["veg"],al:["egg","dairy"],k:210,p:17,c:4,f:14,
+  i:[[8,"","eggs"],[80,"ml","milk"],[1,"","bell pepper"],[2,"cup","spinach"],[60,"g","cheese, grated"],[0,"","salt and pepper"]],
+  s:["Heat the oven to 190°C and grease a 12-hole muffin tin.","Whisk eggs, milk and seasoning. Divide chopped vegetables and cheese between the holes, pour over the egg.","Bake 18 to 20 minutes. Keeps 4 days in the fridge, 3 a serving."]},
+ {id:"pancakes",n:"Banana protein pancakes",cu:"Western",d:1,t:15,sv:1,m:["breakfast"],prep:0,fl:["veg"],al:["egg","gluten","dairy"],k:450,p:36,c:52,f:10,
+  i:[[1,"","banana, ripe"],[2,"","eggs"],[40,"g","rolled oats"],[30,"g","whey protein"],[0.5,"tsp","baking powder"],[100,"g","Greek yogurt, to top"]],
+  s:["Blend everything except the yogurt into a batter.","Cook small pancakes in a non-stick pan, 2 minutes a side.","Top with yogurt and fruit."]},
+ {id:"chili",n:"Turkey and bean chili",cu:"Mexican",d:1,t:45,sv:5,m:["lunch","dinner"],prep:1,fl:[],al:[],k:450,p:38,c:42,f:13,
+  i:[[600,"g","lean ground turkey or chicken"],[2,"can","kidney beans, drained"],[1,"can","chopped tomatoes"],[1,"","onion"],[1,"","bell pepper"],[4,"clove","garlic"],[2,"tbsp","chili powder"],[1,"tsp","cumin"],[1,"tbsp","cooking oil"]],
+  s:["Brown the meat in oil with onion, pepper and garlic.","Add spices and cook 1 minute.","Add tomatoes, beans and 200 ml water. Simmer 25 minutes. Freezes well."]},
+ {id:"burritobowl",n:"Chicken burrito bowl",cu:"Mexican",d:1,t:30,sv:4,m:["lunch","dinner"],prep:1,fl:[],al:["dairy"],k:590,p:46,c:66,f:15,
+  i:[[700,"g","chicken breast"],[2,"tsp","taco seasoning"],[600,"g","cooked rice"],[1,"can","black beans, drained"],[1,"cup","corn"],[1,"cup","salsa"],[100,"g","Greek yogurt"],[1,"","lime"],[1,"tbsp","cooking oil"]],
+  s:["Season and pan-cook the chicken 6 minutes a side, rest, then slice.","Warm beans and corn.","Build bowls: rice, beans, corn, chicken, salsa, a spoon of yogurt and lime."]},
+ {id:"fajitas",n:"Steak fajitas",cu:"Mexican",d:2,t:30,sv:4,m:["dinner"],prep:0,fl:["beef"],al:["gluten"],k:540,p:40,c:46,f:20,
+  i:[[600,"g","flank or sirloin steak"],[2,"","bell peppers"],[1,"","onion"],[2,"tsp","fajita seasoning"],[8,"","small flour tortillas"],[1,"","lime"],[1,"tbsp","cooking oil"]],
+  s:["Season steak, sear in a very hot pan 3 to 4 minutes a side, rest 5 minutes.","Cook sliced peppers and onion in the same pan until charred.","Slice the steak thin against the grain. Serve in warm tortillas with lime."]},
+ {id:"teriyakisalmon",n:"Teriyaki salmon bowl",cu:"Japanese",d:1,t:25,sv:2,m:["lunch","dinner"],prep:1,fl:["pesc"],al:["fish","soy","sesame"],k:610,p:40,c:62,f:20,
+  i:[[300,"g","salmon fillet"],[3,"tbsp","soy sauce"],[2,"tbsp","mirin"],[1,"tbsp","honey"],[1,"tsp","ginger, grated"],[400,"g","cooked rice"],[1,"","cucumber"],[1,"","carrot"],[1,"tsp","sesame seeds"]],
+  s:["Simmer soy, mirin, honey and ginger 2 minutes to thicken.","Pan-sear salmon skin-side down 4 minutes, flip, brush with sauce, cook 2 minutes.","Serve on rice with sliced vegetables and sesame."]},
+ {id:"oyakodon",n:"Oyakodon",cu:"Japanese",d:2,t:25,sv:2,m:["lunch","dinner"],prep:0,fl:[],al:["egg","soy"],k:580,p:40,c:68,f:14,
+  i:[[300,"g","chicken thigh, skinless"],[1,"","onion"],[200,"ml","dashi or chicken stock"],[2,"tbsp","soy sauce"],[1,"tbsp","mirin"],[1,"tsp","sugar"],[3,"","eggs"],[400,"g","cooked rice"],[1,"","spring onion"]],
+  s:["Simmer stock, soy, mirin and sugar with sliced onion 3 minutes.","Add bite-size chicken and cook 6 minutes.","Pour beaten eggs over, cover, and cook 1 minute until just set.","Slide over rice and top with spring onion."]},
+ {id:"bibimbap",n:"Beef bibimbap",cu:"Korean",d:3,t:50,sv:2,m:["lunch","dinner"],prep:0,fl:["beef"],al:["egg","soy","sesame"],k:640,p:38,c:72,f:21,
+  i:[[250,"g","lean ground beef"],[2,"tbsp","soy sauce"],[1,"tsp","sesame oil"],[400,"g","cooked rice"],[2,"cup","spinach"],[1,"","carrot"],[1,"","zucchini"],[100,"g","bean sprouts"],[2,"","eggs"],[2,"tbsp","gochujang"]],
+  s:["Blanch spinach and sprouts, season each with a little sesame oil and salt.","Sauté julienned carrot and zucchini separately, 2 minutes each.","Cook beef with soy and garlic until browned.","Fry eggs sunny side up.","Arrange everything over rice and serve with gochujang to mix in."]},
+ {id:"bulgogi",n:"Chicken bulgogi with rice",cu:"Korean",d:2,t:35,sv:4,m:["lunch","dinner"],prep:1,fl:[],al:["soy","sesame"],k:530,p:42,c:60,f:12,
+  i:[[700,"g","chicken thigh, skinless"],[4,"tbsp","soy sauce"],[1,"","pear or apple, grated"],[5,"clove","garlic"],[1,"tbsp","sesame oil"],[1,"tbsp","brown sugar"],[1,"","onion"],[600,"g","cooked rice"],[1,"cup","kimchi"]],
+  s:["Blend soy, grated pear, garlic, sesame oil and sugar. Marinate thin-sliced chicken 30 minutes.","Stir-fry over high heat with sliced onion, 6 to 8 minutes.","Serve with rice and kimchi."]},
+ {id:"kraopao",n:"Pad kra pao (basil chicken)",cu:"Thai",d:1,t:20,sv:2,m:["lunch","dinner"],prep:0,fl:[],al:["soy","fish","egg"],k:590,p:42,c:62,f:18,
+  i:[[350,"g","ground chicken"],[5,"clove","garlic"],[3,"","bird's eye chilies"],[1,"tbsp","oyster sauce"],[1,"tbsp","soy sauce"],[1,"tsp","fish sauce"],[1,"cup","Thai basil"],[2,"","eggs"],[400,"g","cooked rice"],[1,"tbsp","cooking oil"]],
+  s:["Pound garlic and chilies. Fry in oil 30 seconds.","Add chicken, break it up and cook 5 minutes.","Add sauces and a splash of water, then the basil.","Serve over rice with a fried egg."]},
+ {id:"greencurry",n:"Thai green curry with tofu",cu:"Thai",d:2,t:35,sv:4,m:["lunch","dinner"],prep:1,fl:["veg","vegan"],al:["soy"],k:470,p:20,c:54,f:20,
+  i:[[400,"g","firm tofu"],[3,"tbsp","green curry paste (vegan)"],[400,"ml","light coconut milk"],[1,"","eggplant"],[1,"","bell pepper"],[100,"g","green beans"],[1,"cup","Thai basil"],[1,"tbsp","soy sauce"],[500,"g","cooked rice"]],
+  s:["Pan-fry cubed tofu until golden. Set aside.","Fry the curry paste 1 minute, add coconut milk and 150 ml water.","Add vegetables and simmer 8 minutes. Return the tofu, season with soy, add basil.","Serve with rice."]},
+ {id:"beefbroc",n:"Beef and broccoli stir-fry",cu:"Chinese",d:1,t:25,sv:3,m:["lunch","dinner"],prep:1,fl:["beef"],al:["soy"],k:520,p:40,c:52,f:16,
+  i:[[450,"g","flank steak, thinly sliced"],[1,"head","broccoli"],[3,"tbsp","soy sauce"],[1,"tbsp","oyster sauce"],[1,"tbsp","cornstarch"],[3,"clove","garlic"],[1,"thumb","ginger"],[450,"g","cooked rice"],[1,"tbsp","cooking oil"]],
+  s:["Toss beef with 1 tbsp soy and the cornstarch.","Blanch broccoli 2 minutes.","Sear beef in a very hot wok 2 minutes, remove. Fry garlic and ginger, add broccoli, sauces and the beef with a splash of water.","Toss until glossy. Serve with rice."]},
+ {id:"mapotofu",n:"Mapo tofu (lean)",cu:"Chinese",d:2,t:30,sv:3,m:["lunch","dinner"],prep:1,fl:["pork"],al:["soy"],k:460,p:28,c:48,f:17,
+  i:[[500,"g","soft or medium tofu"],[200,"g","lean ground pork"],[2,"tbsp","doubanjiang (chili bean paste)"],[1,"tsp","Sichuan peppercorn, ground"],[3,"clove","garlic"],[1,"tbsp","cornstarch"],[2,"","spring onions"],[450,"g","cooked rice"]],
+  s:["Brown the pork, add garlic and doubanjiang and fry 1 minute.","Add 250 ml water and cubed tofu, simmer 5 minutes.","Thicken with cornstarch slurry, finish with Sichuan pepper and spring onions. Serve with rice."]},
+ {id:"tikka",n:"Chicken tikka with yogurt rice",cu:"Indian",d:2,t:45,sv:4,m:["lunch","dinner"],prep:1,fl:[],al:["dairy"],k:540,p:46,c:56,f:13,
+  i:[[800,"g","chicken breast"],[200,"g","Greek yogurt"],[2,"tbsp","tikka masala paste"],[1,"","lemon"],[4,"clove","garlic"],[1,"thumb","ginger"],[600,"g","cooked basmati rice"],[1,"","red onion"]],
+  s:["Mix yogurt, paste, lemon, garlic and ginger. Marinate chunks of chicken at least 1 hour.","Thread on skewers or spread on a tray. Grill or bake at 230°C for 15 to 18 minutes.","Serve with rice and sliced onion."]},
+ {id:"chana",n:"Chana masala",cu:"Indian",d:1,t:35,sv:4,m:["lunch","dinner"],prep:1,fl:["veg","vegan"],al:[],k:430,p:16,c:72,f:9,
+  i:[[2,"can","chickpeas, drained"],[1,"can","chopped tomatoes"],[1,"","onion"],[4,"clove","garlic"],[1,"thumb","ginger"],[2,"tsp","garam masala"],[1,"tsp","cumin"],[1,"tbsp","cooking oil"],[500,"g","cooked basmati rice"]],
+  s:["Fry onion until golden, add garlic, ginger and spices for 1 minute.","Add tomatoes and chickpeas with 150 ml water. Simmer 20 minutes, mashing a few chickpeas to thicken.","Serve with rice."]},
+ {id:"dal",n:"Red lentil dal",cu:"Indian",d:1,t:30,sv:4,m:["lunch","dinner"],prep:1,fl:["veg","vegan"],al:[],k:390,p:19,c:62,f:7,
+  i:[[250,"g","red lentils"],[1,"","onion"],[3,"clove","garlic"],[1,"tsp","turmeric"],[1,"tsp","cumin seeds"],[1,"","tomato"],[2,"cup","spinach"],[1,"tbsp","cooking oil"],[400,"g","cooked rice"]],
+  s:["Simmer lentils with turmeric in 900 ml water for 20 minutes.","Fry cumin, onion, garlic and tomato, then stir into the lentils with the spinach.","Serve with rice."]},
+ {id:"greekbowl",n:"Greek chicken bowl",cu:"Mediterranean",d:1,t:30,sv:4,m:["lunch","dinner"],prep:1,fl:[],al:["dairy"],k:530,p:45,c:50,f:15,
+  i:[[700,"g","chicken breast"],[1,"tbsp","dried oregano"],[1,"","lemon"],[3,"clove","garlic"],[250,"g","quinoa or rice, uncooked"],[1,"","cucumber"],[200,"g","cherry tomatoes"],[150,"g","tzatziki or Greek yogurt"],[60,"g","feta"]],
+  s:["Marinate chicken in lemon, garlic, oregano and a little oil for 20 minutes.","Cook quinoa. Grill the chicken 6 minutes a side and slice.","Build bowls with quinoa, chicken, vegetables, tzatziki and feta."]},
+ {id:"shakshuka",n:"Shakshuka",cu:"Mediterranean",d:1,t:30,sv:2,m:["breakfast","lunch","dinner"],prep:0,fl:["veg"],al:["egg","gluten"],k:380,p:22,c:34,f:17,
+  i:[[1,"can","chopped tomatoes"],[1,"","bell pepper"],[1,"","onion"],[2,"clove","garlic"],[1,"tsp","cumin"],[1,"tsp","paprika"],[5,"","eggs"],[2,"slice","wholegrain bread"],[1,"tbsp","olive oil"]],
+  s:["Cook onion and pepper in oil 6 minutes, add garlic and spices.","Add tomatoes and simmer 10 minutes.","Make wells and crack in the eggs. Cover and cook 5 to 7 minutes. Serve with bread."]},
+ {id:"tunapasta",n:"Tuna tomato pasta",cu:"Italian",d:1,t:20,sv:3,m:["lunch","dinner"],prep:1,fl:["pesc"],al:["fish","gluten"],k:560,p:38,c:74,f:11,
+  i:[[250,"g","pasta, dry"],[2,"can","tuna in water, drained"],[1,"can","chopped tomatoes"],[3,"clove","garlic"],[1,"tbsp","capers"],[0.5,"tsp","chili flakes"],[2,"cup","spinach"],[1,"tbsp","olive oil"]],
+  s:["Cook the pasta.","Fry garlic and chili in oil, add tomatoes and capers and simmer 8 minutes.","Stir in tuna and spinach, then the drained pasta with a splash of pasta water."]},
+ {id:"pestopasta",n:"Chicken pesto pasta",cu:"Italian",d:1,t:25,sv:4,m:["lunch","dinner"],prep:1,fl:[],al:["gluten","dairy","nuts"],k:620,p:44,c:66,f:19,
+  i:[[320,"g","pasta, dry"],[600,"g","chicken breast"],[80,"g","basil pesto"],[200,"g","cherry tomatoes"],[2,"cup","spinach"],[30,"g","parmesan"]],
+  s:["Cook the pasta. Pan-cook the chicken 6 minutes a side and slice.","Toss pasta with pesto, a splash of pasta water, tomatoes and spinach.","Top with chicken and parmesan."]},
+ {id:"lasagnalite",n:"High-protein lasagna",cu:"Italian",d:3,t:90,sv:6,m:["dinner"],prep:1,fl:["beef"],al:["gluten","dairy","egg"],k:560,p:44,c:46,f:20,
+  i:[[600,"g","lean ground beef"],[1,"jar","tomato sauce (680 g)"],[1,"","onion"],[3,"clove","garlic"],[12,"","lasagna sheets"],[500,"g","cottage cheese or ricotta, low-fat"],[1,"","egg"],[120,"g","mozzarella"],[2,"cup","spinach"]],
+  s:["Brown beef with onion and garlic, add sauce and simmer 15 minutes.","Mix cottage cheese, egg and spinach.","Layer sauce, sheets and cheese mix three times, finish with sauce and mozzarella.","Bake covered at 190°C for 35 minutes, uncovered 15 more. Rest 10 minutes before cutting."]},
+ {id:"salmonsheet",n:"Sheet-pan salmon, potatoes and greens",cu:"Western",d:1,t:35,sv:2,m:["dinner"],prep:1,fl:["pesc"],al:["fish"],k:560,p:38,c:46,f:24,
+  i:[[300,"g","salmon fillets"],[500,"g","baby potatoes"],[250,"g","green beans or broccoli"],[1,"","lemon"],[2,"clove","garlic"],[1,"tbsp","olive oil"]],
+  s:["Roast halved potatoes with oil at 210°C for 15 minutes.","Add greens and salmon, season with lemon and garlic, roast 12 minutes more."]},
+ {id:"proteinshake",n:"Recovery shake",cu:"Western",d:1,t:3,sv:1,m:["snack"],prep:0,fl:["veg"],al:["dairy"],k:340,p:32,c:44,f:5,
+  i:[[30,"g","whey protein"],[1,"","banana"],[250,"ml","milk, low-fat"],[1,"tbsp","oats"],[0,"","ice"]],
+  s:["Blend everything until smooth. Drink within an hour after training."]},
+ {id:"yogurtbowl",n:"Greek yogurt fruit bowl",cu:"Western",d:1,t:5,sv:1,m:["breakfast","snack"],prep:0,fl:["veg"],al:["dairy","nuts"],k:300,p:24,c:34,f:8,
+  i:[[250,"g","Greek yogurt, low-fat"],[1,"cup","fruit (mango, berries)"],[20,"g","granola"],[10,"g","peanuts or almonds"]],
+  s:["Spoon yogurt into a bowl and top with fruit, granola and nuts."]},
+ {id:"tofuscramble",n:"Tofu scramble wrap",cu:"Western",d:1,t:15,sv:2,m:["breakfast","lunch"],prep:1,fl:["veg","vegan"],al:["soy","gluten"],k:420,p:26,c:40,f:16,
+  i:[[400,"g","firm tofu"],[0.5,"tsp","turmeric"],[1,"","bell pepper"],[2,"cup","spinach"],[2,"","whole-wheat tortillas"],[1,"tbsp","cooking oil"]],
+  s:["Crumble tofu into a hot oiled pan with turmeric, salt and pepper.","Add pepper and spinach and cook 4 minutes.","Wrap in warm tortillas."]},
+ {id:"turon",n:"Saba and peanut butter toast",cu:"Filipino",d:1,t:10,sv:1,m:["breakfast","snack"],prep:0,fl:["veg","vegan"],al:["gluten","nuts"],k:380,p:12,c:58,f:12,
+  i:[[2,"slice","wholegrain bread"],[1,"","saba banana, boiled"],[1,"tbsp","peanut butter"]],
+  s:["Toast the bread, spread peanut butter, and top with sliced saba. A good pre-run snack."]},
+];
+const CUISINES=["Filipino","Japanese","Korean","Thai","Chinese","Indian","Mediterranean","Mexican","Italian","Western"];
+const DIFF=["","Easy","Medium","Hard"];
+const ALLERGENS=[["dairy","Dairy"],["gluten","Gluten"],["egg","Egg"],["nuts","Nuts and peanuts"],["soy","Soy"],["fish","Fish"],["shellfish","Shellfish"],["sesame","Sesame"]];
+const DIETS=[["any","No restriction"],["pesc","Pescatarian"],["veg","Vegetarian"],["vegan","Vegan"],["nopork","No pork"],["halal","Halal (no pork)"]];
+const NGOALS={lose:["Lose fat",-1],maintain:["Maintain",0],gain:["Build muscle",1],perf:["Fuel performance",0],recomp:["Recomp (lose fat, keep muscle)",-1]};
+const STAPLES=/^(salt|pepper|salt and pepper|water|ice|cooking oil|olive oil|sugar|brown sugar|black peppercorns)$/i;
+const FKEY="workouts-food-v1";
+function nutr(){return settings.nutr||{};}
+function saveNutr(n){settings.nutr={...nutr(),...n};settings.updatedAt=Date.now();saveLocal();pushSettings();}
+function foodStore(){try{return JSON.parse(localStorage.getItem(FKEY)||"{}");}catch(e){return {};}}
+function foodSave(st){try{const keys=Object.keys(st.days||{}).sort();while(keys.length>150)delete st.days[keys.shift()];localStorage.setItem(FKEY,JSON.stringify(st));}catch(e){}}
+function dayFood(date){const st=foodStore();return ((st.days||{})[date])||[];}
+function setDayFood(date,list){const st=foodStore();st.days=st.days||{};st.days[date]=list;foodSave(st);}
+const ingKey=n=>String(n).toLowerCase().replace(/\(.*?\)/g,"").split(",")[0].replace(/\b(dry|fresh|thinly sliced|sliced|grated|drained|cubed|boiled|low-fat|skinless|uncooked|day-old|ripe|to top|optional)\b/g,"").replace(/\s+/g," ").trim();
+/* ---- energy ---- */
+function workoutKcal(s){
+  if(s.cal)return s.cal;
+  const kg=weightOn(s.date)||bio().weight||70,h=(s.dur||0)/3600,rpe=effortOf(s).v||5,fx=.75+rpe*.05;
+  if(s.type==="ride"&&s.pw&&s.dur)return s.pw*s.dur/1000*1.05;
+  if((s.type==="run")&&s.dist)return kg*s.dist*1.0*(1+(elevOf(s)||0)/Math.max(1,s.dist*1000)*8);
+  if((s.type==="walk"||s.type==="hike")&&s.dist)return kg*s.dist*.65+(elevOf(s)||0)*kg*.0075;
+  if(s.type==="ride"&&s.dist)return kg*s.dist*.28;
+  const met={lift:5,climb:6.5,hang:4,pickle:6.5,other:6,run:9,walk:3.5,hike:6,ride:7}[s.type]||6;
+  return met*kg*h*fx;
+}
+function bmrNow(){const b=bio(),kg=weightOn(keyOf(new Date()))||b.weight;if(!kg||!b.height||!b.age||!b.sex)return null;return Math.round(10*kg+6.25*b.height-5*b.age+(b.sex==="f"||b.sex==="female"?-161:5));}
+function weightTrend(){ // kg per week over the last 3 weeks, from weigh-ins
+  const since=keyOf(addDays(new Date(),-21)),w=weights().filter(x=>x.d>=since);if(w.length<3)return null;
+  const t0=parseDate(w[0].d).getTime(),xs=w.map(x=>(parseDate(x.d).getTime()-t0)/864e5),ys=w.map(x=>x.kg),n=xs.length,mx=xs.reduce((a,b)=>a+b,0)/n,my=ys.reduce((a,b)=>a+b,0)/n;
+  const sxx=xs.reduce((a,x)=>a+(x-mx)**2,0);if(sxx<20)return null;const slope=xs.reduce((a,x,i)=>a+(x-mx)*(ys[i]-my),0)/sxx;return slope*7;}
+function foodTargets(date){
+  date=date||keyOf(new Date());const N=nutr(),b=bio(),kg=weightOn(date)||b.weight||70,bmr=bmrNow()||Math.round(22*kg);
+  const life=Math.round(bmr*((N.life||1.35)-1)),trainList=live().filter(s=>s.date===date),train=Math.round(trainList.reduce((a,s)=>a+workoutKcal(s),0));
+  const g=N.goal||"maintain",rate=N.rate||0.5;let adj=0,why=[];
+  if(g==="lose"||g==="recomp"){const r=g==="recomp"?.25:Math.min(rate,kg*.01);adj=-Math.round(r*7700/7);}
+  else if(g==="gain")adj=Math.round(Math.min(rate,.5)*7700/7*.6);
+  let tr=weightTrend(),corr=0;
+  if(tr!=null&&N.adaptive!==false){const want=g==="lose"?-Math.min(rate,kg*.01):g==="recomp"?-.25:g==="gain"?Math.min(rate,.5)*.6:0,diff=tr-want;if(Math.abs(diff)>.2)corr=Math.max(-250,Math.min(250,-Math.round(diff*7700/7/2/25)*25));}
+  let kcal=bmr+life+train+adj+corr;const floor=Math.round(Math.max(bmr*1.1,(b.sex==="f"||b.sex==="female")?1300:1500));if(kcal<floor){kcal=floor;why.push("Kept at a safe minimum. A bigger deficit would cost muscle and energy for training.");}
+  kcal=Math.round(kcal/10)*10;
+  const pk={lose:2.2,recomp:2.2,gain:1.8,maintain:1.6,perf:1.7}[g]||1.6,p=Math.round(kg*pk),f=Math.round(Math.max(kg*.8,kcal*.22/9)),c=Math.max(50,Math.round((kcal-p*4-f*9)/4));
+  const hard=trainList.some(s=>(s.dur||0)>=5400||effortOf(s).v>=8);
+  return {kcal,p,c,f,bmr,life,train,adj,corr,tr,trainList,hard,why,kg};
+}
+function dayEaten(date){return dayFood(date).reduce((a,x)=>({k:a.k+(x.k||0),p:a.p+(x.p||0),c:a.c+(x.c||0),f:a.f+(x.f||0)}),{k:0,p:0,c:0,f:0});}
+/* ---- recipe filtering ---- */
+function recipeOK(r,N){N=N||nutr();const d=N.diet||"any",al=N.allergies||[];
+  if(al.some(a=>r.al.includes(a)))return false;
+  if(d==="vegan"&&!r.fl.includes("vegan"))return false;
+  if(d==="veg"&&!r.fl.includes("veg"))return false;
+  if(d==="pesc"&&!(r.fl.includes("veg")||r.fl.includes("pesc")))return false;
+  if((d==="nopork"||d==="halal")&&r.fl.includes("pork"))return false;
+  const dis=(N.dislikes||"").toLowerCase().split(/[,;]+/).map(x=>x.trim()).filter(Boolean);
+  if(dis.some(w=>r.n.toLowerCase().includes(w)||r.i.some(x=>x[2].toLowerCase().includes(w))))return false;
+  if((N.maxDiff||3)<r.d)return false;
+  return true;}
+function pantryCover(r){const P=new Set((nutr().pantry||[]).map(x=>x.toLowerCase()));const need=r.i.filter(x=>!STAPLES.test(ingKey(x[2])));
+  const have=need.filter(x=>{const k=ingKey(x[2]);return [...P].some(p=>k.includes(p)||p.includes(k));});return {have:have.length,need:need.length,missing:need.filter(x=>!have.includes(x)).map(x=>ingKey(x[2]))};}
+/* ---- quantities ---- */
+function fmtQty(q,u){if(!q)return "";const frac=v=>{const w=Math.floor(v),r=v-w,F=[[0,""],[.25,"¼"],[.33,"⅓"],[.5,"½"],[.67,"⅔"],[.75,"¾"],[1,""]];let best=F[0];for(const x of F)if(Math.abs(r-x[0])<Math.abs(r-best[0]))best=x;const W=best[0]===1?w+1:w;return (W?W:"")+(best[1]?best[1]:"")||"0";};
+  if(u==="g"||u==="ml"){const v=q>=100?Math.round(q/10)*10:Math.round(q/5)*5||Math.round(q);return v>=1000&&u==="g"?(Math.round(v/100)/10)+" kg":v>=1000&&u==="ml"?(Math.round(v/100)/10)+" L":v+" "+u;}
+  return frac(q)+(u?" "+u:"");}
+/* ---- plans ---- */
+function seededR(seed){let s=sxSeed(String(seed));return ()=>(s=(s*16807)%2147483647)/2147483647;}
+function pickRecipe(slot,share,T,N,rnd,used,prepOnly){
+  const cu=N.cuisines||[],L=RECIPES.filter(r=>r.m.includes(slot)&&recipeOK(r,N)&&(!prepOnly||r.prep)&&!used.has(r.id));if(!L.length)return null;
+  const sc=r=>{let v=rnd()*1.2;if(cu.length&&cu.includes(r.cu))v+=1.4;v+=(r.p*4/r.k)*3;if((N.pantry||[]).length){const pc=pantryCover(r);v+=pc.need?pc.have/pc.need*1.5:0;}return v;};
+  const r=L.slice().sort((a,b)=>sc(b)-sc(a))[0],want=T.kcal*share,serv=Math.max(.5,Math.min(3,Math.round(want/r.k*2)/2));used.add(r.id);return {id:r.id,serv,slot};}
+function buildDayPlan(date,seed){
+  const N=nutr(),T=foodTargets(date),rnd=seededR(date+":"+(seed||0)),used=new Set(),meals=N.meals||3;
+  const slots=meals>=4?[["breakfast",.25],["lunch",.32],["dinner",.31],["snack",.12]]:[["breakfast",.3],["lunch",.35],["dinner",.35]];
+  if(T.train>300&&meals<4)slots.push(["snack",0]);
+  const out=[];for(const [sl,sh] of slots){const share=sh||Math.min(.15,T.train/T.kcal);const pk=pickRecipe(sl,share,T,N,rnd,used);if(pk)out.push(pk);}
+  return out;}
+function planTotals(pl){return pl.reduce((a,x)=>{const r=RECIPES.find(z=>z.id===x.id);if(!r)return a;return {k:a.k+r.k*x.serv,p:a.p+r.p*x.serv,c:a.c+r.c*x.serv,f:a.f+r.f*x.serv};},{k:0,p:0,c:0,f:0});}
+function shoppingList(items){ // items: [{id, batch servings}]
+  const m=new Map();for(const it of items){const r=RECIPES.find(z=>z.id===it.id);if(!r)continue;const k=it.batch/r.sv;
+    for(const [q,u,n] of r.i){const key=ingKey(n)+"|"+u;const cur=m.get(key)||{q:0,u,n:ingKey(n),label:n};cur.q+=q*k;m.set(key,cur);}}
+  const P=(nutr().pantry||[]).map(x=>x.toLowerCase());
+  return [...m.values()].map(x=>({...x,have:P.some(p=>x.n.includes(p)||p.includes(x.n)),staple:STAPLES.test(x.n)})).sort((a,b)=>a.have-b.have||a.n.localeCompare(b.n));}
+/* ---------- food UI: Coach > Food ---------- */
+let foodView={cu:"",diff:0,meal:"",q:"",prep:false};
+const mbar=(v,t,cls)=>{const pct=t?Math.min(100,v/t*100):0;return `<div class="nu-bar ${cls||""}"><i style="width:${pct.toFixed(1)}%"></i></div>`;};
+function renderFood(){
+  const N=nutr(),today=keyOf(new Date());
+  if(!N.goal)return `<div class="ins nu-hero"><h3>Eat for your training</h3><p class="xpinfo">Daily calories and macros that follow your workouts, recipes from ten cuisines you can scale, a meal-prep planner with a shopping list, and a pantry that suggests what to cook.</p>
+    <button class="btn primary" data-act="fd-setup" style="width:100%;margin-top:12px">Set up food goals</button>
+    <p class="hint">Takes a minute. Uses your weight, height, age and sex from Settings.</p></div>`+recipeBrowser();
+  const T=foodTargets(today),E=dayEaten(today),left=Math.round(T.kcal-E.k);
+  const goalTxt=NGOALS[N.goal][0]+(N.goal==="lose"||N.goal==="gain"?`, ${N.rate||.5} kg a week`:"");
+  let h=`<div class="ins nu-hero"><div class="row2"><div><h3>${left>=0?left.toLocaleString():"+"+(-left).toLocaleString()}</h3><div class="xpinfo">${left>=0?"calories left today":"calories over today's target"} of ${T.kcal.toLocaleString()}</div></div><button class="chip" data-act="fd-setup">${esc(goalTxt)}</button></div>
+    ${mbar(E.k,T.kcal,"k")}
+    <div class="nu-macros">${[["Protein",E.p,T.p,"p"],["Carbs",E.c,T.c,"c"],["Fat",E.f,T.f,"f"]].map(([n,v,t,c])=>`<div><span>${n}</span><b>${Math.round(v)}<small> / ${t} g</small></b>${mbar(v,t,c)}</div>`).join("")}</div>
+    <details class="nu-why"><summary>How today's target is worked out</summary><div class="nu-calc">
+      <div><span>Resting burn</span><b>${T.bmr.toLocaleString()}</b></div><div><span>Daily life</span><b>+${T.life.toLocaleString()}</b></div>
+      <div><span>Training today${T.trainList.length?": "+T.trainList.map(s=>esc(titleOf(s))).join(", "):""}</span><b>+${T.train.toLocaleString()}</b></div>
+      ${T.adj?`<div><span>Goal: ${esc(NGOALS[N.goal][0].toLowerCase())}</span><b>${T.adj>0?"+":""}${T.adj.toLocaleString()}</b></div>`:""}
+      ${T.corr?`<div><span>Weight trend ${T.tr>0?"+":""}${T.tr.toFixed(2)} kg/week, adjusting</span><b>${T.corr>0?"+":""}${T.corr}</b></div>`:""}
+      <p class="hint">${T.why.join(" ")}Protein is set at ${(T.p/T.kg).toFixed(1)} g per kg, fat at ${(T.f/T.kg).toFixed(1)} g per kg, and carbs fill the rest, so hard training days automatically get more carbs.</p></div></details>
+    <div class="row" style="margin-top:12px"><button class="btn" data-act="fd-add">Log food</button><button class="btn primary" data-act="fd-plan">Plan my day</button></div></div>`;
+  if(T.trainList.length){const big=T.trainList.reduce((a,s)=>(s.dur||0)>(a.dur||0)?s:a);const pr=Math.round(Math.min(40,Math.max(20,T.kg*.3))),cb=Math.round(T.kg*(T.hard?1.2:.8));
+    h+=`<div class="ins nu-tip" style="--c:${col(big.type)}"><b>Refuel after ${esc(titleOf(big))}</b><span>Within 2 hours: about ${pr} g protein and ${cb} g carbs${T.hard?", plus fluids and salt. It was a big one":""}. The recovery shake or a rice bowl both work.</span></div>`;}
+  const eaten=dayFood(today);
+  h+=`<div class="ins"><div class="row2"><h3 style="font-size:1.2rem">Today</h3><span class="hint" style="margin:0">${eaten.length?Math.round(E.k).toLocaleString()+" kcal logged":"Nothing logged yet"}</span></div>
+    ${eaten.length?`<div class="tlist">${eaten.map((x,i)=>`<div class="trow"><div class="tx"><b>${esc(x.n)}</b><span>${x.serv?x.serv+" serving"+(x.serv===1?"":"s")+", ":""}${Math.round(x.p)} g protein, ${Math.round(x.c)} g carbs, ${Math.round(x.f)} g fat</span></div><span class="tv" style="font-size:1rem">${Math.round(x.k)}</span><button class="x" data-act="fd-del" data-i="${i}" aria-label="Remove ${esc(x.n)}">×</button></div>`).join("")}</div>`:""}</div>`;
+  const plan=(foodStore().plans||{})[today];
+  if(plan&&plan.length){const tt=planTotals(plan);h+=`<div class="ins"><div class="row2"><h3 style="font-size:1.2rem">Today's plan</h3><button class="chip" data-act="fd-plan">Change</button></div>
+    <div class="tlist">${plan.map(x=>{const r=RECIPES.find(z=>z.id===x.id);return r?`<button class="trow" data-act="fd-recipe" data-rid="${r.id}" data-serv="${x.serv}"><span class="nu-slot">${x.slot[0].toUpperCase()}</span><div class="tx"><b>${esc(r.n)}</b><span>${x.serv} serving${x.serv===1?"":"s"}, ${Math.round(r.k*x.serv)} kcal, ${Math.round(r.p*x.serv)} g protein</span></div></button>`:"";}).join("")}</div>
+    <p class="hint">Plan totals ${Math.round(tt.k).toLocaleString()} kcal and ${Math.round(tt.p)} g protein, against ${T.kcal.toLocaleString()} kcal and ${T.p} g.</p></div>`;}
+  const tr=T.tr;h+=`<div class="ins"><div class="row2"><h3 style="font-size:1.2rem">Weight</h3><button class="chip" data-act="weight">Log weight</button></div>
+    <p class="xpinfo">${weights().length?`${fmtWt(T.kg)} now${N.target?`, aiming for ${fmtWt(N.target)}`:""}.`:"Log your weight a few times a week and targets adjust to how your weight is really moving."}
+    ${tr!=null?` Trend over 3 weeks: ${tr>0?"+":""}${tr.toFixed(2)} kg a week.`:weights().length?" A trend shows after 3 weigh-ins over 3 weeks.":""}
+    ${N.target&&tr&&Math.sign(N.target-T.kg)===Math.sign(tr)&&Math.abs(tr)>.05?` At this rate, about ${Math.ceil(Math.abs(N.target-T.kg)/Math.abs(tr))} weeks to go.`:""}</p></div>`;
+  h+=`<div class="ins"><div class="row2"><h3 style="font-size:1.2rem">Meal prep and pantry</h3></div>
+    <p class="xpinfo">${(N.pantry||[]).length?`${N.pantry.length} items in your pantry.`:"Add what you have at home and I'll suggest recipes that use it."}</p>
+    <div class="row" style="margin-top:10px"><button class="btn" data-act="fd-pantry">Pantry</button><button class="btn" data-act="fd-cookpantry">Cook from pantry</button></div>
+    <button class="btn primary" data-act="fd-prep" style="width:100%;margin-top:10px">Plan meal prep</button></div>`;
+  h+=recipeBrowser();
+  return h+`<p class="hint">Estimates to guide your eating, not medical advice. If you have a medical condition or a history of disordered eating, check targets with a doctor or dietitian.</p>`;
+}
+function recipeBrowser(){
+  const N=nutr(),v=foodView,q=v.q.trim().toLowerCase();
+  const L=RECIPES.filter(r=>(!N.goal||recipeOK(r,{...N,maxDiff:3}))&&(!v.cu||r.cu===v.cu)&&(!v.diff||r.d===v.diff)&&(!v.meal||r.m.includes(v.meal))&&(!v.prep||r.prep)&&(!q||r.n.toLowerCase().includes(q)||r.i.some(x=>x[2].toLowerCase().includes(q))));
+  return `<h2 class="sec" style="margin-top:20px">Recipes</h2>
+    <div class="lsearch" style="margin-bottom:8px"><span class="lsi">${icon("search")}</span><input id="fd-q" type="search" placeholder="Search recipes or ingredients" value="${esc(v.q)}" aria-label="Search recipes"></div>
+    <div class="chips">${[["","All cuisines"],...CUISINES.map(c=>[c,c])].map(([k,n])=>`<button class="chip" data-act="fd-f" data-k="cu" data-v="${k}" aria-pressed="${v.cu===k}">${n}</button>`).join("")}</div>
+    <div class="chips">${[["","Any meal"],["breakfast","Breakfast"],["lunch","Lunch"],["dinner","Dinner"],["snack","Snack"]].map(([k,n])=>`<button class="chip sm" data-act="fd-f" data-k="meal" data-v="${k}" aria-pressed="${v.meal===k}">${n}</button>`).join("")}${[[0,"Any level"],[1,"Easy"],[2,"Medium"],[3,"Hard"]].map(([k,n])=>`<button class="chip sm" data-act="fd-f" data-k="diff" data-v="${k}" aria-pressed="${v.diff===k}">${n}</button>`).join("")}<button class="chip sm" data-act="fd-f" data-k="prep" data-v="1" aria-pressed="${v.prep}">Meal-prep friendly</button></div>
+    <div class="nu-grid">${L.map(r=>`<button class="nu-card" data-act="fd-recipe" data-rid="${r.id}"><span class="nu-cu">${esc(r.cu)}</span><b>${esc(r.n)}</b><span class="nu-meta">${r.t} min, ${DIFF[r.d].toLowerCase()}</span><span class="nu-mac"><b>${r.k}</b> kcal <b>${r.p}</b> g protein</span></button>`).join("")||`<p class="hint">No recipes match. Try fewer filters${N.goal?", or check your diet and allergy settings":""}.</p>`}</div>`;
+}
+function openRecipe(id,serv,back){
+  const r=RECIPES.find(x=>x.id===id);if(!r)return;let sv=serv||r.sv;
+  const draw=()=>{const k=sv/r.sv,pc=(nutr().pantry||[]).length?pantryCover(r):null;
+    openSheet(`<div class="nu-rec"><span class="nu-cu">${esc(r.cu)}, ${DIFF[r.d].toLowerCase()}, ${r.t} min</span><h3>${esc(r.n)}</h3>
+      <div class="nu-per"><div><b>${r.k}</b><span>kcal</span></div><div><b>${r.p} g</b><span>protein</span></div><div><b>${r.c} g</b><span>carbs</span></div><div><b>${r.f} g</b><span>fat</span></div></div>
+      <p class="hint" style="margin-top:4px">Per serving. ${r.prep?"Keeps 3 to 4 days in the fridge.":"Best eaten fresh."}${r.al.length?" Contains "+r.al.join(", ")+".":""}</p>
+      <div class="nu-serv"><span>Servings</span><div class="stepper" role="group" aria-label="Servings"><button type="button" data-sv="-1" aria-label="Fewer servings"${sv<=.5?" disabled":""}>−</button><output aria-live="polite"><b>${sv}</b></output><button type="button" data-sv="1" aria-label="More servings">+</button></div></div>
+      <h4>Ingredients${sv!==r.sv?` <span class="hint" style="font-weight:500">scaled from ${r.sv}</span>`:""}</h4>
+      <ul class="nu-ing">${r.i.map(([q,u,n])=>{const have=pc&&!STAPLES.test(ingKey(n))&&!pc.missing.includes(ingKey(n));return `<li class="${have?"have":""}"><b>${q?fmtQty(q*k,u):""}</b><span>${esc(n)}${have?" <em>in pantry</em>":""}</span></li>`;}).join("")}</ul>
+      <h4>Method</h4><ol class="nu-steps">${r.s.map(t=>`<li>${esc(t)}</li>`).join("")}</ol>
+      <p class="hint">Whole recipe: ${Math.round(r.k*sv).toLocaleString()} kcal, ${Math.round(r.p*sv)} g protein.</p>
+      <div class="row"><button class="btn" id="nr-back">Back</button><button class="btn primary" id="nr-log">Log 1 serving</button></div></div>`);
+    document.querySelectorAll("[data-sv]").forEach(b=>b.onclick=()=>{sv=Math.max(.5,sv+(+b.dataset.sv)*(sv<1||(sv===1&&+b.dataset.sv<0)?.5:1));haptic("light");const t=$("sheet").scrollTop;draw();$("sheet").scrollTop=t;});
+    $("nr-back").onclick=()=>back?back():closeSheet();
+    $("nr-log").onclick=()=>{logFood({n:r.n,rid:r.id,serv:1,k:r.k,p:r.p,c:r.c,f:r.f});closeSheet();render();toast(`Logged ${r.n}`);};};
+  draw();
+}
+function logFood(x){const d=keyOf(new Date()),L=dayFood(d);L.push({...x,at:Date.now()});setDayFood(d,L);}
+function openFoodAdd(){
+  openSheet(`<h3>Log food</h3><p class="sub">Pick a recipe, or type in the numbers from a label or another app.</p>
+    <label for="fa-n">What you ate</label><input id="fa-n" type="text" maxlength="60" placeholder="e.g. Chicken inasal, 1 cup rice">
+    <div class="grid2" style="margin-top:12px"><div><label for="fa-k">Calories</label><input id="fa-k" type="number" inputmode="numeric" min="0"></div><div><label for="fa-p">Protein (g)</label><input id="fa-p" type="number" inputmode="decimal" min="0"></div>
+    <div><label for="fa-c">Carbs (g)</label><input id="fa-c" type="number" inputmode="decimal" min="0"></div><div><label for="fa-f">Fat (g)</label><input id="fa-f" type="number" inputmode="decimal" min="0"></div></div>
+    <p class="hint">Only calories are needed. Leave the rest blank if you don't know them.</p>
+    <div class="err" id="fa-err"></div>
+    <div class="row"><button class="btn" id="fa-x">Cancel</button><button class="btn primary" id="fa-ok">Log it</button></div>
+    <h4 style="margin-top:20px">Or from a recipe</h4><div class="tlist">${RECIPES.filter(r=>recipeOK(r,{...nutr(),maxDiff:3})).map(r=>`<button class="trow" data-fr="${r.id}"><div class="tx"><b>${esc(r.n)}</b><span>${r.k} kcal, ${r.p} g protein a serving</span></div></button>`).join("")}</div>`);
+  $("fa-x").onclick=closeSheet;
+  $("fa-ok").onclick=()=>{const n=$("fa-n").value.trim()||"Food",k=num($("fa-k").value);if(!k){$("fa-err").textContent="Add the calories.";return;}logFood({n,k,p:num($("fa-p").value)||0,c:num($("fa-c").value)||0,f:num($("fa-f").value)||0});closeSheet();render();toast("Logged");};
+  document.querySelectorAll("[data-fr]").forEach(b=>b.onclick=()=>openRecipe(b.dataset.fr,null,openFoodAdd));
+}
+function openFoodSetup(){
+  const N={...nutr()},b=bio();N.goal=N.goal||"maintain";N.rate=N.rate||.5;N.diet=N.diet||"any";N.allergies=N.allergies||[];N.cuisines=N.cuisines||[];N.maxDiff=N.maxDiff||3;N.meals=N.meals||3;N.life=N.life||1.35;
+  const draw=()=>{const missing=!b.height||!b.age||!b.sex||!(weightOn(keyOf(new Date()))||b.weight);
+    openSheet(`<h3>Food goals</h3><p class="sub">Your targets update every day from your weight and the training you log.</p>
+    ${missing?`<div class="banner" style="margin-bottom:10px">Add your weight, height, age and sex in Settings for accurate targets. Until then they're rough.</div>`:""}
+    <label>Goal</label><div class="seg seg-wrap" id="nf-goal">${Object.entries(NGOALS).map(([k,[n]])=>`<button data-v="${k}" aria-pressed="${N.goal===k}">${n}</button>`).join("")}</div>
+    ${N.goal==="lose"||N.goal==="gain"?`<label>Rate</label><div class="seg" id="nf-rate">${(N.goal==="lose"?[.25,.5,.75]:[.25,.5]).map(v=>`<button data-v="${v}" aria-pressed="${N.rate==v}">${v} kg a week</button>`).join("")}</div><p class="hint">${N.goal==="lose"?"0.5 kg a week keeps training quality and muscle. Faster is capped at 1% of your body weight a week.":"Slow gains keep it mostly muscle."}</p>`:""}
+    <label for="nf-target">Target weight (kg, optional)</label><input id="nf-target" type="number" inputmode="decimal" step="any" value="${N.target||""}">
+    <label>Day-to-day activity outside workouts</label><div class="seg" id="nf-life">${[[1.25,"Desk"],[1.35,"Some walking"],[1.5,"On my feet"]].map(([v,n])=>`<button data-v="${v}" aria-pressed="${N.life==v}">${n}</button>`).join("")}</div>
+    <label>Diet</label><div class="seg seg-wrap" id="nf-diet">${DIETS.map(([k,n])=>`<button data-v="${k}" aria-pressed="${N.diet===k}">${n}</button>`).join("")}</div>
+    <label>Allergies and avoid</label><div class="tchips" id="nf-al" style="--c:#FF453A;--ct:#fff">${ALLERGENS.map(([k,n])=>`<button class="tchip" data-v="${k}" aria-pressed="${N.allergies.includes(k)}">${n}</button>`).join("")}</div>
+    <label for="nf-dis">Foods you don't like</label><input id="nf-dis" type="text" maxlength="120" placeholder="e.g. bitter melon, tofu" value="${esc(N.dislikes||"")}">
+    <label>Favourite cuisines</label><div class="tchips" id="nf-cu" style="--c:#F5F5F7;--ct:#000">${CUISINES.map(c=>`<button class="tchip" data-v="${c}" aria-pressed="${N.cuisines.includes(c)}">${c}</button>`).join("")}</div>
+    <label>Hardest recipes to suggest</label><div class="seg" id="nf-diff">${[[1,"Easy only"],[2,"Up to medium"],[3,"Anything"]].map(([v,n])=>`<button data-v="${v}" aria-pressed="${N.maxDiff==v}">${n}</button>`).join("")}</div>
+    <label>Meals a day</label><div class="seg" id="nf-meals">${[[3,"3 meals"],[4,"3 meals and a snack"]].map(([v,n])=>`<button data-v="${v}" aria-pressed="${N.meals==v}">${n}</button>`).join("")}</div>
+    <div class="row" style="margin-top:18px"><button class="btn" id="nf-x">Cancel</button><button class="btn primary" id="nf-ok">Save</button></div>`);
+    const seg=(id,k,numv)=>{const el=$(id);if(!el)return;el.querySelectorAll("button").forEach(bt=>bt.onclick=()=>{rd();N[k]=numv?+bt.dataset.v:bt.dataset.v;const t=$("sheet").scrollTop;draw();$("sheet").scrollTop=t;});};
+    const multi=(id,k)=>$(id).querySelectorAll("button").forEach(bt=>bt.onclick=()=>{const v=bt.dataset.v,a=N[k],i=a.indexOf(v);if(i>=0)a.splice(i,1);else a.push(v);bt.setAttribute("aria-pressed",i<0);haptic("light");});
+    const rd=()=>{N.target=num($("nf-target").value)||null;N.dislikes=$("nf-dis").value.trim();};
+    seg("nf-goal","goal");seg("nf-rate","rate",1);seg("nf-life","life",1);seg("nf-diet","diet");seg("nf-diff","maxDiff",1);seg("nf-meals","meals",1);multi("nf-al","allergies");multi("nf-cu","cuisines");
+    $("nf-x").onclick=closeSheet;$("nf-ok").onclick=()=>{rd();saveNutr(N);closeSheet();coachTab="food";render();toast("Food goals saved");};};
+  draw();
+}
+function openDayPlan(seed){
+  seed=seed||0;const d=keyOf(new Date()),pl=buildDayPlan(d,seed),T=foodTargets(d),tt=planTotals(pl);
+  openSheet(`<h3>Plan my day</h3><p class="sub">Built around today's ${T.kcal.toLocaleString()} kcal and ${T.p} g protein${T.train?`, including ${T.train} kcal of training`:""}.</p>
+    <div class="tlist">${pl.map(x=>{const r=RECIPES.find(z=>z.id===x.id);return `<button class="trow" data-pr="${r.id}" data-serv="${x.serv}"><span class="nu-slot">${x.slot[0].toUpperCase()}</span><div class="tx"><b>${esc(r.n)}</b><span>${x.slot[0].toUpperCase()+x.slot.slice(1)}, ${x.serv} serving${x.serv===1?"":"s"}, ${Math.round(r.k*x.serv)} kcal, ${Math.round(r.p*x.serv)} g protein</span></div></button>`;}).join("")}</div>
+    <div class="nu-calc" style="margin-top:12px"><div><span>Calories</span><b>${Math.round(tt.k).toLocaleString()} of ${T.kcal.toLocaleString()}</b></div><div><span>Protein</span><b>${Math.round(tt.p)} of ${T.p} g</b></div><div><span>Carbs</span><b>${Math.round(tt.c)} of ${T.c} g</b></div><div><span>Fat</span><b>${Math.round(tt.f)} of ${T.f} g</b></div></div>
+    ${pl.length?"":`<p class="hint">No recipes fit your diet settings for these meals. Loosen allergies, diet or difficulty in Food goals.</p>`}
+    <div class="row" style="margin-top:14px"><button class="btn" id="dp-again">Try another</button><button class="btn primary" id="dp-ok">Use this plan</button></div>`);
+  document.querySelectorAll("[data-pr]").forEach(b=>b.onclick=()=>openRecipe(b.dataset.pr,+b.dataset.serv,()=>openDayPlan(seed)));
+  $("dp-again").onclick=()=>openDayPlan(seed+1);
+  $("dp-ok").onclick=()=>{const st=foodStore();st.plans=st.plans||{};st.plans[d]=pl;foodSave(st);closeSheet();render();toast("Plan saved for today");};
+}
+function openMealPrep(o){
+  o=o||{days:4,slots:["lunch","dinner"],seed:0};const N=nutr(),T=foodTargets(),rnd=seededR("prep"+o.seed),used=new Set();
+  const share={breakfast:.27,lunch:.33,dinner:.33};
+  const picks=o.slots.map(sl=>{const pk=pickRecipe(sl,share[sl],{...T,kcal:T.kcal-T.train},N,rnd,used,true);return pk?{...pk,batch:pk.serv*o.days}:null;}).filter(Boolean);
+  const list=shoppingList(picks.map(p=>({id:p.id,batch:p.batch})));
+  openSheet(`<h3>Meal prep</h3><p class="sub">Cook once, eat for ${o.days} days. Portions are sized for a rest day; add a snack or more rice on training days.</p>
+    <label>Days</label><div class="seg" id="mp-days">${[3,4,5].map(v=>`<button data-v="${v}" aria-pressed="${o.days===v}">${v} days</button>`).join("")}</div>
+    <label>Meals to prep</label><div class="tchips" id="mp-slots" style="--c:#F5F5F7;--ct:#000">${[["breakfast","Breakfast"],["lunch","Lunch"],["dinner","Dinner"]].map(([k,n])=>`<button class="tchip" data-v="${k}" aria-pressed="${o.slots.includes(k)}">${n}</button>`).join("")}</div>
+    <h4>Cook</h4><div class="tlist">${picks.map(p=>{const r=RECIPES.find(z=>z.id===p.id);return `<button class="trow" data-mr="${r.id}" data-serv="${p.batch}"><span class="nu-slot">${p.slot[0].toUpperCase()}</span><div class="tx"><b>${esc(r.n)}</b><span>${p.batch} servings (${p.serv} a day), ${Math.round(r.k*p.serv)} kcal and ${Math.round(r.p*p.serv)} g protein a portion</span></div></button>`;}).join("")||`<p class="hint">No prep-friendly recipes fit your settings for these meals.</p>`}</div>
+    ${list.length?`<h4>Shopping list</h4><ul class="nu-shop">${list.filter(x=>!x.staple).map(x=>`<li class="${x.have?"have":""}"><b>${x.q?fmtQty(x.q,x.u):""}</b><span>${esc(x.label)}${x.have?" <em>have it</em>":""}</span></li>`).join("")}</ul><p class="hint">Plus salt, pepper and oil. Items in your pantry are greyed out.</p>`:""}
+    <div class="row" style="margin-top:14px"><button class="btn" id="mp-again">Different recipes</button><button class="btn primary" id="mp-copy">Copy list</button></div>`);
+  $("mp-days").querySelectorAll("button").forEach(b=>b.onclick=()=>openMealPrep({...o,days:+b.dataset.v}));
+  $("mp-slots").querySelectorAll("button").forEach(b=>b.onclick=()=>{const s=[...o.slots],i=s.indexOf(b.dataset.v);if(i>=0){if(s.length>1)s.splice(i,1);}else s.push(b.dataset.v);openMealPrep({...o,slots:["breakfast","lunch","dinner"].filter(x=>s.includes(x))});});
+  document.querySelectorAll("[data-mr]").forEach(b=>b.onclick=()=>openRecipe(b.dataset.mr,+b.dataset.serv,()=>openMealPrep(o)));
+  $("mp-again").onclick=()=>openMealPrep({...o,seed:o.seed+1});
+  $("mp-copy").onclick=async()=>{const txt="Shopping list\n"+list.filter(x=>!x.staple&&!x.have).map(x=>`- ${x.q?fmtQty(x.q,x.u)+" ":""}${x.label}`).join("\n");try{await navigator.clipboard.writeText(txt);toast("Shopping list copied");}catch(e){toast("Couldn't copy here");}};
+}
+const PANTRY_SUGGEST=["chicken thigh","chicken breast","ground chicken","pork shoulder","ground beef","beef sirloin","salmon","tuna","shrimp","tofu","eggs","Greek yogurt","milk","cheese","whey protein","rice","cooked rice","rolled oats","pasta","bread","tortillas","potatoes","quinoa","mung beans","red lentils","chickpeas","black beans","kidney beans","onion","garlic","ginger","tomatoes","chopped tomatoes","bell pepper","spinach","kangkong","malunggay","eggplant","string beans","broccoli","carrot","cucumber","squash","okra","banana","mango","calamansi","lemon","lime","soy sauce","cane vinegar","fish sauce","oyster sauce","coconut milk","curry paste","gochujang","peanut butter","bay leaves","chili powder","cumin","garam masala"];
+function openPantry(){
+  const N=nutr(),P=new Set(N.pantry||[]);
+  const draw=()=>{openSheet(`<h3>Pantry</h3><p class="sub">Tap what you have. Recipes that use it get suggested first, and shopping lists skip it.</p>
+    <div class="lsearch"><span class="lsi">${icon("search")}</span><input id="pa-q" type="text" placeholder="Add anything else, e.g. sardines" aria-label="Add a pantry item"><button class="lsx" id="pa-add" aria-label="Add">+</button></div>
+    <div class="tchips" id="pa-list" style="--c:#2FC48D;--ct:#000;margin-top:10px">${[...new Set([...PANTRY_SUGGEST,...P])].map(x=>`<button class="tchip" data-v="${esc(x)}" aria-pressed="${P.has(x)}">${esc(x)}</button>`).join("")}</div>
+    <div class="row" style="margin-top:16px"><button class="btn" id="pa-clear">Clear all</button><button class="btn primary" id="pa-ok">Done</button></div>`);
+    $("pa-list").querySelectorAll("button").forEach(b=>b.onclick=()=>{const v=b.dataset.v;if(P.has(v))P.delete(v);else P.add(v);b.setAttribute("aria-pressed",P.has(v));haptic("light");});
+    const add=()=>{const v=$("pa-q").value.trim().toLowerCase();if(!v)return;P.add(v);draw();};$("pa-add").onclick=add;$("pa-q").onkeydown=e=>{if(e.key==="Enter")add();};
+    $("pa-clear").onclick=()=>{P.clear();draw();};
+    $("pa-ok").onclick=()=>{saveNutr({pantry:[...P]});closeSheet();render();toast(`${P.size} pantry items saved`);};};
+  draw();
+}
+function openCookPantry(){
+  const N=nutr();if(!(N.pantry||[]).length){openPantry();toast("Add what you have first");return;}
+  const L=RECIPES.filter(r=>recipeOK(r,{...N,maxDiff:3})).map(r=>({r,pc:pantryCover(r)})).filter(x=>x.pc.have>0).sort((a,b)=>b.pc.have/b.pc.need-a.pc.have/a.pc.need||a.pc.missing.length-b.pc.missing.length).slice(0,12);
+  openSheet(`<h3>Cook from your pantry</h3><p class="sub">Best matches for what you have on hand.</p>
+    <div class="tlist">${L.map(({r,pc})=>`<button class="trow" data-cp="${r.id}"><span class="nu-pct">${Math.round(pc.have/pc.need*100)}%</span><div class="tx"><b>${esc(r.n)}</b><span>${pc.missing.length?"Missing "+esc(pc.missing.slice(0,4).join(", "))+(pc.missing.length>4?` and ${pc.missing.length-4} more`:""):"You have everything"}</span></div></button>`).join("")||`<p class="hint">Nothing matches yet. Add a few more staples like rice, eggs, onion and garlic.</p>`}</div>
+    <div class="row" style="margin-top:14px"><button class="btn" id="cp-edit">Edit pantry</button><button class="btn primary" id="cp-x">Done</button></div>`);
+  document.querySelectorAll("[data-cp]").forEach(b=>b.onclick=()=>openRecipe(b.dataset.cp,null,openCookPantry));
+  $("cp-edit").onclick=openPantry;$("cp-x").onclick=closeSheet;
+}
+function foodAct(a,t){
+  if(a==="fd-setup")openFoodSetup();
+  else if(a==="fd-add")openFoodAdd();
+  else if(a==="fd-plan")openDayPlan(0);
+  else if(a==="fd-prep")openMealPrep();
+  else if(a==="fd-pantry")openPantry();
+  else if(a==="fd-cookpantry")openCookPantry();
+  else if(a==="fd-recipe")openRecipe(t.dataset.rid,t.dataset.serv?+t.dataset.serv:null);
+  else if(a==="fd-del"){const d=keyOf(new Date()),L=dayFood(d);L.splice(+t.dataset.i,1);setDayFood(d,L);render();}
+  else if(a==="fd-f"){const k=t.dataset.k;foodView[k]=k==="diff"?+t.dataset.v:k==="prep"?!foodView.prep:t.dataset.v;const y=window.scrollY;render();window.scrollTo(0,y);}
+}
 let coachTab="today",coachAllRecs=false;
 function renderInsights(){
   if(viewer)return `<div class="empty">Coaching is only available to the owner.</div>`;
   let html=`<div class="top"><h1>Coach</h1><button class="chip" data-act="plan">Start a workout</button></div>
-  <div class="seg" style="margin-bottom:14px">${[["today","Today"],["goals","Goals"],["stats","Stats"]].map(([k,n])=>`<button data-ctab="${k}" aria-pressed="${coachTab===k}">${n}</button>`).join("")}</div>`;
+  <div class="seg" style="margin-bottom:14px">${[["today","Today"],["food","Food"],["goals","Goals"],["stats","Stats"]].map(([k,n])=>`<button data-ctab="${k}" aria-pressed="${coachTab===k}">${n}</button>`).join("")}</div>`;
   if(coachTab==="goals")return html+renderLongGoals();
+  if(coachTab==="food")return html+renderFood();
   if(coachTab==="today"){
     html+=activeBanner();
     html+=todayHero();
+    if(nutr().goal){const T=foodTargets(),E=dayEaten(keyOf(new Date()));html+=`<button class="ins nu-mini" data-ctab="food"><div><b>${Math.max(0,Math.round(T.kcal-E.k)).toLocaleString()} kcal left</b><span>${Math.round(E.p)} of ${T.p} g protein${T.train?`. Includes ${T.train} kcal from today's training`:""}</span></div>${mbar(E.k,T.kcal,"k")}</button>`;}
     html+=`<div class="ins" style="--c:var(--xp)"><div class="row2"><div><h3>Ready to train?</h3><div class="xpinfo">${esc(quickSuggestion())}</div></div></div>
       <div class="acts">${[["lift","Lift"],["run","Run"],["ride","Ride"],["hike","Hike"],["climb","Boulder"],["hang","Board"],["core","Core"],["timer","Timer"]].map(([t,n])=>`<button class="actbtn" data-plan="${t}" style="--c:${t==="timer"?"var(--ink)":col(t)}"><i>${icon(t)}</i>${n}</button>`).join("")}</div>
       <p class="hint">Pick an activity and I'll build a session around your time, energy, recovery, and goals.</p></div>`;
