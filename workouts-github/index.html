@@ -16,6 +16,11 @@
 @media (prefers-reduced-motion:reduce){.irbar i{transition:none}}
 
 .pwbtn{background:none;padding:6px 2px;color:var(--muted);font-weight:600;font-size:.8rem;text-decoration:underline;text-underline-offset:3px;min-height:32px}
+
+/* v49: only show switches that do something */
+#sopts:not([data-style="classic"]) .conly,#sopts:not([data-bg="photo"]) #o-ptog [data-t="bw"],#sopts:not([data-bg="photo"]):not([data-style="splits"]) #o-ptog [data-t="motion"],#sopts[data-bg="none"] #o-ptog [data-t="grain"],#sopts[data-bg="glass"] #o-ptog [data-t="grain"]{display:none}
+
+#sopts[data-style="splits"] #o-tog [data-t="route"]{display:none}
 </style></head><body>
 <!doctype html>
 <html lang="en">
@@ -3739,20 +3744,22 @@ async function drawPoster(s,o){
   if(o.style==="week"){
     const SX=1,TR=-.035,hs=fitS(x,head,PF.wide,200,maxW+16,SX,40,TR);
     y+=hs*.72;const yh=y;push(()=>{x.fillStyle=acc;txS(x,head,W/2,off+yh,PF.wide(hs),SX,1,"center",TR);});
-    const sub=[(TYPES[s.type]||"Workout").toUpperCase(),...(()=>{const L=o.stats.map(k=>by[k]).filter(Boolean).slice(0,3);return (L.length>2?[L[0],L[L.length-1]]:L).map(z=>z.k==="time"?durCaps(s.dur):/^[\d,.]+$/.test(z.v)?`${z.v} ${(+z.v.replace(/,/g,"")===1?z.l.replace(/es$|s$/,""):z.l)}`.toUpperCase():z.v.replace(/\s*\/\s*/,"/").toUpperCase());})()];
-    let ss=48;const crowd=()=>{const w=sub.map(t=>trkW(x,t,-.01));if(w.length<3)return w.reduce((a,b)=>a+b,0)>maxW-50;return w[0]+w[1]/2>maxW/2-36||w[2]+w[1]/2>maxW/2-36;};x.font=PF.wide(ss);while(crowd()&&ss>20){ss-=2;x.font=PF.wide(ss);}
+    const sub=[(TYPES[s.type]||"Workout").toUpperCase(),...(()=>{const L=o.stats.map(k=>by[k]).filter(Boolean).slice(0,3);return L.map(z=>z.k==="time"?durCaps(s.dur):/^[\d,.]+$/.test(z.v)?`${z.v} ${(+z.v.replace(/,/g,"")===1?z.l.replace(/es$|s$/,""):z.l)}`.toUpperCase():z.v.replace(/\s*\/\s*/,"/").toUpperCase());})()];
+    let ss=48;const crowd=()=>{const w=sub.map(t=>trkW(x,t,-.01));if(w.length<3)return w.reduce((a,b)=>a+b,0)>maxW-50;if(w.length===3)return w[0]+w[1]/2>maxW/2-36||w[2]+w[1]/2>maxW/2-36;return w.reduce((a,b)=>a+b,0)>maxW-36*(w.length-1)||w[0]+w[1]/2>maxW/3-24||w[3]+w[2]/2>maxW/3-24;};x.font=PF.wide(ss);while(crowd()&&ss>20){ss-=2;x.font=PF.wide(ss);}
     y+=22+ss*.9;const ys=y;
     push(()=>{x.fillStyle=acc;const n=sub.length;sub.forEach((t,i)=>{const X=n===1?W/2:P+(maxW)*(i/(n-1)),al=n===1?"center":i===0?"left":i===n-1?"right":"center";txS(x,t,X,off+ys,PF.wide(ss),1,1,al,-.01);});});
     const route=o.route&&s.track&&s.track.length>1;
     band=1;if(route){y+=110;const rh=860,yr=y;push(()=>{const box=Math.min(maxW*.86,rh*1.1),ox=(W-box)/2,Pj=projector(s.track,box,rh,20);
       x.save();x.lineCap="round";x.lineJoin="round";x.beginPath();s.track.forEach((_,i)=>{const [px,py]=Pj(i);i?x.lineTo(ox+px,off+yr+py):x.moveTo(ox+px,off+yr+py);});
       x.shadowColor="rgba(255,255,255,.35)";x.shadowBlur=o.shadow?18:0;x.strokeStyle=o.rcolor&&o.rcolor!=="same"?o.rcolor:ink;x.lineWidth=13;x.stroke();x.restore();});y+=rh;}
-    else if(s.type==="lift"&&s.ex&&s.ex.length){const v=musLoad(s);if(Object.keys(v).length){y+=120;const mh=640,ym=y;push(()=>{x.shadowColor="transparent";drawMuscleMap(x,W/2,off+ym,mh,v,ink,acc);x.fillStyle=ink;x.globalAlpha=.9;x.font=PF.mono(34);x.textAlign="center";x.fillText(musTop(v,4).map(([m])=>m).join("  ·  "),W/2,off+ym+mh+64,maxW);});y+=mh+64;}}
-    else if(s.type==="climb"){const G=sendGroups(s).slice(0,8);if(G.length){const cols=Math.min(4,G.length),rows=Math.ceil(G.length/cols),cell=230;y+=120;const yg=y;
+    else if(o.mus&&s.type==="lift"&&s.ex&&s.ex.length){const v=musLoad(s);if(Object.keys(v).length){y+=120;const mh=640,ym=y;push(()=>{x.shadowColor="transparent";drawMuscleMap(x,W/2,off+ym,mh,v,ink,acc);x.fillStyle=ink;x.globalAlpha=.9;x.font=PF.mono(34);x.textAlign="center";x.fillText(musTop(v,4).map(([m])=>m).join("  ·  "),W/2,off+ym+mh+64,maxW);});y+=mh+64;}}
+    else if(o.sends&&s.type==="climb"){const G=sendGroups(s).slice(0,8);if(G.length){const cols=Math.min(4,G.length),rows=Math.ceil(G.length/cols),cell=230;y+=120;const yg=y;
       push(()=>{x.shadowColor="transparent";const cw=Math.min(240,maxW/cols);G.forEach((g,i)=>{const r=Math.floor(i/cols),inR=Math.min(cols,G.length-r*cols),cx=W/2-(inR*cw)/2+cw*(i%cols)+cw/2,top=off+yg+r*cell;
         if(g.gc)drawGM(x,g.gl,g.gc,cx,top+50,46);else{x.font=PF.wide(48);x.textAlign="center";x.fillStyle=acc;x.fillText(g.gl,cx,top+68);}
         x.fillStyle=ink;x.textAlign="center";x.font=PF.wide(52);x.fillText("×"+g.n,cx,top+170);x.font=PF.mono(26);x.globalAlpha=.85;if(g.fl)x.fillText(g.fl+" flash"+(g.fl===1?"":"ed"),cx,top+210);x.globalAlpha=1;});});y+=rows*cell;}}
     if(o.title){y+=route?70:130;const yt=y,t=titleOf(s);push(()=>{x.fillStyle=ink;x.font=PF.mono(40);x.textAlign="right";x.fillText(t,W-P,off+yt,maxW);});}
+    {const more=o.stats.map(k=>by[k]).filter(Boolean).slice(3,7);if(more.length){const rc=statsRowCanvas(more,o);y+=100;const yr=y;push(()=>x.drawImage(rc,(W-rc.width)/2,off+yr));y+=rc.height;}}
+    {const ex=await posterExtras(s,o,{mus:true,sends:true,level:true,route:true});if(ex){y+=100;const ye=y;push(()=>x.drawImage(ex,0,off+ye));y+=ex.height;}}
     band=2;if(o.notes&&s.notes){x.font=PF.mono(36);const L=wrapLines(x,s.notes,maxW*.62,5);y+=90;const yn=y;y+=(L.length-1)*48;
       push(()=>{x.fillStyle=ink;x.font=PF.mono(36);x.textAlign="left";L.forEach((l,i)=>x.fillText(l,P-30,off+yn+i*48));});}
     const foot=[o.place&&placeName(s)?"@"+placeName(s).toLowerCase().replace(/[^a-z0-9]+/g,""):"",o.date?fmtDate(s.date,{month:"short",day:"numeric",year:"numeric"}).toLowerCase():"",o.level?"lv "+levelOf(getC().xp):""].filter(Boolean);
@@ -3767,6 +3774,8 @@ async function drawPoster(s,o){
     y+=36;let ls=74;x.font=PF.tallM(ls);while(lines.some(l=>x.measureText(l.l).width+x.measureText(l.r).width>maxW-70)&&ls>30){ls-=2;x.font=PF.tallM(ls);}
     const yl=y;lines.forEach(()=>{y+=ls*1.14;});
     push(()=>{x.fillStyle=ink;lines.forEach((l,i)=>{const yy=off+yl+(i+1)*ls*1.14-ls*.14;txS(x,l.l,P,yy,PF.tallM(ls),1,1.16,"left",.005);txS(x,l.r,W-P,yy,PF.tallM(ls),1,1.16,"right",.005);});});
+    {const meta=(o.title?titleOf(s):"")+(o.place&&placeName(s)?(o.title?" at ":"")+placeName(s):"")+(o.date?((o.title||(o.place&&placeName(s)))?", ":"")+fmtDate(s.date,{weekday:"short",month:"short",day:"numeric"}):"");
+      if(meta){y+=56;const ym=y;push(()=>{x.fillStyle=ink;x.globalAlpha=.85;x.font=PF.ui(34);x.textAlign="left";x.fillText(meta,P,off+ym,maxW);x.globalAlpha=1;});}}
     band=1;const sp=o.splits?trackSplits(s):null;
     if(sp){
       const hasE=sp.rows.some(r=>r.elev!=null),u=dU(),rh=58,cols=hasE?[[P+20,"left"],[P+maxW*.40,"right"],[P+maxW*.62,"right"],[P+maxW*.82,"right"],[W-P-10,"right"]]:[[P+30,"left"],[P+maxW*.45,"right"],[P+maxW*.70,"right"],[W-P-30,"right"]];
@@ -3781,10 +3790,23 @@ async function drawPoster(s,o){
         const tot=["Total",round(toDispDist(s.dist||sp.rows.reduce((a,r)=>a+r.dist,0)),2).toFixed(2),clockQ(sp.rows.reduce((a,r)=>a+r.time,0)),paceQ(s.dur&&s.dist?s.dur/s.dist:0),...(hasE?[elevOf(s)?"+"+Math.round(toDispElev(elevOf(s))):""]:[])];
         tot.forEach((t,j)=>{x.font=PF.uiB(44);x.textAlign=cols[j][1];x.fillStyle=ink;x.fillText(t,cols[j][0],yT+rh*.5);});x.restore();});
     }
+    else{ // no laps: lifts get an exercise table, climbs a problem table
+      let hdr=null,rowsT=[],cols=null,hi=-1;
+      if(s.type==="lift"&&s.ex&&s.ex.length){hdr=["Exercise","Sets × reps","Weight"];cols=[[P+20,"left"],[P+maxW*.68,"right"],[W-P-10,"right"]];
+        const E=s.ex.filter(e=>e.name).slice(0,10);let bw=-1;E.forEach((e,i)=>{if(!isHoldEx(e)&&e.w!=null&&e.w>bw){bw=e.w;hi=i;}});
+        rowsT=E.map(e=>[e.name,`${e.sets||"–"} × ${e.reps||"–"}${isHoldEx(e)?" s":""}`,isBW(e)?(e.w?"BW + "+fmtWt(e.w):"BW"):e.w!=null?fmtWt(e.w)+(isPairDB(e)?" each":""):"–"]);}
+      else if(s.type==="climb"&&s.probs&&s.probs.length){hdr=["Problem","Result","Tries"];cols=[[P+20,"left"],[P+maxW*.68,"right"],[W-P-10,"right"]];
+        const Pr=s.probs.slice(0,12),hd=hardest(s);rowsT=Pr.map((q,i)=>{if(hd&&q===hd&&hi<0)hi=i;return [q.name?`${q.gl}  ${q.name}`:q.gl,RESULTS[q.res]||"",String(q.att||1)];});}
+      if(hdr&&rowsT.length){const rh=58;y+=80;const yt=y;y+=56+rowsT.length*rh;
+        push(()=>{x.save();x.fillStyle=ink;x.globalAlpha=.75;x.font=PF.ui(30);hdr.forEach((t,i)=>{x.textAlign=cols[i][1];x.fillText(t,cols[i][0],off+yt);});x.globalAlpha=.5;x.fillRect(P,off+yt+20,maxW,2);x.globalAlpha=1;
+          rowsT.forEach((r,i)=>{const yy=off+yt+56+i*rh+rh*.5;r.forEach((t,j)=>{x.font=j===0?PF.ui(36):PF.uiB(38);x.textAlign=cols[j][1];x.fillStyle=i===hi&&j===(s.type==="climb"?0:2)?acc:ink;x.fillText(t,cols[j][0],yy,j===0?maxW*.58:maxW*.3);});});x.restore();});}
+    }
+    {const ex=await posterExtras(s,o,{route:true});if(ex){y+=90;const ye=y;push(()=>x.drawImage(ex,0,off+ye));y+=ex.height;}}
     const totalDur=(o.day&&day.length>1?day:[s]).reduce((a,z)=>a+(z.dur||0),0);
     const note=o.notes&&s.notes?s.notes:"";
-    band=2;if(totalDur||note){y+=110;const yf=y;let nl=[];if(note){x.font=PF.serif(32);nl=wrapLines(x,note,maxW*.5,6);}y+=Math.max(0,(nl.length-1)*42);
-      push(()=>{x.fillStyle=ink;if(totalDur){x.font=PF.ui(34);x.textAlign="left";const lab="Total time: ";x.fillText(lab,P,off+yf);const lw=x.measureText(lab).width;x.font=PF.uiB(52);x.fillText(clockQ(totalDur),P+lw,off+yf+2);}
+    {const L=o.stats.map(k=>by[k]).filter(z=>z&&!(sp&&["dist","pace","time"].includes(z.k))).slice(0,4);if(L.length){band=2;y+=110;const yr=y;const cw=maxW/L.length;push(()=>{L.forEach((z,i)=>{const X=P+cw*i;x.fillStyle=ink;x.globalAlpha=.75;x.font=PF.ui(30);x.textAlign="left";x.fillText(z.l,X,off+yr);x.globalAlpha=1;let fs=56;x.font=PF.uiB(fs);while(x.measureText(z.v).width>cw-44&&fs>26){fs-=2;x.font=PF.uiB(fs);}x.fillText(z.v,X,off+yr+64);});});y+=70;}}
+    band=2;if(sp&&(totalDur||note)||!sp&&note){y+=110;const yf=y;let nl=[];if(note){x.font=PF.serif(32);nl=wrapLines(x,note,maxW*.5,6);}y+=Math.max(0,(nl.length-1)*42);
+      push(()=>{x.fillStyle=ink;if(totalDur&&sp){x.font=PF.ui(34);x.textAlign="left";const lab="Total time: ";x.fillText(lab,P,off+yf);const lw=x.measureText(lab).width;x.font=PF.uiB(52);x.fillText(clockQ(totalDur),P+lw,off+yf+2);}
         if(nl.length){x.save();x.shadowColor="transparent";x.font=PF.serif(32);const bw=Math.max(...nl.map(l=>x.measureText(l).width))+44,bh=nl.length*42+26,bx=W-P-bw,by=off+yf-38;x.fillStyle="#FFFFFF";x.fillRect(bx,by,bw,bh);x.fillStyle="#111";x.textAlign="left";nl.forEach((l,i)=>x.fillText(l,bx+22,by+44+i*42));x.restore();}});}
   }
   if(LB&&!LB.top){band=2;y+=LB.gap+40;const ly=y;push(()=>logoAt(x,o,LB,W,P,off+ly,TYPE_HEX[s.type]));y+=LB.h;}
@@ -3800,6 +3822,40 @@ async function drawPoster(s,o){
   if(o.shadow){x.shadowColor=shade;x.shadowBlur=22;x.shadowOffsetY=2;}
   for(const {f,b} of ops){off=base+gaps.slice(0,b+1).reduce((a,g)=>a+g,0);x.save();f();x.restore();}
   return c;
+}
+/* ---------- shared poster pieces: muscles, PR card, medals and level; a row of extra stats ---------- */
+async function posterExtras(s,o,skip){
+  skip=skip||{};const W=1080,P=88,ink=o.color,parts=[];
+  if(o.route&&!skip.route&&s.track&&s.track.length>1){const rw=820,rh=500;parts.push({h:rh,draw:(x,y)=>{const box=Math.min(rw,rh*1.4),ox=(W-box)/2,Pj=projector(s.track,box,rh,14);x.lineCap="round";x.lineJoin="round";x.beginPath();s.track.forEach((_,i)=>{const [px,py]=Pj(i);i?x.lineTo(ox+px,y+py):x.moveTo(ox+px,y+py);});x.strokeStyle=o.rcolor&&o.rcolor!=="same"?o.rcolor:ink;x.lineWidth=12;x.stroke();}});}
+  if(o.mus&&!skip.mus&&s.type==="lift"&&s.ex&&s.ex.length){const v=musLoad(s);if(Object.keys(v).length)parts.push({h:620,draw:(x,y)=>{x.save();x.shadowColor="transparent";drawMuscleMap(x,W/2,y,540,v,ink,o.accent||"#E8323C");x.restore();x.fillStyle=ink;x.globalAlpha=.9;x.font=PF.mono(32);x.textAlign="center";x.fillText(musTop(v,4).map(([m])=>m).join("  ·  "),W/2,y+600,W-2*P);x.globalAlpha=1;}});}
+  if(o.sends&&!skip.sends&&s.type==="climb"){const G=sendGroups(s).slice(0,8);if(G.length){const cols=Math.min(4,G.length),rows=Math.ceil(G.length/cols),cell=230;parts.push({h:rows*cell,draw:(x,y)=>{x.save();x.shadowColor="transparent";const cw=Math.min(240,(W-2*P)/cols);G.forEach((g,i)=>{const r=Math.floor(i/cols),inR=Math.min(cols,G.length-r*cols),cx=W/2-(inR*cw)/2+cw*(i%cols)+cw/2,top=y+r*cell;
+    if(g.gc)drawGM(x,g.gl,g.gc,cx,top+50,46);else{x.font=PF.wide(48);x.textAlign="center";x.fillStyle=o.accent||"#E8323C";x.fillText(g.gl,cx,top+68);}
+    x.fillStyle=ink;x.textAlign="center";x.font=PF.wide(52);x.fillText("×"+g.n,cx,top+170);x.font=PF.mono(26);x.globalAlpha=.85;if(g.fl)x.fillText(g.fl+" flash"+(g.fl===1?"":"ed"),cx,top+210);x.globalAlpha=1;});x.restore();}});}}
+  if(o.prs){const r=getC().by[s.id];const ent=r?[...r.medals,...(r.ymedals||[])].sort((a,b)=>a.rank-b.rank).slice(0,4):[];if(ent.length){const hh=prBlockHeight(ent.length);parts.push({h:hh,draw:(x,y)=>{x.save();x.shadowColor="transparent";const bw=Math.min(W-2*P,880);drawPRBlock(x,(W-bw)/2,y,bw,ent,{style:"glass",radius:28});x.restore();}});}}
+  const extra=[];if(o.level&&!skip.level)extra.push("Level "+levelOf(getC().xp));
+  if(o.trophies){const r=getC().by[s.id];if(r){const cnt=[0,0,0];r.medals.forEach(m=>cnt[m.rank-1]++);const ps=[];if(cnt[0])ps.push(cnt[0]+" gold");if(cnt[1])ps.push(cnt[1]+" silver");if(cnt[2])ps.push(cnt[2]+" bronze");if(ps.length)extra.push(ps.join(", ")+(r.medals.length===1?" medal":" medals"));if(r.acc.length)extra.push(r.acc.length+(r.acc.length===1?" accolade":" accolades"));}}
+  if(extra.length)parts.push({h:56,draw:(x,y)=>{x.fillStyle=ink;x.font=PF.uiB(38);x.textAlign="center";x.fillText(extra.join("     "),W/2,y+42,W-2*P);}});
+  if(!parts.length)return null;
+  const gap=56,c=document.createElement("canvas");c.width=W;c.height=parts.reduce((a,q)=>a+q.h,0)+gap*(parts.length-1);const x=c.getContext("2d");
+  if(o.shadow){const n=parseInt(ink.slice(1),16),l=((n>>16)*.299+((n>>8)&255)*.587+(n&255)*.114)/255;x.shadowColor=l>.5?"rgba(0,0,0,.5)":"rgba(255,255,255,.4)";x.shadowBlur=18;x.shadowOffsetY=2;}
+  let y=0;for(const q of parts){x.save();q.draw(x,y);x.restore();y+=q.h+gap;}
+  return c;
+}
+function statsRowCanvas(L,o){
+  const t=document.createElement("canvas").getContext("2d");const cols=L.map(z=>{t.font=PF.ui(30);const a=t.measureText(z.l).width;t.font=PF.uiB(56);return Math.max(a,t.measureText(z.v).width)+72;});
+  const c=document.createElement("canvas");c.width=Math.ceil(cols.reduce((a,b)=>a+b,0));c.height=130;const x=c.getContext("2d");
+  if(o.shadow){x.shadowColor="rgba(0,0,0,.5)";x.shadowBlur=16;x.shadowOffsetY=2;}
+  let px=0;L.forEach((z,i)=>{x.fillStyle=o.color;x.globalAlpha=.75;x.font=PF.ui(30);x.fillText(z.l,px,34);x.globalAlpha=1;x.font=PF.uiB(56);x.fillText(z.v,px,104);px+=cols[i];});
+  return c;
+}
+async function p3Compose(s,o,art){
+  const parts=[art];
+  if(o.style!=="bill"){const by=Object.fromEntries(allStats(s).map(z=>[z.k,z])),L=o.stats.map(k=>by[k]).filter(Boolean).slice(1,4);if(L.length)parts.push(statsRowCanvas(L,o));}
+  const ex=await posterExtras(s,o);if(ex)parts.push(trimCanvas(ex));
+  if(parts.length===1)return finishPoster(s,o,art);
+  const gap=60,W=Math.max(...parts.map(q=>q.width)),H=parts.reduce((a,q)=>a+q.height,0)+gap*(parts.length-1),c=document.createElement("canvas");c.width=W;c.height=H;const x=c.getContext("2d");
+  let y=0;for(const q of parts){const X=o.style==="bib"?(W-q.width)/2:(q===art?0:Math.min(40,(W-q.width)/2));x.drawImage(q,Math.max(0,X),y);y+=q.height+gap;}
+  return finishPoster(s,o,c);
 }
 /* ---------- more workout poster styles: Ticked (hollow number + marker tick), Bib (race bib), Billboard (stats set full width) ---------- */
 const P3_STYLES=["tick","bib","bill"];
@@ -3847,7 +3903,7 @@ async function drawPoster3(s,o){
     // a race bib: paper, four pin holes, a coloured top band, the number, a timing barcode
     const BW=900,BH=640;k.width=BW+160;k.height=BH+200;const ox=80,oy=70;
     x.save();x.translate(k.width/2,k.height/2);x.rotate(-.025);x.translate(-k.width/2,-k.height/2);
-    x.save();x.shadowColor="rgba(0,0,0,.45)";x.shadowBlur=30;x.shadowOffsetY=12;x.fillStyle="#F6F5F1";x.beginPath();x.roundRect?x.roundRect(ox,oy,BW,BH,18):x.rect(ox,oy,BW,BH);x.fill();x.restore();
+    x.save();if(o.shadow){x.shadowColor="rgba(0,0,0,.45)";x.shadowBlur=30;x.shadowOffsetY=12;}x.fillStyle="#F6F5F1";x.beginPath();x.roundRect?x.roundRect(ox,oy,BW,BH,18):x.rect(ox,oy,BW,BH);x.fill();x.restore();
     x.save();x.beginPath();x.roundRect?x.roundRect(ox,oy,BW,BH,18):x.rect(ox,oy,BW,BH);x.clip();
     x.fillStyle=acc;x.fillRect(ox,oy,BW,120);const bt=lum(acc)>.6?"#111":"#FFF";
     x.fillStyle=bt;x.font=Wd(44);x.textAlign="left";x.fillText((o.title?titleOf(s):(TYPES[s.type]||"Workout")).toUpperCase(),ox+110,oy+78,BW-220);
@@ -3865,7 +3921,7 @@ async function drawPoster3(s,o){
     x.globalCompositeOperation="destination-out";for(const [hx,hy] of [[ox+50,oy+60],[ox+BW-50,oy+60],[ox+50,oy+BH-50],[ox+BW-50,oy+BH-50]]){x.beginPath();x.arc(hx,hy,15,0,7);x.fill();}
     x.globalCompositeOperation="source-over";x.strokeStyle="rgba(0,0,0,.25)";x.lineWidth=2;for(const [hx,hy] of [[ox+50,oy+60],[ox+BW-50,oy+60],[ox+50,oy+BH-50],[ox+BW-50,oy+BH-50]]){x.beginPath();x.arc(hx,hy,19,0,7);x.stroke();}
     x.restore();
-    if(o.notes&&s.notes){const h0=k.height;const c2=document.createElement("canvas");c2.width=k.width;c2.height=h0+200;const y2=c2.getContext("2d");y2.drawImage(k,0,0);y2.font=`500 36px "Barlow",system-ui,sans-serif`;y2.fillStyle=ink;if(o.shadow){y2.shadowColor="rgba(0,0,0,.5)";y2.shadowBlur=14;}wrapLines(y2,s.notes,BW,3).forEach((l,j)=>y2.fillText(l,ox,h0+20+j*48));return finishPoster(s,o,trimCanvas(c2));}
+    if(o.notes&&s.notes){const h0=k.height;const c2=document.createElement("canvas");c2.width=k.width;c2.height=h0+200;const y2=c2.getContext("2d");y2.drawImage(k,0,0);y2.font=`500 36px "Barlow",system-ui,sans-serif`;y2.fillStyle=ink;if(o.shadow){y2.shadowColor="rgba(0,0,0,.5)";y2.shadowBlur=14;}wrapLines(y2,s.notes,BW,3).forEach((l,j)=>y2.fillText(l,ox,h0+20+j*48));return p3Compose(s,o,trimCanvas(c2));}
   }else{ // billboard: each stat set to the full measure, one line each
     const by=Object.fromEntries(allStats(s).map(z=>[z.k,z])),st=o.stats.map(q=>by[q]).filter(Boolean).slice(0,4);
     const lines=st.map(z=>z.k==="time"?durCaps(s.dur):z.v.replace(/\s*\/\s*/,"/").toUpperCase());const MW=920;k.width=MW+160;
@@ -3875,7 +3931,7 @@ async function drawPoster3(s,o){
     rows.forEach((r,j)=>{y+=r.sz*.86;x.save();shadowOn();x.font=A(r.sz);x.textAlign="left";const w=x.measureText(r.t).width;x.translate(80,y);x.scale(Math.min(MW/w,1.3),1);x.fillStyle=j===rows.length-1?acc:ink;x.fillText(r.t,0,0);x.restore();y+=r.sz*.04;});
     x.save();shadowOn();x.font=capF;x.fillStyle=ink;wrapLines(x,cap,MW,3).forEach((l,j)=>x.fillText(l,80,y+90+j*52));x.restore();
   }
-  return finishPoster(s,o,trimCanvas(k));
+  return p3Compose(s,o,trimCanvas(k));
 }
 function trimCanvas(src){const d=src.getContext("2d").getImageData(0,0,src.width,src.height).data;let t=src.height,b=0,l=src.width,r=0;
   for(let yy=0;yy<src.height;yy+=2)for(let xx=0;xx<src.width;xx+=2){if(d[(yy*src.width+xx)*4+3]>6){if(yy<t)t=yy;if(yy>b)b=yy;if(xx<l)l=xx;if(xx>r)r=xx;}}
@@ -3939,6 +3995,10 @@ function openShare(s){
   const hasRoute=!!(s.track&&s.track.length>1);
   const o={layout:"stack",size:"fit",color:"#FFFFFF",font:"sport",align:"center",bg:"none",title:true,date:true,place:false,route:hasRoute,trophies:false,level:false,shadow:false,outline:false,rcolor:"same",sends:s.type==="climb"&&sendGroups(s).length>0,mus:s.type==="lift"&&!!(s.ex&&s.ex.length),stats:defaultStats(s),
     style:"classic",head:"day",accent:"#E8323C",day:true,splits:true,bw:true,grain:true,motion:false,upimg:null,logo:"none",lcol:"volt",lpos:"bc",accOn:"none"};let motionSet=false;
+  /* remember the look you last used (not the stats, which depend on the activity) */
+  const SPK="workouts-share-look-v1",LOOK=["style","layout","size","color","font","align","bg","shadow","outline","accent","accOn","logo","lcol","lpos","head","grain","bw","motion","rcolor","trophies","level"];
+  try{const sv=JSON.parse(localStorage.getItem(SPK)||"{}");for(const k of LOOK)if(sv[k]!=null)o[k]=sv[k];if(o.bg==="photo"&&!s.photo)o.bg="dark";if(o.style==="classic"&&o.size==="poster")o.size="fit";}catch(e){}
+  const saveLook=()=>{try{const sv={};for(const k of LOOK)sv[k]=o[k];localStorage.setItem(SPK,JSON.stringify(sv));}catch(e){}};
   const sameDay=live().filter(z=>z.date===s.date).length>1,canSplit=!!trackSplits(s);
   const accents=[["#E8323C","Red"],["#CDF54A","Volt"],[STRAVA,"Strava orange"],["#FFFFFF","White"],[TYPE_HEX[s.type],"Activity color"]];
   let blob=null,busy=false,again=false;
@@ -3951,7 +4011,7 @@ function openShare(s){
     <div class="preview" id="pv"><span style="color:#fff">Drawing…</span></div>
     <div class="row"><button class="btn primary" id="ssave">Save image</button><button class="btn" id="scopy">Copy image</button></div>
     <p class="hint" id="shint">You can also press and hold the image above and choose "Save to Photos".</p>
-    <div class="opts" style="--c:#F5F5F7;--ct:#000" id="sopts" data-style="classic">
+    <div class="opts" style="--c:#F5F5F7;--ct:#000" id="sopts" data-style="${o.style}" data-logo="${o.logo}" data-bg="${o.bg}">
       <div class="plabel">Style</div>${segH("o-style","style",[["classic","Classic"],["week","Weekday"],["splits","Splits"]])}${segH("o-style2","style",[["tick","Ticked"],["bib","Bib"],["bill","Billboard"]])}
       <div class="oc"><div class="plabel">Layout</div>${segH("o-layout","layout",[["stack","Stacked"],["list","List"],["row","Row"],["grid","Grid"],["hero","Big"]])}</div>
       <div class="op"><div class="hdonly"><div class="plabel">Headline</div>${segH("o-head","head",[["day","Weekday"],["title","Title"],["type","Activity"]])}</div>
@@ -3960,7 +4020,7 @@ function openShare(s){
       <div class="oc"><div class="plabel">Accent on</div>${segH("o-acc","accOn",[["none","Nothing"],["title","Title"],["hero","First stat"],["values","All stats"]])}</div>
       <div class="plabel">Size</div>${segH("o-size","size",[["fit","Fit to content"],["story","Story 9:16"],["poster","Poster 2:3"],["square","Square"]])}
       <div class="plabel">Stats to show (tap to add or remove, in order)</div><div class="tchips" id="o-stats">${allStats(s).map(st=>`<button class="tchip" data-k="${st.k}" aria-pressed="${o.stats.includes(st.k)}">${st.l}</button>`).join("")}</div>
-      <div class="plabel">Show</div><div class="tchips" id="o-tog">${toggles.map(([k,t])=>`<button class="tchip" data-t="${k}" aria-pressed="${o[k]}">${t}</button>`).join("")}</div>
+      <div class="plabel">Show</div><div class="tchips" id="o-tog">${toggles.map(([k,t])=>`<button class="tchip${k==="outline"?" conly":""}" data-t="${k}" aria-pressed="${o[k]}">${t}</button>`).join("")}</div>
       <div class="plabel">Text color</div><div class="swrow" id="o-color">${swatches.map(h=>`<button class="sw" style="--sw:${h}" data-v="${h}" aria-label="${swName(h)}" title="${swName(h)}" aria-pressed="${o.color===h}"></button>`).join("")}</div>
       ${hasRoute||(s.type==="lift"&&s.ex&&s.ex.length)?`<div class="plabel">${hasRoute?"Route color":"Highlight color"}</div><div class="swrow" id="o-rcolor"><button class="sw sw-same" data-v="same" aria-label="Same as text" title="Same as text" aria-pressed="${o.rcolor==="same"}">=</button>${swatches.map(h=>`<button class="sw" style="--sw:${h}" data-v="${h}" aria-label="${swName(h)}" title="${swName(h)}" aria-pressed="${o.rcolor===h}"></button>`).join("")}</div>`:""}
       <div class="oc"><div class="plabel">Font</div>${segH("o-font","font",[["sport","Sport"],["clean","Clean"],["classic","Classic"],["mono","Mono"]])}
@@ -3973,7 +4033,7 @@ function openShare(s){
     </div>
     <div class="row" style="margin-top:16px"><button class="btn" id="sback">Back</button></div>`);
   const redraw=async()=>{
-    if(busy){again=true;return;}busy=true;
+    if(busy){again=true;return;}busy=true;if($("sopts"))$("sopts").dataset.bg=o.bg;saveLook();
     const c=o.style==="classic"?await drawShare(s,o):await drawPoster(s,o);
     const dk=h=>{const n=parseInt(h.slice(1),16);return ((n>>16)*0.299+((n>>8)&255)*0.587+(n&255)*0.114)<128;};
     const light=o.bg==="none"&&dk(o.color)&&(!o.route||!hasRoute||o.rcolor==="same"||dk(o.rcolor));
@@ -4778,8 +4838,11 @@ function openSendShare(s,i,back){
   const tg=[["shadow","Shadow"],["outline","Outline"],["tries","Tries"],...(f.name?[["name","Problem name"]]:[]),...(f.style?[["style","Style and holds"]]:[]),...(f.gym?[["gym","Gym"]]:[]),["date","Date"],...(f.high?[["high","New high point"]]:[])];
   const slug=(f.p.gl+"-"+f.result).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
   o.logo="none";o.lcol="volt";o.lpos="bc";
+  const SSK="workouts-send-look-v1",SLOOK=["layout","color","font","bg","shadow","outline","logo","lcol","lpos","date","gym","tries"];
+  try{const sv=JSON.parse(localStorage.getItem(SSK)||"{}");for(const k of SLOOK)if(sv[k]!=null)o[k]=sv[k];if(sv.accent==="text")o.accent="text";}catch(e){}
+  const saveSL=()=>{try{const sv={accent:o.accent};for(const k of SLOOK)sv[k]=o[k];localStorage.setItem(SSK,JSON.stringify(sv));}catch(e){}};
   segs.push({label:"App logo",key:"logo",opts:[["none","None"],["badge","Badge"],["mark","Mark"],["word","Wordmark"]]},{label:"Logo color",key:"lcol",opts:[["volt","Volt"],["white","White"],["black","Black"],["text","Text"]]},{label:"Logo position",key:"lpos",opts:[["tl","Top left"],["tc","Top"],["tr","Top right"],["bl","Bottom left"],["bc","Bottom"],["br","Bottom right"]]});
-  imageSheet("Share this send","A transparent sticker for your send video. Drop it into an empty corner of the frame in your editor or Instagram.",async()=>{const lg=o.logo&&o.logo!=="none";return withLogo(await drawSendCard(s,i,lg&&o.bg==="glass"?{...o,bg:"none"}:o),o,f.p.gc||"#FF5C8A");},slug+".png",segs,tg,o,back||(()=>openDetail(s)));
+  imageSheet("Share this send","A transparent sticker for your send video. Drop it into an empty corner of the frame in your editor or Instagram.",async()=>{saveSL();const lg=o.logo&&o.logo!=="none";return withLogo(await drawSendCard(s,i,lg&&o.bg==="glass"?{...o,bg:"none"}:o),o,f.p.gc||"#FF5C8A");},slug+".png",segs,tg,o,back||(()=>openDetail(s)));
 }
 
 function openPRShare(s){
