@@ -3026,7 +3026,138 @@ const RECIPES2=[
   i:[[2,"","eggs, hard-boiled"],[1,"","banana (lakatan or saba)"]],
   s:["Boil eggs 10 minutes, cool in water and peel. Good pre- or post-run when you're on the go."]},
 ];
-RECIPES.push(...RECIPES2);
+/* Japanese: donburi, teishoku sets, noodles, soups, breakfasts and snacks */
+const RECIPES3=[
+ {id:"gyudon",n:"Gyudon (beef bowl)",cu:"Japanese",d:1,t:20,sv:2,m:["lunch","dinner"],prep:1,fl:["beef"],al:["soy"],k:590,p:34,c:74,f:18,pr:120,
+  i:[[300,"g","beef, shabu-shabu thin slices"],[1,"","onion, sliced"],[200,"ml","dashi"],[3,"tbsp","soy sauce"],[2,"tbsp","mirin"],[1,"tbsp","sugar"],[1,"tsp","ginger, grated"],[400,"g","cooked Japanese rice"],[1,"tbsp","pickled ginger (beni shoga)"]],
+  s:["Simmer dashi, soy, mirin, sugar and ginger with the onion for 5 minutes.","Add the beef, separate the slices, and cook 2 minutes, skimming.","Spoon over rice with some of the sauce and top with pickled ginger."]},
+ {id:"katsudon",n:"Katsudon",cu:"Japanese",d:2,t:35,sv:2,m:["lunch","dinner"],prep:0,fl:["pork"],al:["gluten","egg","soy"],k:670,p:42,c:80,f:20,pr:115,
+  i:[[2,"","lean pork loin cutlets (120 g each)"],[1,"","egg, for coating"],[50,"g","panko"],[1,"","onion"],[150,"ml","dashi"],[2,"tbsp","soy sauce"],[1,"tbsp","mirin"],[2,"","eggs, beaten"],[400,"g","cooked Japanese rice"]],
+  s:["Coat pork in flour, egg and panko, then air-fry or bake at 220°C for 14 minutes and slice.","Simmer dashi, soy, mirin and onion in a small pan 3 minutes.","Lay in the katsu, pour the beaten egg around it, cover and cook 1 minute. Slide onto rice."]},
+ {id:"soboro",n:"Soboro don (chicken and egg)",cu:"Japanese",d:1,t:20,sv:2,m:["lunch","dinner"],prep:1,fl:[],al:["egg","soy"],k:570,p:40,c:70,f:14,pr:70,
+  i:[[300,"g","ground chicken"],[2,"tbsp","soy sauce"],[1,"tbsp","mirin"],[1,"tsp","sugar"],[1,"tsp","ginger, grated"],[3,"","eggs"],[100,"g","green peas or snow peas"],[400,"g","cooked Japanese rice"]],
+  s:["Cook chicken with soy, mirin, sugar and ginger, stirring into fine crumbles.","Scramble the eggs into small curds with a pinch of sugar.","Blanch the peas. Arrange chicken, egg and peas in stripes over rice."]},
+ {id:"tkg",n:"Tamago kake gohan",cu:"Japanese",d:1,t:5,sv:1,m:["breakfast"],prep:0,fl:["veg"],al:["egg","soy","sesame"],k:400,p:16,c:58,f:11,pr:30,
+  i:[[250,"g","hot cooked Japanese rice"],[2,"","very fresh eggs"],[2,"tsp","soy sauce"],[1,"tsp","furikake"],[1,"sheet","nori"]],
+  s:["Make a well in the hot rice and crack in the eggs.","Add soy sauce and whip with chopsticks until creamy. Top with furikake and nori. Use the freshest eggs you can get, or soft-poach them if you prefer."]},
+ {id:"salmondon",n:"Salmon sashimi bowl",cu:"Japanese",d:1,t:15,sv:2,m:["lunch","dinner"],prep:0,fl:["pesc"],al:["fish","soy","sesame"],k:550,p:34,c:68,f:16,pr:210,
+  i:[[250,"g","sashimi-grade salmon"],[400,"g","sushi rice (seasoned)"],[1,"","cucumber"],[1,"","avocado (small)"],[2,"tbsp","soy sauce"],[1,"tsp","wasabi"],[1,"tsp","sesame seeds"],[1,"sheet","nori"]],
+  s:["Season warm rice with a splash of rice vinegar and sugar if it isn't sushi rice already.","Slice salmon, cucumber and avocado.","Arrange over rice and serve with soy and wasabi. Buy salmon labelled for raw eating, and eat it the same day."]},
+ {id:"karaage",n:"Air-fryer chicken karaage",cu:"Japanese",d:2,t:40,sv:3,m:["lunch","dinner"],prep:1,fl:[],al:["gluten","soy"],k:580,p:42,c:66,f:16,pr:75,
+  i:[[600,"g","chicken thigh, skinless, bite-size"],[3,"tbsp","soy sauce"],[1,"tbsp","sake or mirin"],[1,"tsp","ginger, grated"],[2,"clove","garlic"],[50,"g","potato starch or cornstarch"],[450,"g","cooked Japanese rice"],[2,"cup","shredded cabbage"],[1,"","lemon"]],
+  s:["Marinate chicken in soy, sake, ginger and garlic for 20 minutes.","Toss in starch, spray with oil, and air-fry at 200°C for 14 minutes, shaking halfway.","Serve with rice, cabbage and lemon."]},
+ {id:"tonkatsu",n:"Baked tonkatsu set",cu:"Japanese",d:2,t:35,sv:2,m:["lunch","dinner"],prep:0,fl:["pork"],al:["gluten","egg"],k:590,p:40,c:70,f:17,pr:110,
+  i:[[2,"","lean pork loin cutlets (130 g each)"],[2,"tbsp","flour"],[1,"","egg"],[60,"g","panko, toasted"],[3,"tbsp","tonkatsu sauce"],[2,"cup","shredded cabbage"],[400,"g","cooked Japanese rice"]],
+  s:["Toast panko in a dry pan until golden so it browns in the oven.","Coat pork in flour, egg and panko. Bake at 220°C for 15 minutes or air-fry 12.","Slice and serve with cabbage, rice and tonkatsu sauce."]},
+ {id:"nanban",n:"Chicken nanban",cu:"Japanese",d:2,t:35,sv:2,m:["lunch","dinner"],prep:0,fl:[],al:["gluten","egg","soy"],k:630,p:42,c:66,f:22,pr:85,
+  i:[[400,"g","chicken thigh, skinless"],[1,"","egg"],[2,"tbsp","flour"],[2,"tbsp","soy sauce"],[2,"tbsp","rice vinegar"],[1,"tbsp","sugar"],[2,"","boiled eggs, chopped"],[3,"tbsp","light mayonnaise"],[400,"g","cooked Japanese rice"]],
+  s:["Dust chicken in flour, dip in egg, and pan-fry 5 minutes a side.","Simmer soy, vinegar and sugar 1 minute and toss the chicken in it.","Mix boiled egg, mayo and pickles for tartar. Slice chicken over rice and top with the tartar."]},
+ {id:"saba",n:"Saba shioyaki set",cu:"Japanese",d:1,t:20,sv:2,m:["breakfast","lunch","dinner"],prep:0,fl:["pesc"],al:["fish","soy"],k:590,p:34,c:60,f:24,pr:110,
+  i:[[2,"","salted mackerel fillets (saba)"],[400,"g","cooked Japanese rice"],[100,"g","daikon, grated"],[1,"","lemon"],[2,"tbsp","miso"],[100,"g","tofu"],[1,"tbsp","wakame"]],
+  s:["Grill or broil the mackerel skin side up for 8 to 10 minutes until blistered.","Make a quick miso soup with the tofu and wakame.","Serve with rice, grated daikon and lemon."]},
+ {id:"jpbreakfast",n:"Japanese breakfast set",cu:"Japanese",d:2,t:25,sv:2,m:["breakfast"],prep:0,fl:["pesc"],al:["fish","egg","soy"],k:560,p:38,c:62,f:18,pr:150,
+  i:[[2,"","salmon fillets (100 g each), lightly salted"],[3,"","eggs"],[1,"tsp","sugar"],[1,"tsp","soy sauce"],[400,"g","cooked Japanese rice"],[2,"tbsp","miso"],[100,"g","tofu"],[1,"","small cucumber, pickled"]],
+  s:["Salt the salmon and grill 8 minutes.","Make tamagoyaki: whisk eggs, sugar and soy, cook in thin layers, rolling each one up.","Serve with rice, miso soup and pickles."]},
+ {id:"nikujaga",n:"Nikujaga",cu:"Japanese",d:1,t:35,sv:4,m:["lunch","dinner"],prep:1,fl:["beef"],al:["soy"],k:450,p:26,c:56,f:14,pr:85,
+  i:[[300,"g","beef, thin slices"],[4,"","potatoes"],[1,"","carrot"],[1,"","onion"],[100,"g","shirataki or glass noodles"],[400,"ml","dashi"],[4,"tbsp","soy sauce"],[3,"tbsp","mirin"],[1,"tbsp","sugar"]],
+  s:["Brown the beef briefly, add onion, potatoes and carrot.","Add dashi, soy, mirin and sugar, cover with a lid or foil, and simmer 15 minutes.","Add the noodles for 5 minutes. Tastes even better the next day."]},
+ {id:"chikuzenni",n:"Chikuzenni with rice",cu:"Japanese",d:2,t:45,sv:4,m:["lunch","dinner"],prep:1,fl:[],al:["soy"],k:520,p:30,c:78,f:10,pr:70,
+  i:[[500,"g","chicken thigh, skinless"],[1,"","carrot"],[150,"g","lotus root or radish"],[150,"g","konnyaku"],[6,"","dried shiitake, soaked"],[300,"ml","dashi"],[3,"tbsp","soy sauce"],[2,"tbsp","mirin"],[600,"g","cooked Japanese rice"]],
+  s:["Brown the chicken.","Add the vegetables, konnyaku and mushrooms with dashi, soy and mirin.","Simmer covered 20 minutes, then uncovered until the liquid is glossy. Serve with rice."]},
+ {id:"hambagu",n:"Hambagu (hamburg steak)",cu:"Japanese",d:2,t:35,sv:3,m:["lunch","dinner"],prep:1,fl:["beef"],al:["gluten","egg","dairy","soy"],k:620,p:38,c:62,f:24,pr:105,
+  i:[[450,"g","lean ground beef"],[1,"","onion, minced and sautéed"],[30,"g","panko soaked in 3 tbsp milk"],[1,"","egg"],[3,"tbsp","ketchup"],[2,"tbsp","tonkatsu or Worcestershire sauce"],[450,"g","cooked Japanese rice"],[2,"cup","salad greens"]],
+  s:["Mix beef, onion, soaked panko, egg, salt and pepper and shape 3 thick patties with a dent in the middle.","Sear 3 minutes a side, add 60 ml water, cover and steam 6 minutes.","Stir ketchup and sauce into the pan juices. Serve over the patties with rice and salad."]},
+ {id:"omurice",n:"Chicken omurice",cu:"Japanese",d:2,t:25,sv:2,m:["lunch","dinner"],prep:0,fl:[],al:["egg"],k:590,p:34,c:74,f:18,pr:70,
+  i:[[250,"g","chicken thigh, diced"],[1,"","onion"],[400,"g","cooked rice"],[4,"tbsp","ketchup"],[4,"","eggs"],[100,"g","peas and carrots"],[1,"tsp","butter"]],
+  s:["Fry chicken and onion, add the vegetables, rice and ketchup, and toss until hot.","Make a soft, just-set omelette of 2 eggs per person.","Lay it over a mound of rice and finish with a line of ketchup."]},
+ {id:"yakisoba",n:"Chicken yakisoba",cu:"Japanese",ty:"noodles",d:1,t:20,sv:2,m:["lunch","dinner"],prep:1,fl:[],al:["gluten","soy"],k:560,p:32,c:76,f:14,pr:75,
+  i:[[300,"g","yakisoba or fresh ramen noodles"],[250,"g","chicken thigh, thin slices"],[2,"cup","cabbage"],[1,"","carrot"],[1,"","onion"],[4,"tbsp","yakisoba or Worcestershire sauce"],[1,"tbsp","soy sauce"],[1,"tsp","aonori and pickled ginger"]],
+  s:["Stir-fry chicken, then the vegetables.","Add loosened noodles and a splash of water and toss 2 minutes.","Add the sauces and toss until coated. Top with aonori and pickled ginger."]},
+ {id:"yakiudon",n:"Yaki udon",cu:"Japanese",ty:"noodles",d:1,t:20,sv:2,m:["lunch","dinner"],prep:0,fl:[],al:["gluten","soy"],k:540,p:30,c:78,f:12,pr:75,
+  i:[[2,"pack","frozen udon (200 g each)"],[200,"g","chicken or pork, thin slices"],[150,"g","mushrooms"],[2,"cup","cabbage"],[2,"","spring onions"],[3,"tbsp","soy sauce"],[1,"tbsp","mirin"],[1,"tsp","katsuobushi (optional)"]],
+  s:["Microwave or blanch the udon to loosen.","Stir-fry meat, then mushrooms and cabbage.","Add udon, soy and mirin and toss 2 minutes. Top with spring onions and katsuobushi."]},
+ {id:"kitsune",n:"Kitsune udon",cu:"Japanese",ty:"soup",d:1,t:15,sv:2,m:["lunch","dinner"],prep:0,fl:["veg","vegan"],al:["gluten","soy"],k:480,p:18,c:80,f:10,pr:60,
+  i:[[2,"pack","frozen udon (200 g each)"],[4,"","inari age (seasoned fried tofu pouches)"],[800,"ml","kombu dashi"],[3,"tbsp","soy sauce (usukuchi if you have it)"],[2,"tbsp","mirin"],[2,"","spring onions"],[0,"","shichimi pepper"]],
+  s:["Heat dashi, soy and mirin.","Cook the udon and divide into bowls.","Pour over the broth, lay the tofu pouches on top, and finish with spring onions and shichimi."]},
+ {id:"nikuudon",n:"Niku udon",cu:"Japanese",ty:"soup",d:1,t:20,sv:2,m:["lunch","dinner"],prep:0,fl:["beef"],al:["gluten","soy","fish"],k:570,p:32,c:80,f:14,pr:110,
+  i:[[2,"pack","frozen udon (200 g each)"],[200,"g","beef, thin slices"],[1,"","onion"],[800,"ml","dashi"],[4,"tbsp","soy sauce"],[2,"tbsp","mirin"],[1,"tbsp","sugar"],[2,"","spring onions"]],
+  s:["Simmer the beef and onion with 2 tbsp soy, 1 tbsp mirin and the sugar for 5 minutes.","Heat the dashi with the rest of the soy and mirin.","Pour broth over cooked udon and top with the sweet beef and spring onions."]},
+ {id:"tantanmen",n:"Tantanmen",cu:"Japanese",ty:"soup",d:2,t:30,sv:2,m:["lunch","dinner"],prep:0,fl:["pork"],al:["gluten","soy","sesame"],k:640,p:36,c:70,f:24,pr:120,
+  i:[[200,"g","lean ground pork"],[2,"pack","ramen noodles"],[3,"tbsp","sesame paste or tahini"],[1,"tbsp","doubanjiang"],[800,"ml","chicken stock"],[200,"ml","unsweetened soy milk"],[2,"tbsp","soy sauce"],[2,"","bok choy"],[1,"tsp","chili oil"]],
+  s:["Fry the pork with doubanjiang until browned.","Whisk sesame paste and soy in the bowls, then add hot stock and soy milk.","Add cooked noodles and blanched bok choy, top with the pork and chili oil."]},
+ {id:"tonjiru",n:"Tonjiru (pork miso soup)",cu:"Japanese",ty:"soup",d:1,t:30,sv:4,m:["lunch","dinner"],prep:1,fl:["pork"],al:["soy"],k:300,p:22,c:26,f:12,pr:55,
+  i:[[250,"g","pork, thin slices"],[1,"","carrot"],[150,"g","daikon"],[1,"","potato or taro"],[150,"g","tofu"],[1,"L","dashi"],[4,"tbsp","miso"],[2,"","spring onions"]],
+  s:["Fry the pork briefly, add the root vegetables and dashi and simmer 15 minutes.","Add tofu, then take off the heat and stir in the miso.","Serve with rice for a full meal."]},
+ {id:"kenchin",n:"Kenchinjiru",cu:"Japanese",ty:"soup",d:1,t:30,sv:4,m:["side"],prep:1,fl:["veg","vegan"],al:["soy","sesame"],k:190,p:12,c:22,f:6,pr:35,
+  i:[[300,"g","firm tofu"],[1,"","carrot"],[150,"g","daikon"],[100,"g","konnyaku"],[4,"","shiitake"],[1,"L","kombu dashi"],[3,"tbsp","soy sauce"],[1,"tsp","sesame oil"]],
+  s:["Fry the vegetables in sesame oil 3 minutes.","Add dashi and simmer 15 minutes, then crumble in the tofu and season with soy."]},
+ {id:"zosui",n:"Chicken and egg zosui",cu:"Japanese",ty:"soup",d:1,t:20,sv:2,m:["breakfast","lunch","dinner"],prep:0,fl:[],al:["egg","soy"],k:380,p:28,c:48,f:8,pr:45,
+  i:[[300,"g","cooked rice"],[200,"g","chicken breast, small pieces"],[700,"ml","dashi"],[2,"tbsp","soy sauce"],[2,"","eggs, beaten"],[1,"cup","spinach"],[2,"","spring onions"]],
+  s:["Simmer chicken in the dashi with soy for 6 minutes.","Add rinsed rice and spinach for 3 minutes.","Drizzle in the eggs, cover for 30 seconds, and top with spring onions. Easy on the stomach after a long run."]},
+ {id:"ochazuke",n:"Salmon ochazuke",cu:"Japanese",ty:"soup",d:1,t:15,sv:2,m:["breakfast","lunch"],prep:0,fl:["pesc"],al:["fish","soy","sesame"],k:410,p:24,c:58,f:9,pr:70,
+  i:[[150,"g","salted salmon"],[400,"g","cooked Japanese rice"],[600,"ml","hot green tea or dashi"],[1,"sheet","nori, in strips"],[1,"tsp","sesame seeds"],[1,"tsp","wasabi"]],
+  s:["Grill the salmon and flake it.","Top bowls of rice with salmon, nori and sesame.","Pour over hot tea or dashi and add a little wasabi."]},
+ {id:"onigiri",n:"Tuna mayo onigiri",cu:"Japanese",d:1,t:15,sv:2,m:["snack","lunch"],prep:1,fl:["pesc"],al:["fish","egg"],k:430,p:20,c:64,f:10,pr:45,
+  i:[[400,"g","cooked Japanese rice"],[1,"can","tuna, drained"],[2,"tbsp","light mayonnaise"],[1,"tsp","soy sauce"],[2,"sheet","nori"]],
+  s:["Mix tuna, mayo and soy.","With wet salted hands, press a handful of rice around a spoon of filling into a triangle.","Wrap with nori. Makes 4. Great for long hikes and runs."]},
+ {id:"tamagoyaki",n:"Tamagoyaki",cu:"Japanese",d:2,t:15,sv:2,m:["side"],prep:1,fl:["veg"],al:["egg","soy"],k:160,p:13,c:4,f:10,pr:25,
+  i:[[4,"","eggs"],[2,"tbsp","dashi or water"],[1,"tsp","sugar"],[1,"tsp","soy sauce"],[1,"tsp","cooking oil"]],
+  s:["Whisk eggs, dashi, sugar and soy.","In an oiled pan, pour a thin layer, roll it to one side when just set, then add another layer underneath and roll again.","Repeat, then rest and slice. Keeps 3 days for bentos."]},
+ {id:"nattorice",n:"Natto rice with egg",cu:"Japanese",d:1,t:5,sv:1,m:["breakfast"],prep:0,fl:["veg"],al:["soy","egg"],k:440,p:22,c:62,f:12,pr:55,
+  i:[[1,"pack","natto with sauce"],[250,"g","hot cooked Japanese rice"],[1,"","egg (raw yolk or soft-boiled)"],[1,"","spring onion"],[1,"tsp","mustard"]],
+  s:["Stir the natto with its sauce and mustard until stringy.","Pile on the rice with the egg and spring onion."]},
+ {id:"zarusoba",n:"Zaru soba with tofu",cu:"Japanese",ty:"noodles",d:1,t:15,sv:2,m:["lunch","dinner"],prep:0,fl:["pesc"],al:["gluten","soy","fish"],k:480,p:24,c:78,f:8,pr:70,
+  i:[[200,"g","dry soba"],[200,"g","silken tofu"],[150,"ml","mentsuyu (concentrate)"],[300,"ml","cold water"],[2,"","spring onions"],[1,"tsp","wasabi"],[1,"sheet","nori"]],
+  s:["Cook soba, then rinse well under cold water.","Dilute the mentsuyu with water for dipping.","Serve noodles on a plate with nori, cold tofu, spring onions and wasabi. Dip as you eat. Good on hot days."]},
+ {id:"hiyashichuka",n:"Hiyashi chuka",cu:"Japanese",ty:"noodles",d:2,t:25,sv:2,m:["lunch","dinner"],prep:0,fl:[],al:["gluten","egg","soy","sesame"],k:550,p:34,c:72,f:14,pr:85,
+  i:[[2,"pack","ramen noodles"],[200,"g","chicken breast, poached and shredded"],[2,"","eggs, thin omelette in strips"],[1,"","cucumber"],[2,"","tomatoes"],[3,"tbsp","soy sauce"],[3,"tbsp","rice vinegar"],[1,"tbsp","sugar"],[1,"tsp","sesame oil"]],
+  s:["Cook noodles, rinse cold and drain well.","Whisk soy, vinegar, sugar and sesame oil for the dressing.","Arrange chicken, egg, cucumber and tomato over the noodles and pour over the dressing."]},
+ {id:"sukiyaki",n:"Sukiyaki",cu:"Japanese",d:2,t:30,sv:3,m:["dinner"],prep:0,fl:["beef"],al:["soy","egg"],k:690,p:36,c:88,f:22,pr:160,
+  i:[[400,"g","beef, thin slices"],[300,"g","firm tofu"],[1,"","napa cabbage (¼)"],[150,"g","enoki or shiitake"],[1,"pack","shirataki"],[100,"ml","soy sauce"],[100,"ml","mirin"],[2,"tbsp","sugar"],[450,"g","cooked Japanese rice"]],
+  s:["Simmer soy, mirin, sugar and 150 ml water as the sauce.","Sear some beef in a wide pan, add the sauce, then tofu, vegetables and noodles.","Cook at the table, adding beef as you go. Dip in beaten egg if you like. Serve with rice."]},
+ {id:"shabu",n:"Pork shabu-shabu with ponzu",cu:"Japanese",d:2,t:30,sv:3,m:["dinner"],prep:0,fl:["pork"],al:["soy","sesame"],k:500,p:34,c:60,f:14,pr:120,
+  i:[[400,"g","pork loin, shabu-shabu slices"],[1,"","napa cabbage (¼)"],[150,"g","enoki"],[300,"g","tofu"],[1,"","carrot"],[1,"piece","kombu"],[100,"ml","ponzu"],[2,"tbsp","sesame dipping sauce"],[450,"g","cooked Japanese rice"]],
+  s:["Soak kombu in 1.5 L water for 20 minutes, then bring it just to a simmer.","Cook vegetables and tofu in the broth, then swish the pork slices until just cooked.","Dip in ponzu or sesame sauce. Serve with rice."]},
+ {id:"jpbeefcurry",n:"Japanese beef curry",cu:"Japanese",d:1,t:50,sv:5,m:["lunch","dinner"],prep:1,fl:["beef"],al:["gluten"],k:640,p:30,c:84,f:20,pr:90,
+  i:[[500,"g","beef chuck, cubed"],[2,"","onions"],[2,"","carrots"],[3,"","potatoes"],[1,"box","Japanese curry roux (half box, about 100 g)"],[1,"","apple, grated"],[750,"g","cooked Japanese rice"]],
+  s:["Brown beef and onions well.","Add 900 ml water, carrots and grated apple and simmer 25 minutes, then potatoes for 12.","Turn off the heat, melt in the roux, then simmer 5 minutes. Freezes well."]},
+ {id:"tofusteak",n:"Teriyaki tofu steak bowl",cu:"Japanese",d:1,t:20,sv:2,m:["lunch","dinner"],prep:1,fl:["veg","vegan"],al:["soy","sesame"],k:500,p:24,c:66,f:16,pr:55,
+  i:[[400,"g","extra-firm tofu, pressed"],[2,"tbsp","cornstarch"],[3,"tbsp","soy sauce"],[2,"tbsp","mirin"],[1,"tbsp","sugar"],[400,"g","cooked Japanese rice"],[2,"cup","broccoli"],[1,"tsp","sesame seeds"]],
+  s:["Slice tofu into steaks, dust with cornstarch, and pan-fry until crisp, 4 minutes a side.","Add soy, mirin and sugar and reduce to a glaze.","Serve over rice with broccoli and sesame."]},
+ {id:"nasudengaku",n:"Nasu dengaku with edamame rice",cu:"Japanese",d:1,t:25,sv:2,m:["lunch","dinner"],prep:0,fl:["veg","vegan"],al:["soy","sesame"],k:470,p:16,c:70,f:14,pr:45,
+  i:[[2,"","eggplants, halved"],[3,"tbsp","miso"],[1,"tbsp","mirin"],[1,"tbsp","sugar"],[300,"g","cooked Japanese rice"],[150,"g","shelled edamame"],[1,"tsp","sesame seeds"]],
+  s:["Score the eggplant, brush with oil, and roast cut side down at 220°C for 15 minutes.","Mix miso, mirin and sugar, spread on the eggplant, and broil 3 minutes.","Stir edamame through the rice and serve together."]},
+ {id:"sabamiso",n:"Saba misoni",cu:"Japanese",d:2,t:25,sv:2,m:["lunch","dinner"],prep:1,fl:["pesc"],al:["fish","soy"],k:550,p:30,c:58,f:22,pr:95,
+  i:[[2,"","mackerel fillets"],[3,"tbsp","miso"],[2,"tbsp","mirin"],[1,"tbsp","sugar"],[1,"thumb","ginger, sliced"],[200,"ml","water or dashi"],[400,"g","cooked Japanese rice"]],
+  s:["Pour boiling water over the fish to clean it, then pat dry.","Simmer water, mirin, sugar and ginger, lay in the fish, and cover with a small lid or foil for 8 minutes.","Stir in the miso and spoon it over for 3 more minutes. Serve with rice."]},
+ {id:"tamagosando",n:"Tamago sando",cu:"Japanese",d:1,t:15,sv:2,m:["snack","breakfast","lunch"],prep:0,fl:["veg"],al:["egg","gluten"],k:400,p:20,c:40,f:18,pr:50,
+  i:[[4,"","eggs, hard-boiled"],[2,"tbsp","Japanese mayonnaise"],[2,"tbsp","Greek yogurt"],[1,"tsp","sugar"],[4,"slice","milk bread (shokupan)"]],
+  s:["Mash eggs with mayo, yogurt, sugar, salt and pepper.","Spread thickly between the bread, cut off the crusts, and cut in half."]},
+ {id:"katsusando",n:"Chicken katsu sando",cu:"Japanese",d:2,t:30,sv:2,m:["lunch","snack"],prep:0,fl:[],al:["gluten","egg"],k:490,p:38,c:52,f:14,pr:80,
+  i:[[300,"g","chicken breast, butterflied"],[1,"","egg"],[40,"g","panko"],[4,"slice","milk bread (shokupan)"],[2,"tbsp","tonkatsu sauce"],[1,"cup","shredded cabbage"]],
+  s:["Coat chicken in egg and panko and bake or air-fry at 220°C for 14 minutes.","Brush with tonkatsu sauce and sandwich with cabbage.","Press for a minute, then cut."]},
+ {id:"edamame",n:"Edamame with sea salt",cu:"Japanese",d:1,t:8,sv:2,m:["snack","side"],prep:1,fl:["veg","vegan"],al:["soy"],k:200,p:17,c:14,f:9,pr:40,
+  i:[[300,"g","frozen edamame in pods"],[1,"tsp","flaky salt"],[0,"","chili flakes or garlic, optional"]],
+  s:["Boil 4 minutes, drain, and toss with salt."]},
+ {id:"gyoza",n:"Chicken and cabbage gyoza",cu:"Japanese",d:3,t:60,sv:3,m:["lunch","dinner"],prep:1,fl:[],al:["gluten","soy","sesame"],k:520,p:32,c:62,f:16,pr:70,
+  i:[[400,"g","ground chicken"],[2,"cup","cabbage, finely chopped and salted"],[2,"","spring onions"],[1,"tsp","ginger"],[1,"tbsp","soy sauce"],[1,"tsp","sesame oil"],[36,"","gyoza wrappers"],[2,"tbsp","rice vinegar and soy, to dip"]],
+  s:["Squeeze the salted cabbage dry and mix with chicken, spring onion, ginger, soy and sesame oil.","Fill and pleat the wrappers.","Fry flat side down until golden, add 80 ml water, cover and steam 6 minutes. Freeze extras raw."]},
+ {id:"okonomiyaki",n:"Chicken okonomiyaki",cu:"Japanese",d:3,t:30,sv:2,m:["lunch","dinner"],prep:0,fl:[],al:["gluten","egg"],k:510,p:30,c:58,f:18,pr:70,
+  i:[[100,"g","flour"],[120,"ml","dashi or water"],[2,"","eggs"],[3,"cup","cabbage, shredded"],[200,"g","chicken thigh, thin slices"],[2,"","spring onions"],[3,"tbsp","okonomi sauce"],[1,"tbsp","Japanese mayonnaise"]],
+  s:["Mix flour, dashi and eggs, then fold in the cabbage and spring onion.","Pour into a hot oiled pan, lay the chicken on top, and cook 5 minutes.","Flip carefully and cook 5 more. Top with okonomi sauce, a zigzag of mayo and aonori."]},
+ {id:"teridon",n:"Teriyaki chicken meal-prep bowls",cu:"Japanese",d:1,t:30,sv:4,m:["lunch","dinner"],prep:1,fl:[],al:["soy","sesame"],k:560,p:44,c:70,f:12,pr:70,
+  i:[[700,"g","chicken breast"],[4,"tbsp","soy sauce"],[3,"tbsp","mirin"],[1,"tbsp","honey"],[1,"tsp","ginger"],[600,"g","cooked Japanese rice"],[2,"cup","broccoli"],[1,"","carrot"],[1,"tsp","sesame seeds"]],
+  s:["Pan-cook the chicken 6 minutes a side.","Add soy, mirin, honey and ginger and reduce to a glaze, turning the chicken.","Slice and pack with rice and steamed vegetables. Keeps 4 days."]},
+ {id:"agedashi",n:"Agedashi tofu",cu:"Japanese",d:2,t:20,sv:2,m:["side"],prep:0,fl:["veg"],al:["soy","fish"],k:230,p:14,c:16,f:12,pr:40,
+  i:[[400,"g","silken or soft tofu"],[3,"tbsp","potato starch"],[200,"ml","dashi"],[2,"tbsp","soy sauce"],[1,"tbsp","mirin"],[50,"g","daikon, grated"],[1,"","spring onion"]],
+  s:["Pat tofu dry, cut into cubes, and dust with starch.","Shallow-fry until crisp.","Pour over the warm dashi broth and top with daikon and spring onion."]},
+ {id:"onigirazu",n:"Salmon onigirazu",cu:"Japanese",d:1,t:20,sv:2,m:["lunch","snack"],prep:1,fl:["pesc"],al:["fish","egg"],k:430,p:26,c:60,f:10,pr:90,
+  i:[[400,"g","cooked Japanese rice"],[150,"g","cooked salmon, flaked"],[2,"","eggs, thin omelette"],[1,"","cucumber"],[2,"sheet","nori"]],
+  s:["On a nori sheet, spread a square of rice, then layer salmon, egg and cucumber, then more rice.","Fold the corners of the nori over to seal, wrap in cling film and rest 5 minutes.","Cut in half through the film. Packs well."]},
+];
+RECIPES.push(...RECIPES2,...RECIPES3);
+const NOODLE_RX=/\b(ramen|udon|soba|pho|sotanghon|mami|noodles?|tantanmen|pancit|laksa|japchae|pad thai|jjamppong|batchoy|bihon|yakisoba|chuka)\b/i;
+const isNoodle=r=>r.ty==="noodles"||(NOODLE_RX.test(r.n)&&!/molo/i.test(r.n));
 for(const [id,t] of [["tunapasta","pasta"],["pestopasta","pasta"],["lasagnalite","pasta"],["sinigang","soup"],["tinola","soup"],["arrozcaldo","soup"]]){const r=RECIPES.find(x=>x.id===id);if(r)r.ty=t;}
 /* rough Metro Manila supermarket cost per serving, in pesos (late 2026) */
 const PRICE={adobo:56,sinigang:91,tinola:50,inasal:63,monggo:20,arrozcaldo:45,tapsilog:102,pinakbet:66,oats:120,eggmuffins:43,pancakes:118,chili:73,burritobowl:97,fajitas:130,teriyakisalmon:205,oyakodon:67,bibimbap:122,bulgogi:75,kraopao:80,greencurry:61,beefbroc:116,mapotofu:67,tikka:92,chana:59,dal:23,greekbowl:127,shakshuka:83,tunapasta:77,pestopasta:104,lasagnalite:128,salmonsheet:233,proteinshake:83,yogurtbowl:140,tofuscramble:80,turon:30};
@@ -3128,7 +3259,7 @@ let foodView={cu:"",diff:0,meal:"",q:"",prep:false,ty:"",lim:24};
 const mbar=(v,t,cls)=>{const pct=t?Math.min(100,v/t*100):0;return `<div class="nu-bar ${cls||""}"><i style="width:${pct.toFixed(1)}%"></i></div>`;};
 function renderFood(){
   const N=nutr(),today=keyOf(new Date());
-  if(!N.goal)return `<div class="ins nu-hero"><h3>Eat for your training</h3><p class="xpinfo">Daily calories and macros that follow your workouts, over 90 recipes from eleven cuisines you can scale, soups and jarred-sauce pastas included, a meal-prep planner with a shopping list, and a pantry that suggests what to cook.</p>
+  if(!N.goal)return `<div class="ins nu-hero"><h3>Eat for your training</h3><p class="xpinfo">Daily calories and macros that follow your workouts, over 130 recipes from eleven cuisines you can scale, with soups, noodles, jarred-sauce pastas and a deep Japanese shelf, a meal-prep planner with a shopping list, and a pantry that suggests what to cook.</p>
     <button class="btn primary" data-act="fd-setup" style="width:100%;margin-top:12px">Set up food goals</button>
     <p class="hint">Takes a minute. Uses your weight, height, age and sex from Settings.</p></div>`+recipeBrowser();
   const T=foodTargets(today),E=dayEaten(today),left=Math.round(T.kcal-E.k);
@@ -3166,11 +3297,11 @@ function renderFood(){
 }
 function recipeBrowser(){
   const N=nutr(),v=foodView,q=v.q.trim().toLowerCase();
-  const L=RECIPES.filter(r=>(!N.goal||recipeOK(r,{...N,maxDiff:3}))&&(!v.cu||r.cu===v.cu)&&(!v.diff||r.d===v.diff)&&(!v.meal||r.m.includes(v.meal))&&(!v.ty||r.ty===v.ty)&&(!v.prep||r.prep)&&(!v.bud||!N.budget||inBudget(tdeeMealCost(r).cost,N))&&(!q||r.n.toLowerCase().includes(q)||r.i.some(x=>x[2].toLowerCase().includes(q))));
+  const L=RECIPES.filter(r=>(!N.goal||recipeOK(r,{...N,maxDiff:3}))&&(!v.cu||r.cu===v.cu)&&(!v.diff||r.d===v.diff)&&(!v.meal||r.m.includes(v.meal))&&(!v.ty||(v.ty==="noodles"?isNoodle(r):r.ty===v.ty))&&(!v.prep||r.prep)&&(!v.bud||!N.budget||inBudget(tdeeMealCost(r).cost,N))&&(!q||r.n.toLowerCase().includes(q)||r.i.some(x=>x[2].toLowerCase().includes(q))));
   return `<h2 class="sec" style="margin-top:20px">Recipes</h2>
     <div class="lsearch" style="margin-bottom:8px"><span class="lsi">${icon("search")}</span><input id="fd-q" type="search" placeholder="Search recipes or ingredients" value="${esc(v.q)}" aria-label="Search recipes"></div>
     <div class="chips">${[["","All cuisines"],...CUISINES.map(c=>[c,c])].map(([k,n])=>`<button class="chip" data-act="fd-f" data-k="cu" data-v="${k}" aria-pressed="${v.cu===k}">${n}</button>`).join("")}</div>
-    <div class="chips">${[["soup","Soups"],["pasta","Pasta"]].map(([k,n])=>`<button class="chip" data-act="fd-f" data-k="ty" data-v="${k}" aria-pressed="${v.ty===k}">${n}</button>`).join("")}</div>
+    <div class="chips">${[["soup","Soups"],["noodles","Noodles"],["pasta","Pasta"]].map(([k,n])=>`<button class="chip" data-act="fd-f" data-k="ty" data-v="${k}" aria-pressed="${v.ty===k}">${n}</button>`).join("")}</div>
     <div class="chips">${[["","Any meal"],["breakfast","Breakfast"],["lunch","Lunch"],["dinner","Dinner"],["snack","Snack"]].map(([k,n])=>`<button class="chip sm" data-act="fd-f" data-k="meal" data-v="${k}" aria-pressed="${v.meal===k}">${n}</button>`).join("")}${[[0,"Any level"],[1,"Easy"],[2,"Medium"],[3,"Hard"]].map(([k,n])=>`<button class="chip sm" data-act="fd-f" data-k="diff" data-v="${k}" aria-pressed="${v.diff===k}">${n}</button>`).join("")}<button class="chip sm" data-act="fd-f" data-k="prep" data-v="1" aria-pressed="${v.prep}">Meal-prep friendly</button>${N.budget?`<button class="chip sm" data-act="fd-f" data-k="bud" data-v="1" aria-pressed="${!!v.bud}">Within budget</button>`:""}</div>
     <p class="hint" style="margin:0 0 8px">${L.length} recipe${L.length===1?"":"s"}</p>
     <div class="nu-grid">${L.slice(0,v.lim).map(r=>`<button class="nu-card" data-act="fd-recipe" data-rid="${r.id}"><span class="nu-cu">${esc(r.cu)}</span><b>${esc(r.n)}</b><span class="nu-meta">${r.t} min, ${DIFF[r.d].toLowerCase()}</span><span class="nu-mac"><b>${r.k}</b> kcal <b>${r.p}</b> g protein</span><span class="nu-cost${nutr().budget&&!inBudget(tdeeMealCost(r).cost)?" over":""}">${peso(r.pr)} a serving${nutr().goal?`, ${peso(tdeeMealCost(r).cost)} for your meal size`:""}</span></button>`).join("")||`<p class="hint">No recipes match. Try fewer filters${N.goal?", or check your diet and allergy settings":""}.</p>`}</div>${L.length>v.lim?`<button class="btn" data-act="fd-more" style="width:100%;margin-bottom:16px">Show ${Math.min(24,L.length-v.lim)} more</button>`:""}`;
