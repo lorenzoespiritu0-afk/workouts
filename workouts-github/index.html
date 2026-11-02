@@ -56,6 +56,8 @@
 
 #sheet .tlist .trow .tx span{white-space:normal}
 .nu-mini{display:block;width:100%;text-align:left}.nu-mini b{font-family:var(--num);font-size:1.3rem;display:block}.nu-mini span{font-size:.85rem;color:var(--muted)}
+
+.nu-cost{font-size:.76rem;color:#2FC48D;font-weight:600}.nu-cost.over{color:#FF9F0A}
 </style></head><body>
 <!doctype html>
 <html lang="en">
@@ -2847,6 +2849,19 @@ const RECIPES=[
   i:[[2,"slice","wholegrain bread"],[1,"","saba banana, boiled"],[1,"tbsp","peanut butter"]],
   s:["Toast the bread, spread peanut butter, and top with sliced saba. A good pre-run snack."]},
 ];
+/* rough Metro Manila supermarket cost per serving, in pesos (late 2026) */
+const PRICE={adobo:56,sinigang:91,tinola:50,inasal:63,monggo:20,arrozcaldo:45,tapsilog:102,pinakbet:66,oats:120,eggmuffins:43,pancakes:118,chili:73,burritobowl:97,fajitas:130,teriyakisalmon:205,oyakodon:67,bibimbap:122,bulgogi:75,kraopao:80,greencurry:61,beefbroc:116,mapotofu:67,tikka:92,chana:59,dal:23,greekbowl:127,shakshuka:83,tunapasta:77,pestopasta:104,lasagnalite:128,salmonsheet:233,proteinshake:83,yogurtbowl:140,tofuscramble:80,turon:30};
+RECIPES.forEach(r=>{r.pr=PRICE[r.id]||80;});
+const peso=v=>"₱"+Math.round(v).toLocaleString();
+const BUDGETS=[[null,"No limit"],[[40,80],"₱40–80"],[[80,150],"₱80–150"],[[150,250],"₱150–250"],[[250,450],"₱250+"]];
+/* maintenance: resting burn + daily life + your average training over the last 7 days */
+function tdeeNow(){const N=nutr(),b=bio(),kg=weightOn(keyOf(new Date()))||b.weight||70,bmr=bmrNow()||Math.round(22*kg),since=keyOf(addDays(new Date(),-7));
+  const train=live().filter(s=>s.date>=since&&s.date<keyOf(new Date())).reduce((a,s)=>a+workoutKcal(s),0)/7;return Math.round((bmr*(N.life||1.35)+train)/10)*10;}
+const mealKcalRef=()=>{const N=nutr();return tdeeNow()/(N.meals>=4?3.6:3);};
+const costAt=(r,serv)=>r.pr*serv;
+/* what one of your meals of this recipe costs, sized to your TDEE */
+const tdeeMealCost=r=>{const serv=Math.max(.5,Math.min(3,Math.round(mealKcalRef()/r.k*2)/2));return {serv,cost:costAt(r,serv)};};
+const inBudget=(cost,N)=>{const B=(N||nutr()).budget;return !B||cost<=B[1]*1.05;};
 const CUISINES=["Filipino","Japanese","Korean","Thai","Chinese","Indian","Mediterranean","Mexican","Italian","Western"];
 const DIFF=["","Easy","Medium","Hard"];
 const ALLERGENS=[["dairy","Dairy"],["gluten","Gluten"],["egg","Egg"],["nuts","Nuts and peanuts"],["soy","Soy"],["fish","Fish"],["shellfish","Shellfish"],["sesame","Sesame"]];
@@ -2913,7 +2928,9 @@ function fmtQty(q,u){if(!q)return "";const frac=v=>{const w=Math.floor(v),r=v-w,
 function seededR(seed){let s=sxSeed(String(seed));return ()=>(s=(s*16807)%2147483647)/2147483647;}
 function pickRecipe(slot,share,T,N,rnd,used,prepOnly){
   const cu=N.cuisines||[],L=RECIPES.filter(r=>r.m.includes(slot)&&recipeOK(r,N)&&(!prepOnly||r.prep)&&!used.has(r.id));if(!L.length)return null;
-  const sc=r=>{let v=rnd()*1.2;if(cu.length&&cu.includes(r.cu))v+=1.4;v+=(r.p*4/r.k)*3;if((N.pantry||[]).length){const pc=pantryCover(r);v+=pc.need?pc.have/pc.need*1.5:0;}return v;};
+  const B=N.budget,want0=T.kcal*share;
+  const sc=r=>{let v=rnd()*2.2;if(cu.length&&cu.includes(r.cu))v+=1.4;v+=(r.p*4/r.k)*3;
+    if(B){const sv=Math.max(.5,Math.min(3,Math.round(want0/r.k*2)/2)),cost=costAt(r,sv);if(cost>B[1])v-=2+(cost-B[1])/B[1]*6;else if(cost<B[0]*.6)v-=.6;else v+=.8;}if((N.pantry||[]).length){const pc=pantryCover(r);v+=pc.need?pc.have/pc.need*1.5:0;}return v;};
   const r=L.slice().sort((a,b)=>sc(b)-sc(a))[0],want=T.kcal*share,serv=Math.max(.5,Math.min(3,Math.round(want/r.k*2)/2));used.add(r.id);return {id:r.id,serv,slot};}
 function buildDayPlan(date,seed){
   const N=nutr(),T=foodTargets(date),rnd=seededR(date+":"+(seed||0)),used=new Set(),meals=N.meals||3;
@@ -2921,7 +2938,7 @@ function buildDayPlan(date,seed){
   if(T.train>300&&meals<4)slots.push(["snack",0]);
   const out=[];for(const [sl,sh] of slots){const share=sh||Math.min(.15,T.train/T.kcal);const pk=pickRecipe(sl,share,T,N,rnd,used);if(pk)out.push(pk);}
   return out;}
-function planTotals(pl){return pl.reduce((a,x)=>{const r=RECIPES.find(z=>z.id===x.id);if(!r)return a;return {k:a.k+r.k*x.serv,p:a.p+r.p*x.serv,c:a.c+r.c*x.serv,f:a.f+r.f*x.serv};},{k:0,p:0,c:0,f:0});}
+function planTotals(pl){return pl.reduce((a,x)=>{const r=RECIPES.find(z=>z.id===x.id);if(!r)return a;return {k:a.k+r.k*x.serv,p:a.p+r.p*x.serv,c:a.c+r.c*x.serv,f:a.f+r.f*x.serv,cost:a.cost+costAt(r,x.serv)};},{k:0,p:0,c:0,f:0,cost:0});}
 function shoppingList(items){ // items: [{id, batch servings}]
   const m=new Map();for(const it of items){const r=RECIPES.find(z=>z.id===it.id);if(!r)continue;const k=it.batch/r.sv;
     for(const [q,u,n] of r.i){const key=ingKey(n)+"|"+u;const cur=m.get(key)||{q:0,u,n:ingKey(n),label:n};cur.q+=q*k;m.set(key,cur);}}
@@ -2945,6 +2962,7 @@ function renderFood(){
       <div><span>Training today${T.trainList.length?": "+T.trainList.map(s=>esc(titleOf(s))).join(", "):""}</span><b>+${T.train.toLocaleString()}</b></div>
       ${T.adj?`<div><span>Goal: ${esc(NGOALS[N.goal][0].toLowerCase())}</span><b>${T.adj>0?"+":""}${T.adj.toLocaleString()}</b></div>`:""}
       ${T.corr?`<div><span>Weight trend ${T.tr>0?"+":""}${T.tr.toFixed(2)} kg/week, adjusting</span><b>${T.corr>0?"+":""}${T.corr}</b></div>`:""}
+      <div><span>Your TDEE (maintenance, 7-day training average)</span><b>${tdeeNow().toLocaleString()}</b></div>
       <p class="hint">${T.why.join(" ")}Protein is set at ${(T.p/T.kg).toFixed(1)} g per kg, fat at ${(T.f/T.kg).toFixed(1)} g per kg, and carbs fill the rest, so hard training days automatically get more carbs.</p></div></details>
     <div class="row" style="margin-top:12px"><button class="btn" data-act="fd-add">Log food</button><button class="btn primary" data-act="fd-plan">Plan my day</button></div></div>`;
   if(T.trainList.length){const big=T.trainList.reduce((a,s)=>(s.dur||0)>(a.dur||0)?s:a);const pr=Math.round(Math.min(40,Math.max(20,T.kg*.3))),cb=Math.round(T.kg*(T.hard?1.2:.8));
@@ -2954,8 +2972,8 @@ function renderFood(){
     ${eaten.length?`<div class="tlist">${eaten.map((x,i)=>`<div class="trow"><div class="tx"><b>${esc(x.n)}</b><span>${x.serv?x.serv+" serving"+(x.serv===1?"":"s")+", ":""}${Math.round(x.p)} g protein, ${Math.round(x.c)} g carbs, ${Math.round(x.f)} g fat</span></div><span class="tv" style="font-size:1rem">${Math.round(x.k)}</span><button class="x" data-act="fd-del" data-i="${i}" aria-label="Remove ${esc(x.n)}">×</button></div>`).join("")}</div>`:""}</div>`;
   const plan=(foodStore().plans||{})[today];
   if(plan&&plan.length){const tt=planTotals(plan);h+=`<div class="ins"><div class="row2"><h3 style="font-size:1.2rem">Today's plan</h3><button class="chip" data-act="fd-plan">Change</button></div>
-    <div class="tlist">${plan.map(x=>{const r=RECIPES.find(z=>z.id===x.id);return r?`<button class="trow" data-act="fd-recipe" data-rid="${r.id}" data-serv="${x.serv}"><span class="nu-slot">${x.slot[0].toUpperCase()}</span><div class="tx"><b>${esc(r.n)}</b><span>${x.serv} serving${x.serv===1?"":"s"}, ${Math.round(r.k*x.serv)} kcal, ${Math.round(r.p*x.serv)} g protein</span></div></button>`:"";}).join("")}</div>
-    <p class="hint">Plan totals ${Math.round(tt.k).toLocaleString()} kcal and ${Math.round(tt.p)} g protein, against ${T.kcal.toLocaleString()} kcal and ${T.p} g.</p></div>`;}
+    <div class="tlist">${plan.map(x=>{const r=RECIPES.find(z=>z.id===x.id);return r?`<button class="trow" data-act="fd-recipe" data-rid="${r.id}" data-serv="${x.serv}"><span class="nu-slot">${x.slot[0].toUpperCase()}</span><div class="tx"><b>${esc(r.n)}</b><span>${x.serv} serving${x.serv===1?"":"s"}, ${Math.round(r.k*x.serv)} kcal, ${Math.round(r.p*x.serv)} g protein, about ${peso(costAt(r,x.serv))}</span></div></button>`:"";}).join("")}</div>
+    <p class="hint">Plan totals ${Math.round(tt.k).toLocaleString()} kcal, ${Math.round(tt.p)} g protein and about ${peso(tt.cost)}, against ${T.kcal.toLocaleString()} kcal and ${T.p} g.</p></div>`;}
   const tr=T.tr;h+=`<div class="ins"><div class="row2"><h3 style="font-size:1.2rem">Weight</h3><button class="chip" data-act="weight">Log weight</button></div>
     <p class="xpinfo">${weights().length?`${fmtWt(T.kg)} now${N.target?`, aiming for ${fmtWt(N.target)}`:""}.`:"Log your weight a few times a week and targets adjust to how your weight is really moving."}
     ${tr!=null?` Trend over 3 weeks: ${tr>0?"+":""}${tr.toFixed(2)} kg a week.`:weights().length?" A trend shows after 3 weigh-ins over 3 weeks.":""}
@@ -2969,12 +2987,12 @@ function renderFood(){
 }
 function recipeBrowser(){
   const N=nutr(),v=foodView,q=v.q.trim().toLowerCase();
-  const L=RECIPES.filter(r=>(!N.goal||recipeOK(r,{...N,maxDiff:3}))&&(!v.cu||r.cu===v.cu)&&(!v.diff||r.d===v.diff)&&(!v.meal||r.m.includes(v.meal))&&(!v.prep||r.prep)&&(!q||r.n.toLowerCase().includes(q)||r.i.some(x=>x[2].toLowerCase().includes(q))));
+  const L=RECIPES.filter(r=>(!N.goal||recipeOK(r,{...N,maxDiff:3}))&&(!v.cu||r.cu===v.cu)&&(!v.diff||r.d===v.diff)&&(!v.meal||r.m.includes(v.meal))&&(!v.prep||r.prep)&&(!v.bud||!N.budget||inBudget(tdeeMealCost(r).cost,N))&&(!q||r.n.toLowerCase().includes(q)||r.i.some(x=>x[2].toLowerCase().includes(q))));
   return `<h2 class="sec" style="margin-top:20px">Recipes</h2>
     <div class="lsearch" style="margin-bottom:8px"><span class="lsi">${icon("search")}</span><input id="fd-q" type="search" placeholder="Search recipes or ingredients" value="${esc(v.q)}" aria-label="Search recipes"></div>
     <div class="chips">${[["","All cuisines"],...CUISINES.map(c=>[c,c])].map(([k,n])=>`<button class="chip" data-act="fd-f" data-k="cu" data-v="${k}" aria-pressed="${v.cu===k}">${n}</button>`).join("")}</div>
-    <div class="chips">${[["","Any meal"],["breakfast","Breakfast"],["lunch","Lunch"],["dinner","Dinner"],["snack","Snack"]].map(([k,n])=>`<button class="chip sm" data-act="fd-f" data-k="meal" data-v="${k}" aria-pressed="${v.meal===k}">${n}</button>`).join("")}${[[0,"Any level"],[1,"Easy"],[2,"Medium"],[3,"Hard"]].map(([k,n])=>`<button class="chip sm" data-act="fd-f" data-k="diff" data-v="${k}" aria-pressed="${v.diff===k}">${n}</button>`).join("")}<button class="chip sm" data-act="fd-f" data-k="prep" data-v="1" aria-pressed="${v.prep}">Meal-prep friendly</button></div>
-    <div class="nu-grid">${L.map(r=>`<button class="nu-card" data-act="fd-recipe" data-rid="${r.id}"><span class="nu-cu">${esc(r.cu)}</span><b>${esc(r.n)}</b><span class="nu-meta">${r.t} min, ${DIFF[r.d].toLowerCase()}</span><span class="nu-mac"><b>${r.k}</b> kcal <b>${r.p}</b> g protein</span></button>`).join("")||`<p class="hint">No recipes match. Try fewer filters${N.goal?", or check your diet and allergy settings":""}.</p>`}</div>`;
+    <div class="chips">${[["","Any meal"],["breakfast","Breakfast"],["lunch","Lunch"],["dinner","Dinner"],["snack","Snack"]].map(([k,n])=>`<button class="chip sm" data-act="fd-f" data-k="meal" data-v="${k}" aria-pressed="${v.meal===k}">${n}</button>`).join("")}${[[0,"Any level"],[1,"Easy"],[2,"Medium"],[3,"Hard"]].map(([k,n])=>`<button class="chip sm" data-act="fd-f" data-k="diff" data-v="${k}" aria-pressed="${v.diff===k}">${n}</button>`).join("")}<button class="chip sm" data-act="fd-f" data-k="prep" data-v="1" aria-pressed="${v.prep}">Meal-prep friendly</button>${N.budget?`<button class="chip sm" data-act="fd-f" data-k="bud" data-v="1" aria-pressed="${!!v.bud}">Within budget</button>`:""}</div>
+    <div class="nu-grid">${L.map(r=>`<button class="nu-card" data-act="fd-recipe" data-rid="${r.id}"><span class="nu-cu">${esc(r.cu)}</span><b>${esc(r.n)}</b><span class="nu-meta">${r.t} min, ${DIFF[r.d].toLowerCase()}</span><span class="nu-mac"><b>${r.k}</b> kcal <b>${r.p}</b> g protein</span><span class="nu-cost${nutr().budget&&!inBudget(tdeeMealCost(r).cost)?" over":""}">${peso(r.pr)} a serving${nutr().goal?`, ${peso(tdeeMealCost(r).cost)} for your meal size`:""}</span></button>`).join("")||`<p class="hint">No recipes match. Try fewer filters${N.goal?", or check your diet and allergy settings":""}.</p>`}</div>`;
 }
 function openRecipe(id,serv,back){
   const r=RECIPES.find(x=>x.id===id);if(!r)return;let sv=serv||r.sv;
@@ -2986,7 +3004,7 @@ function openRecipe(id,serv,back){
       <h4>Ingredients${sv!==r.sv?` <span class="hint" style="font-weight:500">scaled from ${r.sv}</span>`:""}</h4>
       <ul class="nu-ing">${r.i.map(([q,u,n])=>{const have=pc&&!STAPLES.test(ingKey(n))&&!pc.missing.includes(ingKey(n));return `<li class="${have?"have":""}"><b>${q?fmtQty(q*k,u):""}</b><span>${esc(n)}${have?" <em>in pantry</em>":""}</span></li>`;}).join("")}</ul>
       <h4>Method</h4><ol class="nu-steps">${r.s.map(t=>`<li>${esc(t)}</li>`).join("")}</ol>
-      <p class="hint">Whole recipe: ${Math.round(r.k*sv).toLocaleString()} kcal, ${Math.round(r.p*sv)} g protein.</p>
+      <p class="hint">${sv} serving${sv===1?"":"s"}: ${Math.round(r.k*sv).toLocaleString()} kcal, ${Math.round(r.p*sv)} g protein, about ${peso(costAt(r,sv))} (${peso(r.pr)} a serving). ${nutr().goal?`A meal sized to your TDEE is ${tdeeMealCost(r).serv} serving${tdeeMealCost(r).serv===1?"":"s"}, about ${peso(tdeeMealCost(r).cost)}.`:""}</p>
       <div class="row"><button class="btn" id="nr-back">Back</button><button class="btn primary" id="nr-log">Log 1 serving</button></div></div>`);
     document.querySelectorAll("[data-sv]").forEach(b=>b.onclick=()=>{sv=Math.max(.5,sv+(+b.dataset.sv)*(sv<1||(sv===1&&+b.dataset.sv<0)?.5:1));haptic("light");const t=$("sheet").scrollTop;draw();$("sheet").scrollTop=t;});
     $("nr-back").onclick=()=>back?back():closeSheet();
@@ -3021,11 +3039,15 @@ function openFoodSetup(){
     <label for="nf-dis">Foods you don't like</label><input id="nf-dis" type="text" maxlength="120" placeholder="e.g. bitter melon, tofu" value="${esc(N.dislikes||"")}">
     <label>Favourite cuisines</label><div class="tchips" id="nf-cu" style="--c:#F5F5F7;--ct:#000">${CUISINES.map(c=>`<button class="tchip" data-v="${c}" aria-pressed="${N.cuisines.includes(c)}">${c}</button>`).join("")}</div>
     <label>Hardest recipes to suggest</label><div class="seg" id="nf-diff">${[[1,"Easy only"],[2,"Up to medium"],[3,"Anything"]].map(([v,n])=>`<button data-v="${v}" aria-pressed="${N.maxDiff==v}">${n}</button>`).join("")}</div>
+    <label>Budget per meal</label><div class="seg seg-wrap" id="nf-bud">${BUDGETS.map(([v,n],i)=>`<button data-i="${i}" aria-pressed="${JSON.stringify(N.budget||null)===JSON.stringify(v)}">${n}</button>`).join("")}</div>
+    <div class="grid2" style="margin-top:8px"><div><label for="nf-bmin">Custom min (₱)</label><input id="nf-bmin" type="number" inputmode="numeric" min="0" value="${N.budget?N.budget[0]:""}"></div><div><label for="nf-bmax">Custom max (₱)</label><input id="nf-bmax" type="number" inputmode="numeric" min="0" value="${N.budget?N.budget[1]:""}"></div></div>
+    <p class="hint">${(()=>{const td=tdeeNow(),mk=Math.round(mealKcalRef()),cs=RECIPES.filter(r=>recipeOK(r,{...N,maxDiff:3})&&r.m.some(m=>m==="lunch"||m==="dinner")).map(r=>tdeeMealCost(r).cost).sort((a,b)=>a-b);if(!cs.length)return "";const fit=N.budget?cs.filter(c=>c<=N.budget[1]*1.05).length:cs.length;return `Your TDEE is about ${td.toLocaleString()} kcal, so a main meal is about ${mk} kcal. Lunch and dinner recipes cost ${peso(cs[0])} to ${peso(cs[cs.length-1])} at that size${N.budget?`, and ${fit} of ${cs.length} fit this budget`:""}. Plans and meal prep pick within it.`;})()}</p>
     <label>Meals a day</label><div class="seg" id="nf-meals">${[[3,"3 meals"],[4,"3 meals and a snack"]].map(([v,n])=>`<button data-v="${v}" aria-pressed="${N.meals==v}">${n}</button>`).join("")}</div>
     <div class="row" style="margin-top:18px"><button class="btn" id="nf-x">Cancel</button><button class="btn primary" id="nf-ok">Save</button></div>`);
     const seg=(id,k,numv)=>{const el=$(id);if(!el)return;el.querySelectorAll("button").forEach(bt=>bt.onclick=()=>{rd();N[k]=numv?+bt.dataset.v:bt.dataset.v;const t=$("sheet").scrollTop;draw();$("sheet").scrollTop=t;});};
     const multi=(id,k)=>$(id).querySelectorAll("button").forEach(bt=>bt.onclick=()=>{const v=bt.dataset.v,a=N[k],i=a.indexOf(v);if(i>=0)a.splice(i,1);else a.push(v);bt.setAttribute("aria-pressed",i<0);haptic("light");});
-    const rd=()=>{N.target=num($("nf-target").value)||null;N.dislikes=$("nf-dis").value.trim();};
+    const rd=()=>{N.target=num($("nf-target").value)||null;N.dislikes=$("nf-dis").value.trim();const a=num($("nf-bmin").value),z=num($("nf-bmax").value);if(z&&(!N.budget||a!==N.budget[0]||z!==N.budget[1]))N.budget=[Math.min(a||0,z),Math.max(a||0,z)];};
+    $("nf-bud").querySelectorAll("button").forEach(bt=>bt.onclick=()=>{rd();N.budget=BUDGETS[+bt.dataset.i][0];const t=$("sheet").scrollTop;draw();$("sheet").scrollTop=t;});
     seg("nf-goal","goal");seg("nf-rate","rate",1);seg("nf-life","life",1);seg("nf-diet","diet");seg("nf-diff","maxDiff",1);seg("nf-meals","meals",1);multi("nf-al","allergies");multi("nf-cu","cuisines");
     $("nf-x").onclick=closeSheet;$("nf-ok").onclick=()=>{rd();saveNutr(N);closeSheet();coachTab="food";render();toast("Food goals saved");};};
   draw();
@@ -3033,8 +3055,8 @@ function openFoodSetup(){
 function openDayPlan(seed){
   seed=seed||0;const d=keyOf(new Date()),pl=buildDayPlan(d,seed),T=foodTargets(d),tt=planTotals(pl);
   openSheet(`<h3>Plan my day</h3><p class="sub">Built around today's ${T.kcal.toLocaleString()} kcal and ${T.p} g protein${T.train?`, including ${T.train} kcal of training`:""}.</p>
-    <div class="tlist">${pl.map(x=>{const r=RECIPES.find(z=>z.id===x.id);return `<button class="trow" data-pr="${r.id}" data-serv="${x.serv}"><span class="nu-slot">${x.slot[0].toUpperCase()}</span><div class="tx"><b>${esc(r.n)}</b><span>${x.slot[0].toUpperCase()+x.slot.slice(1)}, ${x.serv} serving${x.serv===1?"":"s"}, ${Math.round(r.k*x.serv)} kcal, ${Math.round(r.p*x.serv)} g protein</span></div></button>`;}).join("")}</div>
-    <div class="nu-calc" style="margin-top:12px"><div><span>Calories</span><b>${Math.round(tt.k).toLocaleString()} of ${T.kcal.toLocaleString()}</b></div><div><span>Protein</span><b>${Math.round(tt.p)} of ${T.p} g</b></div><div><span>Carbs</span><b>${Math.round(tt.c)} of ${T.c} g</b></div><div><span>Fat</span><b>${Math.round(tt.f)} of ${T.f} g</b></div></div>
+    <div class="tlist">${pl.map(x=>{const r=RECIPES.find(z=>z.id===x.id);return `<button class="trow" data-pr="${r.id}" data-serv="${x.serv}"><span class="nu-slot">${x.slot[0].toUpperCase()}</span><div class="tx"><b>${esc(r.n)}</b><span>${x.slot[0].toUpperCase()+x.slot.slice(1)}, ${x.serv} serving${x.serv===1?"":"s"}, ${Math.round(r.k*x.serv)} kcal, ${Math.round(r.p*x.serv)} g protein, about ${peso(costAt(r,x.serv))}${nutr().budget&&costAt(r,x.serv)>nutr().budget[1]*1.05?" (over budget)":""}</span></div></button>`;}).join("")}</div>
+    <div class="nu-calc" style="margin-top:12px"><div><span>Calories</span><b>${Math.round(tt.k).toLocaleString()} of ${T.kcal.toLocaleString()}</b></div><div><span>Protein</span><b>${Math.round(tt.p)} of ${T.p} g</b></div><div><span>Carbs</span><b>${Math.round(tt.c)} of ${T.c} g</b></div><div><span>Fat</span><b>${Math.round(tt.f)} of ${T.f} g</b></div><div><span>Cost</span><b>about ${peso(tt.cost)}${nutr().budget?` (budget ${peso(nutr().budget[0]*pl.length)}–${peso(nutr().budget[1]*pl.length)})`:""}</b></div></div>
     ${pl.length?"":`<p class="hint">No recipes fit your diet settings for these meals. Loosen allergies, diet or difficulty in Food goals.</p>`}
     <div class="row" style="margin-top:14px"><button class="btn" id="dp-again">Try another</button><button class="btn primary" id="dp-ok">Use this plan</button></div>`);
   document.querySelectorAll("[data-pr]").forEach(b=>b.onclick=()=>openRecipe(b.dataset.pr,+b.dataset.serv,()=>openDayPlan(seed)));
@@ -3049,8 +3071,8 @@ function openMealPrep(o){
   openSheet(`<h3>Meal prep</h3><p class="sub">Cook once, eat for ${o.days} days. Portions are sized for a rest day; add a snack or more rice on training days.</p>
     <label>Days</label><div class="seg" id="mp-days">${[3,4,5].map(v=>`<button data-v="${v}" aria-pressed="${o.days===v}">${v} days</button>`).join("")}</div>
     <label>Meals to prep</label><div class="tchips" id="mp-slots" style="--c:#F5F5F7;--ct:#000">${[["breakfast","Breakfast"],["lunch","Lunch"],["dinner","Dinner"]].map(([k,n])=>`<button class="tchip" data-v="${k}" aria-pressed="${o.slots.includes(k)}">${n}</button>`).join("")}</div>
-    <h4>Cook</h4><div class="tlist">${picks.map(p=>{const r=RECIPES.find(z=>z.id===p.id);return `<button class="trow" data-mr="${r.id}" data-serv="${p.batch}"><span class="nu-slot">${p.slot[0].toUpperCase()}</span><div class="tx"><b>${esc(r.n)}</b><span>${p.batch} servings (${p.serv} a day), ${Math.round(r.k*p.serv)} kcal and ${Math.round(r.p*p.serv)} g protein a portion</span></div></button>`;}).join("")||`<p class="hint">No prep-friendly recipes fit your settings for these meals.</p>`}</div>
-    ${list.length?`<h4>Shopping list</h4><ul class="nu-shop">${list.filter(x=>!x.staple).map(x=>`<li class="${x.have?"have":""}"><b>${x.q?fmtQty(x.q,x.u):""}</b><span>${esc(x.label)}${x.have?" <em>have it</em>":""}</span></li>`).join("")}</ul><p class="hint">Plus salt, pepper and oil. Items in your pantry are greyed out.</p>`:""}
+    <h4>Cook</h4><div class="tlist">${picks.map(p=>{const r=RECIPES.find(z=>z.id===p.id);return `<button class="trow" data-mr="${r.id}" data-serv="${p.batch}"><span class="nu-slot">${p.slot[0].toUpperCase()}</span><div class="tx"><b>${esc(r.n)}</b><span>${p.batch} servings (${p.serv} a day), ${Math.round(r.k*p.serv)} kcal, ${Math.round(r.p*p.serv)} g protein and about ${peso(costAt(r,p.serv))} a portion. Batch about ${peso(costAt(r,p.batch))}</span></div></button>`;}).join("")||`<p class="hint">No prep-friendly recipes fit your settings for these meals.</p>`}</div>
+    ${list.length?`<h4>Shopping list</h4><ul class="nu-shop">${list.filter(x=>!x.staple).map(x=>`<li class="${x.have?"have":""}"><b>${x.q?fmtQty(x.q,x.u):""}</b><span>${esc(x.label)}${x.have?" <em>have it</em>":""}</span></li>`).join("")}</ul><p class="hint">Plus salt, pepper and oil. Items in your pantry are greyed out. Whole prep costs about ${peso(picks.reduce((a,p)=>a+costAt(RECIPES.find(z=>z.id===p.id),p.batch),0))} before what you already have.</p>`:""}
     <div class="row" style="margin-top:14px"><button class="btn" id="mp-again">Different recipes</button><button class="btn primary" id="mp-copy">Copy list</button></div>`);
   $("mp-days").querySelectorAll("button").forEach(b=>b.onclick=()=>openMealPrep({...o,days:+b.dataset.v}));
   $("mp-slots").querySelectorAll("button").forEach(b=>b.onclick=()=>{const s=[...o.slots],i=s.indexOf(b.dataset.v);if(i>=0){if(s.length>1)s.splice(i,1);}else s.push(b.dataset.v);openMealPrep({...o,slots:["breakfast","lunch","dinner"].filter(x=>s.includes(x))});});
@@ -3089,7 +3111,7 @@ function foodAct(a,t){
   else if(a==="fd-cookpantry")openCookPantry();
   else if(a==="fd-recipe")openRecipe(t.dataset.rid,t.dataset.serv?+t.dataset.serv:null);
   else if(a==="fd-del"){const d=keyOf(new Date()),L=dayFood(d);L.splice(+t.dataset.i,1);setDayFood(d,L);render();}
-  else if(a==="fd-f"){const k=t.dataset.k;foodView[k]=k==="diff"?+t.dataset.v:k==="prep"?!foodView.prep:t.dataset.v;const y=window.scrollY;render();window.scrollTo(0,y);}
+  else if(a==="fd-f"){const k=t.dataset.k;foodView[k]=k==="diff"?+t.dataset.v:k==="prep"?!foodView.prep:k==="bud"?!foodView.bud:t.dataset.v;const y=window.scrollY;render();window.scrollTo(0,y);}
 }
 let coachTab="today",coachAllRecs=false;
 function renderInsights(){
