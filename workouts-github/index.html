@@ -5889,7 +5889,8 @@ function poseStats(tr){
   return {time:T[n-1]-T[0],moves,rests,longest,rise:(bot-top)*tr.h/tor};
 }
 /* draw the tracking on top of one frame. t is the video time, W and H the canvas size */
-function drawPoseLayer(x,tr,t,W,H,o){
+function drawPoseLayer(x,tr,t,W,H,o,zk){
+  const bk=zk||1;
   const sc=W/tr.w,tor=tr.torso*sc,lw=Math.max(3,Math.min(W*.022,tor*.085)),col=o.col;
   const P=poseAt(tr,t),ok=k=>P&&P[k][2]>.35,at=k=>[P[k][0]*W,P[k][1]*H];
   x.save();x.lineCap="round";x.lineJoin="round";
@@ -5901,10 +5902,10 @@ function drawPoseLayer(x,tr,t,W,H,o){
       const pts=[];for(let i=0;i<tr.n&&tr.T[i]<=t;i++){if(tr.T[i]<from)continue;const q=jn==="hip"?hipOf(tr,i):[tr.X[jn][i],tr.Y[jn][i],tr.V[jn][i]];pts.push([q[0]*W,q[1]*H,tr.T[i],q[2]]);}
       if(P){const q=jn==="hip"?[(P[23][0]+P[24][0])/2,(P[23][1]+P[24][1])/2,Math.min(P[23][2],P[24][2])]:P[jn];pts.push([q[0]*W,q[1]*H,t,q[2]]);}
       const w0=jn==="hip"?lw*1.05:lw*.55,base=jn==="hip"?1:.75;
-      x.shadowColor=col;x.shadowBlur=w0*2.4;x.strokeStyle=col;
+      x.shadowColor=col;x.shadowBlur=(w0*2.4)*bk;x.strokeStyle=col;
       for(let i=1;i<pts.length;i++){const a=pts[i-1],b=pts[i];if(b[2]-a[2]>.5||a[3]<.2||b[3]<.2)continue;const age=t-b[2],al=fade?Math.pow(Math.max(0,1-age/1.4),1.4):1;if(al<=.01)continue;
         x.globalAlpha=al*base;x.lineWidth=w0*(fade?.35+.65*al:1);x.beginPath();x.moveTo(a[0],a[1]);x.lineTo(b[0],b[1]);x.stroke();}
-      if(jn==="hip"&&P&&ok(23)&&ok(24)){const h=pts[pts.length-1];x.globalAlpha=1;x.fillStyle="#FFFFFF";x.shadowBlur=lw*3;x.beginPath();x.arc(h[0],h[1],lw*.75,0,Math.PI*2);x.fill();}
+      if(jn==="hip"&&P&&ok(23)&&ok(24)){const h=pts[pts.length-1];x.globalAlpha=1;x.fillStyle="#FFFFFF";x.shadowBlur=(lw*3)*bk;x.beginPath();x.arc(h[0],h[1],lw*.75,0,Math.PI*2);x.fill();}
     }
     x.globalAlpha=1;x.shadowBlur=0;
   }
@@ -5914,24 +5915,81 @@ function drawPoseLayer(x,tr,t,W,H,o){
     const head=(()=>{if(!(ok(11)&&ok(12)))return null;const sw=Math.hypot((P[11][0]-P[12][0])*W,(P[11][1]-P[12][1])*H);let c=null;if(ok(7)&&ok(8))c=[(P[7][0]+P[8][0])/2*W,(P[7][1]+P[8][1])/2*H];else if(ok(0))c=at(0);if(!c)return null;return [c[0],c[1],Math.max(lw*1.4,Math.min(sw*.36,tor*.32))];})();
     const path=()=>{x.beginPath();for(const [a,b] of segs){const p=at(a),q=at(b);x.moveTo(p[0],p[1]);x.lineTo(q[0],q[1]);}};
     if(o.skel==="neon"){
-      x.strokeStyle=col;x.lineWidth=lw;x.shadowColor=col;x.shadowBlur=lw*2.6;path();x.stroke();if(head){x.beginPath();x.arc(head[0],head[1],head[2],0,Math.PI*2);x.stroke();}
+      x.strokeStyle=col;x.lineWidth=lw;x.shadowColor=col;x.shadowBlur=(lw*2.6)*bk;path();x.stroke();if(head){x.beginPath();x.arc(head[0],head[1],head[2],0,Math.PI*2);x.stroke();}
       x.shadowBlur=0;x.strokeStyle="rgba(255,255,255,.92)";x.lineWidth=lw*.36;path();x.stroke();if(head){x.lineWidth=lw*.3;x.beginPath();x.arc(head[0],head[1],head[2],0,Math.PI*2);x.stroke();}
       x.fillStyle="#FFFFFF";for(const k of POSE_JOINTS)if(ok(k)){const p=at(k);x.beginPath();x.arc(p[0],p[1],lw*.42,0,Math.PI*2);x.fill();}
     }else if(o.skel==="clean"){
-      x.shadowColor="rgba(0,0,0,.45)";x.shadowBlur=lw*1.2;x.strokeStyle="rgba(255,255,255,.95)";x.lineWidth=lw*.55;path();x.stroke();if(head){x.beginPath();x.arc(head[0],head[1],head[2],0,Math.PI*2);x.stroke();}
+      x.shadowColor="rgba(0,0,0,.45)";x.shadowBlur=(lw*1.2)*bk;x.strokeStyle="rgba(255,255,255,.95)";x.lineWidth=lw*.55;path();x.stroke();if(head){x.beginPath();x.arc(head[0],head[1],head[2],0,Math.PI*2);x.stroke();}
       x.shadowBlur=0;for(const k of POSE_JOINTS)if(ok(k)){const p=at(k);x.beginPath();x.arc(p[0],p[1],lw*.62,0,Math.PI*2);x.fillStyle=col;x.fill();x.lineWidth=lw*.22;x.strokeStyle="#FFFFFF";x.stroke();}
     }else{ // dots
-      x.shadowColor=col;x.shadowBlur=lw*2.2;x.fillStyle=col;for(const k of POSE_JOINTS)if(ok(k)){const p=at(k);x.beginPath();x.arc(p[0],p[1],lw*.75,0,Math.PI*2);x.fill();}
+      x.shadowColor=col;x.shadowBlur=(lw*2.2)*bk;x.fillStyle=col;for(const k of POSE_JOINTS)if(ok(k)){const p=at(k);x.beginPath();x.arc(p[0],p[1],lw*.75,0,Math.PI*2);x.fill();}
       x.shadowBlur=0;x.fillStyle="#FFFFFF";for(const k of POSE_JOINTS)if(ok(k)){const p=at(k);x.beginPath();x.arc(p[0],p[1],lw*.3,0,Math.PI*2);x.fill();}
-      if(head){x.strokeStyle=col;x.lineWidth=lw*.4;x.shadowColor=col;x.shadowBlur=lw*2;x.beginPath();x.arc(head[0],head[1],head[2],0,Math.PI*2);x.stroke();x.shadowBlur=0;}
+      if(head){x.strokeStyle=col;x.lineWidth=lw*.4;x.shadowColor=col;x.shadowBlur=(lw*2)*bk;x.beginPath();x.arc(head[0],head[1],head[2],0,Math.PI*2);x.stroke();x.shadowBlur=0;}
     }
   }
   x.restore();
 }
+/* ---------- virtual camera: follows the climber and zooms, like an editor's auto-reframe ---------- */
+const CAM_ZOOM={wide:2.8,medium:2.0,close:1.45},CAM_SHAPES={"9:16":9/16,"4:5":4/5,"1:1":1};
+const outAspect=(o,tr)=>CAM_SHAPES[o.shape]||tr.w/tr.h;
+function outDims(o,tr,long){const a=outAspect(o,tr);let W,H;if(a<1){H=long;W=H*a;}else{W=long;H=W/a;}return [Math.round(W/2)*2,Math.round(H/2)*2];}
+function bodyBox(P,tr){
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9,n=0;
+  for(const k of [0,11,12,13,14,15,16,23,24,25,26,27,28,31,32]){if(P[k][2]<.35)continue;const px=P[k][0]*tr.w,py=P[k][1]*tr.h;if(px<x0)x0=px;if(px>x1)x1=px;if(py<y0)y0=py;if(py>y1)y1=py;n++;}
+  return n<4?null:[x0,y0-tr.torso*.38,x1,y1];
+}
+/* the climber's box over time on a 30 fps grid: a heavily smoothed copy steers the camera, a lightly smoothed one draws the tracking box */
+function camPath(tr){
+  const fps=30,N=Math.max(2,Math.ceil(tr.dur*fps)+1),raw=[[],[],[],[]],known=[];
+  for(let i=0;i<N;i++){const P=poseAt(tr,i/fps),b=P&&bodyBox(P,tr);if(b){known.push(i);raw[0][i]=(b[0]+b[2])/2;raw[1][i]=(b[1]+b[3])/2;raw[2][i]=Math.max(b[3]-b[1],tr.torso*2.2);raw[3][i]=Math.max(b[2]-b[0],tr.torso*.9);}}
+  if(!known.length)return null;
+  const fill=A=>{const out=new Float32Array(N);let k=0;for(let i=0;i<N;i++){while(k<known.length-1&&known[k+1]<=i)k++;const a=known[k],b=known[Math.min(known.length-1,k+1)];
+    if(i<=known[0])out[i]=A[known[0]];else if(i>=known[known.length-1])out[i]=A[known[known.length-1]];else out[i]=b===a?A[a]:A[a]+(A[b]-A[a])*(i-a)/(b-a);}return out;};
+  const smooth=(A,sec)=>{const sg=sec*fps,R=Math.ceil(sg*3),K=[];for(let j=-R;j<=R;j++)K.push(Math.exp(-j*j/(2*sg*sg)));const out=new Float32Array(N);
+    for(let i=0;i<N;i++){let a=0,w=0;for(let j=-R;j<=R;j++){const q=Math.max(0,Math.min(N-1,i+j));a+=A[q]*K[j+R];w+=K[j+R];}out[i]=a/w;}return out;};
+  const F=raw.map(fill);
+  let mx=0,my=0;for(let i=0;i<N;i++){mx+=F[0][i];my+=F[1][i];}
+  return {fps,N,cx:smooth(F[0],.5),cy:smooth(F[1],.5),bh:smooth(F[2],1.2),bx:smooth(F[0],.12),by:smooth(F[1],.12),bbh:smooth(F[2],.25),bbw:smooth(F[3],.25),mx:mx/N,my:my/N};
+}
+const camAt=(cam,A,t)=>{const i=Math.max(0,Math.min(cam.N-1,t*cam.fps)),i0=Math.floor(i),i1=Math.min(cam.N-1,i0+1);return A[i0]+(A[i1]-A[i0])*(i-i0);};
+/* the part of the source frame to show at time t: [x, y, width, height] in video pixels */
+function camView(cam,tr,o,t){
+  const W=tr.w,H=tr.h,a=outAspect(o,tr);let w,h;
+  if(o.cam==="follow"&&cam){
+    const cx=camAt(cam,cam.cx,t);let cy=camAt(cam,cam.cy,t);
+    h=Math.max(H*.2,camAt(cam,cam.bh,t)*CAM_ZOOM[o.zoom||"medium"]);
+    if(o.push){const te=tr.T[tr.n-1],q=Math.max(0,Math.min(1,(t-(te-2.4))/1.8));h*=1-.3*q*q*(3-2*q);}
+    w=h*a;if(w>W){w=W;h=w/a;}if(h>H){h=H;w=h*a;}
+    cy-=h*.06;// a little headroom, you're moving up
+    return [Math.max(0,Math.min(W-w,cx-w/2)),Math.max(0,Math.min(H-h,cy-h/2)),w,h];
+  }
+  if(Math.abs(a-W/H)<.01)return [0,0,W,H];
+  if(a<W/H){h=H;w=h*a;}else{w=W;h=w/a;}
+  const mx=cam?cam.mx:W/2,my=cam?cam.my:H/2;
+  return [Math.max(0,Math.min(W-w,mx-w/2)),Math.max(0,Math.min(H-h,my-h/2)),w,h];
+}
+function drawTrackBox(x,cam,tr,t,vp,W,H,o,label){
+  if(!cam||!poseAt(tr,t))return;
+  const k=W/vp[2],cx=camAt(cam,cam.bx,t),cy=camAt(cam,cam.by,t),bh=camAt(cam,cam.bbh,t),bw=Math.max(camAt(cam,cam.bbw,t),bh*.42),pad=bh*.07;
+  const x0=(cx-bw/2-pad-vp[0])*k,x1=(cx+bw/2+pad-vp[0])*k,y0=(cy-bh/2-pad-vp[1])*k,y1=(cy+bh/2+pad-vp[1])*k,u=Math.min(W,H)/1080,col=o.col;
+  const n=parseInt(col.slice(1),16),lt=((n>>16)*.299+((n>>8)&255)*.587+(n&255)*.114)/255>.6;
+  x.save();x.lineCap="square";x.textBaseline="alphabetic";x.font=`700 ${Math.round(26*u)}px "WkMono",monospace`;
+  if(o.box==="brackets"){
+    const L=Math.min(x1-x0,y1-y0)*.18;x.strokeStyle="#FFFFFF";x.lineWidth=5*u;x.shadowColor="rgba(0,0,0,.5)";x.shadowBlur=10*u;
+    for(const [px,py,dx,dy] of [[x0,y0,1,1],[x1,y0,-1,1],[x0,y1,1,-1],[x1,y1,-1,-1]]){x.beginPath();x.moveTo(px,py+dy*L);x.lineTo(px,py);x.lineTo(px+dx*L,py);x.stroke();}
+    x.fillStyle=col;x.beginPath();x.arc(x0+8*u,y0-22*u,7*u,0,Math.PI*2);x.fill();x.fillStyle="#FFFFFF";x.fillText(label,x0+26*u,y0-13*u);
+  }else{
+    x.strokeStyle=col;x.lineWidth=3*u;x.shadowColor=col;x.shadowBlur=16*u;x.strokeRect(x0,y0,x1-x0,y1-y0);x.shadowBlur=0;
+    const tw=x.measureText(label).width+28*u;x.fillStyle=col;x.fillRect(x0-1.5*u,y0-42*u,tw,42*u);x.fillStyle=lt?"#101215":"#FFFFFF";x.fillText(label,x0+12*u,y0-13*u);
+  }
+  x.restore();
+}
 function drawPoseFrame(x,v,tr,t,W,H,o,extra){
-  x.drawImage(v,0,0,W,H);
+  const cam=extra&&extra.cam,vp=camView(cam,tr,o,t),k=W/vp[2];
+  x.drawImage(v,vp[0],vp[1],vp[2],vp[3],0,0,W,H);
   if(o.dim){x.fillStyle="rgba(6,8,12,.42)";x.fillRect(0,0,W,H);}
-  drawPoseLayer(x,tr,t,W,H,o);
+  x.save();x.scale(k,H/vp[3]);x.translate(-vp[0],-vp[1]);drawPoseLayer(x,tr,t,tr.w,tr.h,o,k);x.restore();
+  if(o.box&&o.box!=="off")drawTrackBox(x,cam,tr,t,vp,W,H,o,(extra&&extra.label)||"TRACKING");
   const portrait=H>W,u=Math.min(W,H)/1080;
   if(o.timer){const t0=tr.T[0],tt=Math.max(0,Math.min(t,tr.T[tr.n-1])-t0),m=Math.floor(tt/60),s=tt%60;
     x.save();x.font=`700 ${Math.round(46*u)}px "WkMono",monospace`;x.fillStyle="#FFFFFF";x.shadowColor="rgba(0,0,0,.6)";x.shadowBlur=14*u;x.textBaseline="alphabetic";
@@ -5954,7 +6012,7 @@ async function exportPoseVideo(url,tr,o,extra,onProg,cancel){
   try{
     await vidReady(v);priming=false;v.pause();
     if(v.currentTime>0)await new Promise(r=>{const to=setTimeout(r,1500);v.addEventListener("seeked",()=>{clearTimeout(to);r();},{once:true});v.currentTime=0;});
-    const sc=Math.min(1,1920/Math.max(tr.w,tr.h)),W=Math.round(tr.w*sc/2)*2,H=Math.round(tr.h*sc/2)*2;
+    const [W,H]=outDims(o,tr,o.cam!=="follow"&&!CAM_SHAPES[o.shape]?Math.min(1920,Math.max(tr.w,tr.h)):1920);
     const cv=document.createElement("canvas");cv.width=W;cv.height=H;const x=cv.getContext("2d");
     const stream=cv.captureStream(30);
     if(actx){try{const src=actx.createMediaElementSource(v),dst=actx.createMediaStreamDestination();src.connect(dst);dst.stream.getAudioTracks().forEach(tk=>stream.addTrack(tk));}catch(e){v.muted=true;}}
@@ -5977,11 +6035,11 @@ async function exportPoseVideo(url,tr,o,extra,onProg,cancel){
 }
 /* ---------- the sheet ---------- */
 function openTracker(link,back){
-  const st={url:null,A:null,tr:null,stats:null,sticker:null};
+  const st={url:null,A:null,tr:null,stats:null,sticker:null,cam:null,label:"TRACKING"};
   const f=link?sendFacts(link.s,link.i):null,gc=f&&f.p.gc;
-  const o={skel:"neon",trail:"hips",trailLen:"fade",color:gc?"grade":"#CDF54A",dim:false,timer:false,sound:true,sticker:link?"top":"off",q:"full"};
-  try{const sv=JSON.parse(localStorage.getItem("workouts-motion-v1")||"{}");for(const k of ["skel","trail","trailLen","color","dim","timer","sound","q"])if(sv[k]!=null)o[k]=sv[k];if(o.color==="grade"&&!gc)o.color="#CDF54A";}catch(e){}
-  const saveO=()=>{try{const sv={};for(const k of ["skel","trail","trailLen","color","dim","timer","sound","q"])sv[k]=o[k];localStorage.setItem("workouts-motion-v1",JSON.stringify(sv));}catch(e){}};
+  const o={skel:"neon",trail:"hips",trailLen:"fade",color:gc?"grade":"#CDF54A",dim:false,timer:false,sound:true,sticker:link?"top":"off",q:"full",cam:"follow",zoom:"medium",shape:"9:16",box:"off",push:false};
+  try{const sv=JSON.parse(localStorage.getItem("workouts-motion-v1")||"{}");for(const k of ["skel","trail","trailLen","color","dim","timer","sound","q","cam","zoom","shape","box","push"])if(sv[k]!=null)o[k]=sv[k];if(o.color==="grade"&&!gc)o.color="#CDF54A";}catch(e){}
+  const saveO=()=>{try{const sv={};for(const k of ["skel","trail","trailLen","color","dim","timer","sound","q","cam","zoom","shape","box","push"])sv[k]=o[k];localStorage.setItem("workouts-motion-v1",JSON.stringify(sv));}catch(e){}};
   const colOf=()=>o.color==="grade"?(gc||"#CDF54A"):o.color;
   let loop=0,pv=null;
   const stopPreview=()=>{cancelAnimationFrame(loop);loop=0;if(pv){pv.pause();pv.remove();pv=null;}};
@@ -5989,7 +6047,7 @@ function openTracker(link,back){
   const fileIn=()=>{let fi=$("mt-file");if(!fi){fi=document.createElement("input");fi.type="file";fi.accept="video/*";fi.id="mt-file";fi.hidden=true;document.body.appendChild(fi);}return fi;};
   const pick=()=>{
     stopPreview();
-    openSheet(`<h3>Motion tracking</h3><p class="sub">Pick a send video and the app finds your body in every frame, then plays it back with a skeleton, tracers, or both. It all runs on this phone; the video isn't uploaded.</p>
+    openSheet(`<h3>Motion tracking</h3><p class="sub">Pick a send video and the app finds you in every frame. It can reframe the shot to follow and zoom in on you like an editor's motion tracking, and add a skeleton, tracers and a tracking box. It all runs on this phone; the video isn't uploaded.</p>
       ${link?`<div class="banner" style="margin:4px 0 12px"><b>${esc(f.p.gl)}, ${esc(f.result)}</b>${f.gym?` at ${esc(f.gym)}`:""}. Your send sticker can go on the video too.</div>`:""}
       <button class="btn primary" id="mt-pick" style="width:100%">${icon("climb")} Choose a video</button>
       <label>Tracking</label><div class="seg" id="mt-q"><button data-v="full" aria-pressed="${o.q==="full"}">Accurate</button><button data-v="lite" aria-pressed="${o.q==="lite"}">Faster</button></div>
@@ -6010,7 +6068,7 @@ function openTracker(link,back){
       if(cancel.on)return;
       const tr=buildTrack(A);
       if(!tr||tr.found<.15){pick();$("mt-err").textContent="Couldn't find a climber in that video. Try a clip where your whole body is in frame.";return;}
-      st.A=A;st.tr=tr;st.stats=poseStats(tr);ready();
+      st.A=A;st.tr=tr;st.stats=poseStats(tr);st.cam=camPath(tr);if(link)st.label=`${f.p.gl} · ${f.result}`.toUpperCase();ready();
     }catch(e){
       if(cancel.on)return;pick();
       $("mt-err").textContent=e&&e.message==="decode"?"That video couldn't be opened here. Try exporting it from Photos as a normal (not HDR or Cinematic) video.":`Motion tracking couldn't start: the pose model didn't load. It downloads about 9 MB the first time, so check your connection and try again.${window.STANDALONE?"":" If this keeps happening here, open the app from your home screen, where it can load the model."}`;
@@ -6021,20 +6079,25 @@ function openTracker(link,back){
     const seg=(label,key,opts)=>`<div class="plabel">${label}</div><div class="seg" data-mk="${key}">${opts.map(([v,t])=>`<button data-v="${v}" aria-pressed="${String(o[key])===String(v)}">${t}</button>`).join("")}</div>`;
     const cols=[...(gc?[["grade","Grade color"]]:[]),["#CDF54A","Volt"],["#FFFFFF","White"],["#FC4C02","Orange"],["#8B7CFF","Aura"]];
     openSheet(`<h3>Your climb, tracked</h3>
-      <div class="mt-stage" style="aspect-ratio:${tr.w}/${tr.h};width:min(100%,calc(58vh * ${ar.toFixed(4)}))"><canvas id="mt-cv" aria-label="Video preview with tracking"></canvas><button class="mt-play" id="mt-play" aria-label="Pause">${icon("pause")}</button></div>
+      <div class="mt-stage" id="mt-stage"><canvas id="mt-cv" aria-label="Video preview with tracking"></canvas><button class="mt-play" id="mt-play" aria-label="Pause">${icon("pause")}</button></div>
       <input type="range" id="mt-seek" min="0" max="1000" value="0" aria-label="Scrub through the video">
       <div class="mt-stats"><div><b>${fmtClock(Math.round(S.time))}</b><span>On the wall</span></div><div><b>${S.moves}</b><span>Hand moves</span></div><div><b>${S.rests}</b><span>${S.rests===1?"Shake-out":"Shake-outs"}${S.longest?`, ${Math.round(S.longest)}s max`:""}</span></div></div>
       ${tr.found<.6?`<p class="hint">You were tracked in ${Math.round(tr.found*100)}% of frames, so parts may flicker. A steadier, wider shot helps.</p>`:""}
       <div class="opts" style="--c:#F5F5F7;--ct:#000">
+      ${seg("Camera","cam",[["follow","Follow me"],["full","Full frame"]])}
+      <div id="mt-follow"${o.cam==="follow"?"":" hidden"}>${seg("Zoom","zoom",[["wide","Wide"],["medium","Medium"],["close","Close"]])}</div>
+      ${seg("Shape","shape",[["9:16","9:16"],["4:5","4:5"],["1:1","1:1"],["orig","Original"]])}
+      ${seg("Tracking box","box",[["off","None"],["brackets","Brackets"],["box","Box"]])}
       ${seg("Skeleton","skel",[["neon","Neon"],["clean","Clean"],["dots","Joints"],["off","None"]])}
       ${seg("Tracers","trail",[["off","None"],["hips","Hips"],["limbs","Hands and feet"],["all","All"]])}
       ${seg("Tracer length","trailLen",[["fade","Fading"],["full","Whole route"]])}
       ${seg("Color","color",cols)}
       ${link?seg("Send sticker","sticker",[["off","Off"],["top","At the top"],["all","Whole video"]]):""}
-      <div class="plabel">Extras</div><div class="tchips">${[["dim","Darken video"],["timer","Climb timer"],["sound","Keep the sound"]].map(([k,t])=>`<button class="tchip" data-mt="${k}" aria-pressed="${!!o[k]}">${t}</button>`).join("")}</div></div>
+      <div class="plabel">Extras</div><div class="tchips">${[["push","Push in at the top"],["dim","Darken video"],["timer","Climb timer"],["sound","Keep the sound"]].map(([k,t])=>`<button class="tchip" data-mt="${k}" aria-pressed="${!!o[k]}"${k==="push"&&o.cam!=="follow"?" hidden":""}>${t}</button>`).join("")}</div></div>
       <div class="row" style="margin-top:16px"><button class="btn primary" id="mt-save">Save video</button></div>
       <div class="row" style="margin-top:10px"><button class="btn" id="mt-new">Another video</button><button class="btn" id="mt-back">${back?"Back":"Done"}</button></div>`);
-    const cv=$("mt-cv"),sc=Math.min(1,720/Math.max(tr.w,tr.h));cv.width=Math.round(tr.w*sc);cv.height=Math.round(tr.h*sc);const x=cv.getContext("2d");
+    const cv=$("mt-cv"),x=cv.getContext("2d");
+    const setStage=()=>{const a=outAspect(o,tr),[w,h]=outDims(o,tr,720),sg=$("mt-stage");sg.style.aspectRatio=String(a);sg.style.width=`min(100%,calc(58vh * ${a.toFixed(4)}))`;if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h;}};setStage();
     pv=hiddenVideo(st.url,true);pv.loop=true;
     const prep=async()=>{if(link&&o.sticker!=="off"&&!st.sticker){try{const lo={layout:"stack",font:"sport",color:"#FFFFFF",accent:f.p.gc?"grade":"text",bg:"none",shadow:true,outline:false,gym:!!f.gym,date:true,tries:true,name:!!f.name,style:false,high:true,logo:"none"};
       const sv=JSON.parse(localStorage.getItem("workouts-send-look-v1")||"{}");for(const k of ["layout","color","font","bg","shadow","outline","date","gym","tries"])if(sv[k]!=null)lo[k]=sv[k];if(sv.accent==="text")lo.accent="text";lo.layout=({tape:"aura",dymo:"plaque",volume:"chrome",diecut:"seal"})[lo.layout]||lo.layout;if(lo.bg==="glass"&&STORY_LAYOUTS.includes(lo.layout))lo.bg="none";
@@ -6047,7 +6110,8 @@ function openTracker(link,back){
     const tog=()=>{if(pv.paused)pv.play().catch(()=>{});else pv.pause();};
     $("mt-play").onclick=tog;cv.onclick=tog;
     $("mt-seek").oninput=e=>{if(pv.duration)pv.currentTime=e.target.value/1000*pv.duration;};
-    document.querySelectorAll("[data-mk]").forEach(el=>el.querySelectorAll("button").forEach(b=>b.onclick=()=>{o[el.dataset.mk]=b.dataset.v;el.querySelectorAll("button").forEach(z=>z.setAttribute("aria-pressed",z===b));saveO();prep();haptic("light");}));
+    document.querySelectorAll("[data-mk]").forEach(el=>el.querySelectorAll("button").forEach(b=>b.onclick=()=>{o[el.dataset.mk]=b.dataset.v;el.querySelectorAll("button").forEach(z=>z.setAttribute("aria-pressed",z===b));saveO();prep();haptic("light");
+      if(el.dataset.mk==="shape")setStage();if(el.dataset.mk==="cam"){$("mt-follow").hidden=o.cam!=="follow";const pb=document.querySelector('[data-mt="push"]');if(pb)pb.hidden=o.cam!=="follow";}}));
     document.querySelectorAll("[data-mt]").forEach(b=>b.onclick=()=>{const k=b.dataset.mt;o[k]=!o[k];b.setAttribute("aria-pressed",o[k]);saveO();});
     $("mt-new").onclick=()=>{stopPreview();pick();$("mt-pick").click();};
     $("mt-back").onclick=goBack;
