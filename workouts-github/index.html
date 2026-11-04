@@ -6036,14 +6036,105 @@ function drawTrackBox(x,cam,tr,t,vp,W,H,o,label){
   }
   x.restore();
 }
+/* ---------- intro card: the send, shown over the opening seconds while you're still at the start ---------- */
+/* when you leave the ground: the hips rise clearly above where they sat at the start */
+function climbStart(tr){
+  const n=tr.n;if(n<4)return null;const hy=i=>(tr.Y[23][i]+tr.Y[24][i])/2,lim=tr.T[0]+.8,b=[];
+  for(let i=0;i<n&&tr.T[i]<=lim;i++)b.push(hy(i));if(!b.length)return null;b.sort((p,q)=>p-q);const base=b[b.length>>1],th=.35*tr.torso/tr.h;
+  for(let i=0;i<n;i++)if(hy(i)<base-th)return Math.max(0,tr.T[i]-.35);return null;
+}
+const introDur=(o,ex)=>o.introLen==="auto"?Math.max(2.2,Math.min(5.5,(ex&&ex.climbT!=null?ex.climbT:2.6)+.25)):+o.introLen||3;
+const easeOut=q=>q<=0?0:q>=1?1:1-Math.pow(1-q,3);
+const easeBack=q=>{q=Math.max(0,Math.min(1,q));const c=1.6;return 1+(c+1)*Math.pow(q-1,3)+c*Math.pow(q-1,2);};
+function introInfo(f){
+  const p=f.p,sent=p.res!=="attempt",att=p.att||1;
+  return {grade:p.gl||"",gc:p.gc||null,sent,att,res:p.res,
+    word:f.result==="Project sent"?"Project sent":p.res==="flash"?"Flash":sent?"Sent":"Working on it",
+    tries:f.result==="Project sent"?f.tries:p.res==="flash"?"First attempt":sent?(att<=10?`${ORD_W[att]} attempt`:`Attempt ${att}`):`${att} ${att===1?"attempt":"attempts"} so far`,
+    name:f.name||"",gym:f.gym||"",date:f.date||"",high:!!f.high};
+}
+function drawIntro(x,W,H,t,D,o,I,sticker){
+  if(t>D+.05)return;
+  x.save();try{drawIntro_(x,W,H,t,D,o,I,sticker);}finally{x.restore();x.globalAlpha=1;}
+}
+function drawIntro_(x,W,H,t,D,o,I,sticker){
+  const u=Math.min(W,H)/1080,portrait=H>W,cx=W/2,col=o.col;
+  const inA=easeOut(t/.7),outA=1-easeOut((t-(D-.55))/.55),A=Math.max(0,Math.min(inA,outA)),ph=(a,d)=>easeOut((t-a)/(d||.6));
+  if(A<=0)return;
+  const lum=h=>{const n=parseInt(String(h).slice(1),16);return ((n>>16)*.299+((n>>8)&255)*.587+(n&255)*.114)/255;};
+  x.save();x.textBaseline="alphabetic";
+  if(o.intro==="title"){
+    // cinematic title: dim, glow, serif, the details set in small caps
+    x.fillStyle=`rgba(6,8,12,${.5*A})`;x.fillRect(0,0,W,H);
+    const cy=portrait?H*.44:H*.46,lift=(1-inA)*24*u;x.globalAlpha=A;x.textAlign="center";
+    const caps=[I.gym,I.date].filter(Boolean).join("  ·  ").toUpperCase();
+    let y=cy-(I.gc?300:230)*u;
+    if(I.high){x.save();x.globalAlpha=A*ph(.1);x.fillStyle=col;capsT(x,"NEW HIGH POINT",cx,y-56*u,WSF.caps(28*u),28*u*.34,"center");x.restore();}
+    if(caps){x.save();x.globalAlpha=A*ph(.1);x.fillStyle="rgba(255,255,255,.85)";x.shadowColor="rgba(0,0,0,.5)";x.shadowBlur=14*u;capsT(x,caps,cx,y+lift,WSF.caps(32*u),32*u*.34,"center");x.restore();}
+    if(I.gc){x.save();x.globalAlpha=A*ph(.15);const r=78*u*(.9+.1*inA);x.shadowColor=I.gc;x.shadowBlur=60*u;drawGM(x,I.grade,I.gc,cx,cy-150*u,r);x.restore();}
+    const gs=fit2(x,I.grade,WSF.serif,(I.gc?200:300)*u,W*.82,60*u);
+    x.save();x.globalAlpha=A*ph(.2,.7);x.translate(cx,cy+60*u);const sc=1.06-.06*ph(.2,.9);x.scale(sc,sc);x.font=WSF.serif(gs);x.fillStyle="#FFFFFF";x.shadowColor=I.gc||col;x.shadowBlur=60*u;x.fillText(I.grade,0,0);x.shadowBlur=0;x.fillText(I.grade,0,0);x.restore();
+    const hw=260*u*ph(.35,.7);x.fillStyle="rgba(255,255,255,.7)";x.fillRect(cx-hw/2,cy+108*u,hw,2*u);
+    x.save();x.globalAlpha=A*ph(.45);x.font=WSF.ital(68*u);x.fillStyle="#FFFFFF";x.shadowColor="rgba(0,0,0,.5)";x.shadowBlur=18*u;x.fillText(`${I.word}${I.tries?", "+I.tries.toLowerCase():""}.`,cx,cy+200*u-lift*.5);
+    if(I.name){x.font=WSF.ital(46*u);x.fillStyle="rgba(255,255,255,.8)";x.fillText(`“${I.name}”`,cx,cy+272*u);}x.restore();
+  }else if(o.intro==="card"){
+    // broadcast lower third: header strip and main bar wipe in, attempt boxes tick in one by one
+    const M=72*u,BW=W-2*M,blk=168*u,y0=portrait?H*.64:H*.56,accC=I.gc||col,onAcc=lum(accC)>.6?"#101215":"#FFFFFF",slide=(1-outA)*W*.35;
+    x.translate(-slide,0);x.globalAlpha=outA;
+    const head=[I.gym||"Bouldering",I.date].filter(Boolean).join("   ·   ").toUpperCase();
+    x.font=`${Math.round(34*u)}px "WkCond","Barlow Condensed",sans-serif`;const hw=Math.min(BW,x.measureText(head).width+80*u),w1=hw*ph(.05,.5);
+    x.save();x.beginPath();x.rect(M,y0,w1,60*u);x.clip();x.fillStyle="rgba(10,12,18,.92)";x.fillRect(M,y0,hw,60*u);x.fillStyle=accC;x.fillRect(M,y0,10*u,60*u);x.fillStyle="rgba(255,255,255,.9)";x.fillText(head,M+34*u,y0+42*u);x.restore();
+    const y1=y0+60*u,w2=BW*ph(.25,.55);
+    x.save();x.beginPath();x.rect(M,y1,w2,blk);x.clip();
+    x.fillStyle="#F5F5F2";x.fillRect(M,y1,BW,blk);x.fillStyle=accC;x.fillRect(M,y1,blk,blk);
+    if(I.gc)drawGM(x,I.grade,I.gc,M+blk/2,y1+blk/2,62*u);else{const gs=fit2(x,I.grade,SXF.anton,112*u,blk-28*u,40*u);x.font=SXF.anton(gs);x.fillStyle=onAcc;x.textAlign="center";x.fillText(I.grade,M+blk/2,y1+blk/2+gs*.36);x.textAlign="left";}
+    const boxes=Math.max(1,Math.min(10,I.att)),bs=40*u,bg=10*u,bx=W-M-30*u-boxes*(bs+bg)+bg,tx=M+blk+36*u;
+    const title=I.word==="Project sent"?"PROJECT SENT":I.res==="flash"?"FLASH":I.sent?"TOP":"WORKING";
+    const ts=fit2(x,title,SXF.anton,96*u,bx-tx-30*u,48*u);x.font=SXF.anton(ts);x.fillStyle="#101215";x.fillText(title,tx,y1+96*u);
+    x.font=`${Math.round(36*u)}px "WkCond","Barlow Condensed",sans-serif`;x.fillStyle="#4A4F5A";x.fillText([I.gc?I.grade:"",I.name||I.tries].filter(Boolean).join("  ·  "),tx,y1+142*u);
+    x.font=`${Math.round(24*u)}px "WkCond","Barlow Condensed",sans-serif`;x.fillStyle="#7A808C";x.textAlign="right";x.fillText("ATTEMPTS",W-M-30*u,y1+46*u);x.textAlign="left";
+    for(let k=0;k<boxes;k++){const on=t>.7+k*.12;if(!on)continue;const X=bx+k*(bs+bg),Y=y1+70*u,last=k===boxes-1&&I.sent;x.lineWidth=3*u;x.strokeStyle="#101215";if(last){x.fillStyle=accC;x.fillRect(X,Y,bs,bs);}x.strokeRect(X+1.5*u,Y+1.5*u,bs-3*u,bs-3*u);
+      if(last){x.strokeStyle=onAcc;x.lineWidth=4*u;x.beginPath();x.moveTo(X+10*u,Y+21*u);x.lineTo(X+17*u,Y+29*u);x.lineTo(X+31*u,Y+12*u);x.stroke();}}
+    x.restore();
+    if(I.high&&t>.9){x.save();x.font=`${Math.round(30*u)}px "WkCond","Barlow Condensed",sans-serif`;const tt="NEW HIGH POINT",w3=x.measureText(tt).width+56*u;x.fillStyle=accC;x.fillRect(W-M-w3,y1+blk,w3,52*u);x.fillStyle=onAcc;x.fillText(tt,W-M-w3+28*u,y1+blk+37*u);x.restore();}
+  }else if(o.intro==="hud"){
+    // viewfinder: brackets snap in, the readout types itself out
+    const T=portrait?H*.13:H*.08,B=portrait?H*.83:H*.92,L=64*u,R=W-64*u,len=96*u,s1=1.06-.06*inA;
+    x.globalAlpha=A;x.translate(cx,(T+B)/2);x.scale(s1,s1);x.translate(-cx,-(T+B)/2);
+    x.strokeStyle="#FFFFFF";x.lineWidth=6*u;x.lineCap="square";x.shadowColor="rgba(0,0,0,.5)";x.shadowBlur=10*u;
+    for(const [px,py,dx,dy] of [[L,T,1,1],[R,T,-1,1],[L,B,1,-1],[R,B,-1,-1]]){x.beginPath();x.moveTo(px,py+dy*len);x.lineTo(px,py);x.lineTo(px+dx*len,py);x.stroke();}
+    x.font=`700 ${Math.round(36*u)}px "WkMono",monospace`;x.fillStyle="#FFFFFF";x.fillText("REC",L+68*u,T+70*u);
+    if(Math.floor(t*2.2)%2===0){x.fillStyle="#FF3B30";x.beginPath();x.arc(L+40*u,T+57*u,13*u,0,Math.PI*2);x.fill();}
+    if(I.date){x.fillStyle="#FFFFFF";x.textAlign="right";x.fillText(I.date.toUpperCase(),R-34*u,T+70*u);x.textAlign="left";}
+    const type=(str,start)=>str.slice(0,Math.max(0,Math.floor((t-start)*30)));
+    let by=B-48*u;const lines=[[I.gym.toUpperCase(),.95],[I.tries.toUpperCase(),.75],[I.name?`"${I.name.toUpperCase()}"`:"",.55]].filter(q=>q[0]).reverse();
+    x.font=`700 ${Math.round(30*u)}px "WkMono",monospace`;x.fillStyle="#FFFFFF";for(const [str,st0] of lines){x.fillText(type(str,st0),L+34*u,by);by-=48*u;}
+    by-=10*u;x.globalAlpha=A*ph(.45,.3);x.font=SXF.wide(56*u);x.fillStyle=col;x.fillText(I.word.toUpperCase(),L+34*u,by);by-=74*u;
+    const gs=fit2(x,I.grade,SXF.anton,250*u,W*.6,90*u);x.globalAlpha=A*ph(.3,.3);x.font=SXF.anton(gs);x.fillStyle="#FFFFFF";x.fillText(I.grade,L+30*u,by);
+    if(I.gc){const gw=x.measureText(I.grade).width;x.shadowBlur=0;drawGM(x,I.grade,I.gc,L+30*u+gw+70*u,by-gs*.38,40*u);}
+  }else if(o.intro==="sticker"&&sticker){
+    // your share sticker pops in, holds, and shrinks away
+    x.globalAlpha=A;
+    if(sticker.width===1080&&sticker.height===1920&&portrait)x.drawImage(sticker,0,0,W,H);
+    else{x.fillStyle=`rgba(6,8,12,${.35*A})`;x.fillRect(0,0,W,H);const sc=t<D-.55?.8+.2*easeBack(t/.6):1-.15*easeOut((t-(D-.55))/.55),sw=Math.min(W*.78,sticker.width*u*1.15)*sc,sh=sw*sticker.height/sticker.width;x.drawImage(sticker,cx-sw/2,(portrait?H*.42:H*.5)-sh/2,sw,sh);}
+  }
+  x.restore();
+}
+function fit2(x,t,font,size,maxW,min){let sz=size;x.font=font(sz);while(x.measureText(t).width>maxW&&sz>min){sz-=4;x.font=font(sz);}return sz;}
 function drawPoseFrame(x,v,tr,t,W,H,o,extra){
-  const cam=extra&&extra.cam,vp=camView(cam,tr,o,t),k=W/vp[2];
+  const cam=extra&&extra.cam,hasIntro=!!(extra&&extra.I&&o.intro&&o.intro!=="off"),D=hasIntro?introDur(o,extra):0;
+  let vp=camView(cam,tr,o,t);
+  // with an intro, the camera starts wide and pushes in as the card leaves
+  if(hasIntro&&o.cam==="follow"){const wide=camView(cam,tr,{...o,cam:"full"},t),q=easeOut((t-(D-.7))/1.1);vp=wide.map((a,i)=>a+(vp[i]-a)*q);}
+  const k=W/vp[2];
   x.drawImage(v,vp[0],vp[1],vp[2],vp[3],0,0,W,H);
   if(o.dim){x.fillStyle="rgba(6,8,12,.42)";x.fillRect(0,0,W,H);}
-  x.save();x.scale(k,H/vp[3]);x.translate(-vp[0],-vp[1]);drawPoseLayer(x,tr,t,tr.w,tr.h,o,k);x.restore();
-  if(o.box&&o.box!=="off")drawTrackBox(x,cam,tr,t,vp,W,H,o,(extra&&extra.label)||"TRACKING");
+  const clean=hasIntro&&t<D-.25;// keep the frame clean under the intro card
+  if(!clean){x.save();x.scale(k,H/vp[3]);x.translate(-vp[0],-vp[1]);drawPoseLayer(x,tr,t,tr.w,tr.h,o,k);x.restore();
+    if(o.box&&o.box!=="off")drawTrackBox(x,cam,tr,t,vp,W,H,o,(extra&&extra.label)||"TRACKING");}
+  if(hasIntro)drawIntro(x,W,H,t,D,o,extra.I,extra.sticker);
   const portrait=H>W,u=Math.min(W,H)/1080;
-  if(o.timer){const t0=tr.T[0],tt=Math.max(0,Math.min(t,tr.T[tr.n-1])-t0),m=Math.floor(tt/60),s=tt%60;
+  if(o.timer&&!(hasIntro&&t<D)){const t0=extra&&extra.climbT!=null?extra.climbT:tr.T[0],tt=Math.max(0,Math.min(t,tr.T[tr.n-1])-t0),m=Math.floor(tt/60),s=tt%60;
     x.save();x.font=`700 ${Math.round(46*u)}px "WkMono",monospace`;x.fillStyle="#FFFFFF";x.shadowColor="rgba(0,0,0,.6)";x.shadowBlur=14*u;x.textBaseline="alphabetic";
     const ty=portrait?H*.15:80*u,txt=`${m}:${s.toFixed(1).padStart(4,"0")}`;x.textAlign="left";x.fillText(txt,64*u+30*u,ty);
     x.fillStyle=o.col;x.beginPath();x.arc(64*u+9*u,ty-15*u,9*u,0,Math.PI*2);x.fill();x.restore();}
@@ -6089,9 +6180,9 @@ async function exportPoseVideo(url,tr,o,extra,onProg,cancel){
 function openTracker(link,back){
   const st={url:null,A:null,tr:null,stats:null,sticker:null,cam:null,label:"TRACKING"};
   const f=link?sendFacts(link.s,link.i):null,gc=f&&f.p.gc;
-  const o={skel:"neon",trail:"hips",trailLen:"fade",color:gc?"grade":"#CDF54A",dim:false,timer:false,sound:true,sticker:link?"top":"off",q:"full",cam:"follow",zoom:"medium",shape:"9:16",box:"off",push:false};
-  try{const sv=JSON.parse(localStorage.getItem("workouts-motion-v1")||"{}");for(const k of ["skel","trail","trailLen","color","dim","timer","sound","q","cam","zoom","shape","box","push"])if(sv[k]!=null)o[k]=sv[k];if(o.color==="grade"&&!gc)o.color="#CDF54A";}catch(e){}
-  const saveO=()=>{try{const sv={};for(const k of ["skel","trail","trailLen","color","dim","timer","sound","q","cam","zoom","shape","box","push"])sv[k]=o[k];localStorage.setItem("workouts-motion-v1",JSON.stringify(sv));}catch(e){}};
+  const o={skel:"neon",trail:"hips",trailLen:"fade",color:gc?"grade":"#CDF54A",dim:false,timer:false,sound:true,sticker:link?"top":"off",intro:link?"title":"off",introLen:"auto",q:"full",cam:"follow",zoom:"medium",shape:"9:16",box:"off",push:false};
+  try{const sv=JSON.parse(localStorage.getItem("workouts-motion-v1")||"{}");for(const k of ["skel","trail","trailLen","color","dim","timer","sound","q","cam","zoom","shape","box","push","introLen","intro"])if(sv[k]!=null)o[k]=sv[k];if(o.color==="grade"&&!gc)o.color="#CDF54A";if(!link)o.intro="off";else if(o.intro==="off"&&!localStorage.getItem("workouts-motion-intro"))o.intro="title";}catch(e){}
+  const saveO=()=>{try{const sv={};for(const k of ["skel","trail","trailLen","color","dim","timer","sound","q","cam","zoom","shape","box","push","introLen","intro"])sv[k]=o[k];localStorage.setItem("workouts-motion-v1",JSON.stringify(sv));}catch(e){}};
   const colOf=()=>o.color==="grade"?(gc||"#CDF54A"):o.color;
   let loop=0,pv=null;
   const stopPreview=()=>{cancelAnimationFrame(loop);loop=0;if(pv){pv.pause();pv.remove();pv=null;}};
@@ -6124,7 +6215,7 @@ function openTracker(link,back){
       if(cancel.on||!A)return;
       const tr=buildTrack(A);
       if(!tr||tr.found<.15){pick();$("mt-err").textContent="Couldn't find a climber in that video. Try a clip where your whole body is in frame.";return;}
-      st.A=A;st.tr=tr;st.stats=poseStats(tr);st.cam=camPath(tr);if(link)st.label=`${f.p.gl} · ${f.result}`.toUpperCase();ready();
+      st.A=A;st.tr=tr;st.stats=poseStats(tr);st.cam=camPath(tr);st.climbT=climbStart(tr);if(link){st.label=`${f.p.gl} · ${f.result}`.toUpperCase();st.I=introInfo(f);}ready();
     }catch(e){
       clearInterval(tick);
       if(cancel.on)return;pick();
@@ -6149,6 +6240,7 @@ function openTracker(link,back){
       ${seg("Tracers","trail",[["off","None"],["hips","Hips"],["limbs","Hands and feet"],["all","All"]])}
       ${seg("Tracer length","trailLen",[["fade","Fading"],["full","Whole route"]])}
       ${seg("Color","color",cols)}
+      ${link?seg("Intro card","intro",[["off","Off"],["title","Title"],["card","Broadcast"],["hud","Viewfinder"],["sticker","Your sticker"]])+`<div id="mt-ilen"${o.intro==="off"?" hidden":""}>`+seg("Intro length","introLen",[["auto","Until you start"],["3","3 s"],["5","5 s"]])+`</div>`:`<p class="hint" style="margin-top:14px">To open the video with a title card of your send, start from the send instead: open it, tap Share, then Track a send video.</p>`}
       ${link?seg("Send sticker","sticker",[["off","Off"],["top","At the top"],["all","Whole video"]]):""}
       <div class="plabel">Extras</div><div class="tchips">${[["push","Push in at the top"],["dim","Darken video"],["timer","Climb timer"],["sound","Keep the sound"]].map(([k,t])=>`<button class="tchip" data-mt="${k}" aria-pressed="${!!o[k]}"${k==="push"&&o.cam!=="follow"?" hidden":""}>${t}</button>`).join("")}</div></div>
       <div class="row" style="margin-top:16px"><button class="btn primary" id="mt-save">Save video</button></div>
@@ -6156,7 +6248,8 @@ function openTracker(link,back){
     const cv=$("mt-cv"),x=cv.getContext("2d");
     const setStage=()=>{const a=outAspect(o,tr),[w,h]=outDims(o,tr,720),sg=$("mt-stage");sg.style.aspectRatio=String(a);sg.style.width=`min(100%,calc(58vh * ${a.toFixed(4)}))`;if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h;}};setStage();
     pv=hiddenVideo(st.url,true);pv.loop=true;
-    const prep=async()=>{if(link&&o.sticker!=="off"&&!st.sticker){try{const lo={layout:"stack",font:"sport",color:"#FFFFFF",accent:f.p.gc?"grade":"text",bg:"none",shadow:true,outline:false,gym:!!f.gym,date:true,tries:true,name:!!f.name,style:false,high:true,logo:"none"};
+    const prep=async()=>{try{await Promise.all(['80px "WkSerif"','italic 80px "WkSerif"','40px "WkSans"','80px "WkAnton"','40px "WkWide"','700 40px "WkMono"','40px "WkCond"'].map(q=>document.fonts.load(q)));}catch(e){}
+      if(link&&(o.sticker!=="off"||o.intro==="sticker")&&!st.sticker){try{const lo={layout:"stack",font:"sport",color:"#FFFFFF",accent:f.p.gc?"grade":"text",bg:"none",shadow:true,outline:false,gym:!!f.gym,date:true,tries:true,name:!!f.name,style:false,high:true,logo:"none"};
       const sv=JSON.parse(localStorage.getItem("workouts-send-look-v1")||"{}");for(const k of ["layout","color","font","bg","shadow","outline","date","gym","tries"])if(sv[k]!=null)lo[k]=sv[k];if(sv.accent==="text")lo.accent="text";lo.layout=({tape:"aura",dymo:"plaque",volume:"chrome",diecut:"seal"})[lo.layout]||lo.layout;if(lo.bg==="glass"&&STORY_LAYOUTS.includes(lo.layout))lo.bg="none";
       st.sticker=await drawSendCard(link.s,link.i,lo);}catch(e){st.sticker=null;}}};
     prep();
@@ -6168,7 +6261,7 @@ function openTracker(link,back){
     $("mt-play").onclick=tog;cv.onclick=tog;
     $("mt-seek").oninput=e=>{if(pv.duration)pv.currentTime=e.target.value/1000*pv.duration;};
     document.querySelectorAll("[data-mk]").forEach(el=>el.querySelectorAll("button").forEach(b=>b.onclick=()=>{o[el.dataset.mk]=b.dataset.v;el.querySelectorAll("button").forEach(z=>z.setAttribute("aria-pressed",z===b));saveO();prep();haptic("light");
-      if(el.dataset.mk==="shape")setStage();if(el.dataset.mk==="cam"){$("mt-follow").hidden=o.cam!=="follow";const pb=document.querySelector('[data-mt="push"]');if(pb)pb.hidden=o.cam!=="follow";}}));
+      if(el.dataset.mk==="shape")setStage();if(el.dataset.mk==="intro"){$("mt-ilen").hidden=o.intro==="off";try{localStorage.setItem("workouts-motion-intro","1");}catch(e){}if(pv){pv.currentTime=0;pv.play().catch(()=>{});}}if(el.dataset.mk==="cam"){$("mt-follow").hidden=o.cam!=="follow";const pb=document.querySelector('[data-mt="push"]');if(pb)pb.hidden=o.cam!=="follow";}}));
     document.querySelectorAll("[data-mt]").forEach(b=>b.onclick=()=>{const k=b.dataset.mt;o[k]=!o[k];b.setAttribute("aria-pressed",o[k]);saveO();});
     $("mt-new").onclick=()=>{stopPreview();pick();$("mt-pick").click();};
     $("mt-back").onclick=goBack;
