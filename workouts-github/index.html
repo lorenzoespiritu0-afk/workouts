@@ -5811,44 +5811,90 @@ const POSE_VER="0.10.14",POSE_CDN=`https://cdn.jsdelivr.net/npm/@mediapipe/tasks
 const POSE_MODELS={lite:"https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",full:"https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task"};
 const POSE_BONES=[[11,12],[11,13],[13,15],[15,19],[12,14],[14,16],[16,20],[11,23],[12,24],[23,24],[23,25],[25,27],[27,31],[24,26],[26,28],[28,32]];
 const POSE_JOINTS=[11,12,13,14,15,16,23,24,25,26,27,28,31,32];
+const POSE_LEGACY="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404";
 let poseLM=null,poseKind=null;
-async function loadPose(kind){
+const isIOSWeb=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+const withTimeout=(p,ms,what)=>Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej(new Error("timeout:"+what)),ms))]);
+/* download with progress, giving up if nothing arrives for a while */
+async function fetchBytes(url,onProg,stallMs){
+  const ctl=window.AbortController?new AbortController():null;let last=Date.now();const iv=setInterval(()=>{if(Date.now()-last>stallMs&&ctl)ctl.abort();},1000);
+  try{
+    const r=await withTimeout(fetch(url,ctl?{signal:ctl.signal}:{}),stallMs,"model");if(!r.ok)throw new Error("http "+r.status);
+    const tot=+r.headers.get("content-length")||0;
+    if(!r.body||!r.body.getReader)return new Uint8Array(await r.arrayBuffer());
+    const rd=r.body.getReader(),parts=[];let got=0;
+    for(;;){const {done,value}=await rd.read();if(done)break;parts.push(value);got+=value.length;last=Date.now();onProg&&onProg(got,tot);}
+    const out=new Uint8Array(got);let o=0;for(const q of parts){out.set(q,o);o+=q.length;}return out;
+  }finally{clearInterval(iv);}
+}
+const loadScript=src=>new Promise((res,rej)=>{const sc=document.createElement("script");sc.src=src;sc.crossOrigin="anonymous";sc.onload=()=>res();sc.onerror=()=>rej(new Error("script"));document.head.appendChild(sc);});
+/* the backup: MediaPipe's older pose solution, where everything, model included, comes from jsdelivr */
+async function loadLegacyPose(kind,stage){
+  stage("Loading the backup tracker…");
+  if(!window.Pose)await withTimeout(loadScript(POSE_LEGACY+"/pose.js"),30000,"backup library");
+  const pose=new window.Pose({locateFile:f=>`${POSE_LEGACY}/${f}`});
+  pose.setOptions({modelComplexity:kind==="lite"?0:1,smoothLandmarks:false,enableSegmentation:false,minDetectionConfidence:.45,minTrackingConfidence:.45});
+  let pending=null;pose.onResults(r=>{const q=pending;pending=null;if(q)q({landmarks:r.poseLandmarks?[r.poseLandmarks]:[]});});
+  stage("Starting the backup tracker…");
+  await withTimeout(pose.initialize(),90000,"backup engine");
+  return {legacy:true,detectForVideo(v){return new Promise((res,rej)=>{pending=res;pose.send({image:v}).catch(rej);});},close(){try{pose.close();}catch(e){}}};
+}
+async function loadPose(kind,stage){
+  stage=stage||(()=>{});
   if(window.__poseMock)return window.__poseMock;
   if(poseLM&&poseKind===kind)return poseLM;
-  const mod=await import(POSE_CDN+"/vision_bundle.mjs");
-  const fs=await mod.FilesetResolver.forVisionTasks(POSE_CDN+"/wasm");
-  const mk=delegate=>mod.PoseLandmarker.createFromOptions(fs,{baseOptions:{modelAssetPath:POSE_MODELS[kind],delegate},runningMode:"VIDEO",numPoses:1,minPoseDetectionConfidence:.45,minPosePresenceConfidence:.45,minTrackingConfidence:.45});
-  let lm;try{lm=await mk("GPU");}catch(e){lm=await mk("CPU");}
+  let lm=null,why="";
+  try{
+    stage("Loading the tracking library…");
+    const mod=await withTimeout(import(POSE_CDN+"/vision_bundle.mjs"),30000,"library");
+    stage("Downloading the pose model…");
+    const buf=await fetchBytes(POSE_MODELS[kind],(g,t)=>stage(`Downloading the pose model, ${t?Math.round(g/t*100)+"%":(g/1048576).toFixed(1)+" MB"}`),20000);
+    stage("Starting the tracker…");
+    const fs=await mod.FilesetResolver.forVisionTasks(POSE_CDN+"/wasm");
+    const mk=delegate=>mod.PoseLandmarker.createFromOptions(fs,{baseOptions:{modelAssetBuffer:buf.slice(),delegate},runningMode:"VIDEO",numPoses:1,minPoseDetectionConfidence:.45,minPosePresenceConfidence:.45,minTrackingConfidence:.45});
+    // the GPU path can stall on iPhones, so they go straight to CPU
+    if(!isIOSWeb){try{lm=await withTimeout(mk("GPU"),20000,"gpu");}catch(e){lm=null;}}
+    if(!lm)lm=await withTimeout(mk("CPU"),60000,"engine");
+  }catch(e){why=String(e&&e.message||e);lm=null;}
+  if(!lm){try{lm=await loadLegacyPose(kind,stage);}catch(e){const er=new Error("load");er.detail=(why?why+"; ":"")+String(e&&e.message||e);throw er;}}
   if(poseLM&&poseLM.close)try{poseLM.close();}catch(e){}
   poseLM=lm;poseKind=kind;return lm;
 }
 function hiddenVideo(url,muted){
-  const v=document.createElement("video");v.muted=muted;v.defaultMuted=muted;v.playsInline=true;v.setAttribute("playsinline","");v.preload="auto";
-  v.style.cssText="position:fixed;left:0;top:0;width:2px;height:2px;opacity:.01;pointer-events:none;z-index:-1";v.src=url;document.body.appendChild(v);return v;
+  const v=document.createElement("video");v.muted=muted;v.defaultMuted=muted;if(muted)v.setAttribute("muted","");v.playsInline=true;v.setAttribute("playsinline","");v.setAttribute("webkit-playsinline","");v.preload="auto";
+  v.style.cssText="position:fixed;left:0;top:0;width:2px;height:2px;opacity:.01;pointer-events:none;z-index:-1";v.src=url;document.body.appendChild(v);try{v.load();}catch(e){}return v;
 }
-const vidReady=v=>new Promise((res,rej)=>{if(v.readyState>=2){res();return;}v.addEventListener("loadeddata",()=>res(),{once:true});v.addEventListener("error",()=>rej(new Error("decode")),{once:true});});
+/* metadata is enough to start: iPhones don't load a hidden video's frames until it plays */
+const vidReady=v=>new Promise((res,rej)=>{if(v.readyState>=1){res();return;}const to=setTimeout(()=>rej(new Error("decode")),20000);
+  v.addEventListener("loadedmetadata",()=>{clearTimeout(to);res();},{once:true});v.addEventListener("error",()=>{clearTimeout(to);rej(new Error("decode"));},{once:true});});
+const vidFrames=v=>new Promise(res=>{if(v.readyState>=2){res();return;}const to=setTimeout(res,4000);const ok=()=>{clearTimeout(to);res();};v.addEventListener("loadeddata",ok,{once:true});v.addEventListener("playing",ok,{once:true});});
 /* one pass over the video, a pose per frame */
-async function analyzePose(url,kind,onProg,cancel){
-  const lm=await loadPose(kind);
+async function analyzePose(url,kind,onProg,cancel,stage){
+  const lm=await loadPose(kind,stage);
+  if(cancel.on)return null;
+  stage&&stage("Reading your video…");
   const v=hiddenVideo(url,true);
   try{
     await vidReady(v);
-    const dur=v.duration,samples=[];let lastTs=-1;
-    const take=mt=>{let ts=Math.round(mt*1000);if(ts<=lastTs)ts=lastTs+1;lastTs=ts;const r=lm.detectForVideo(v,ts);const L=r&&r.landmarks&&r.landmarks[0];
-      if(L){const a=new Float32Array(99);for(let k=0;k<33;k++){a[k*3]=L[k].x;a[k*3+1]=L[k].y;a[k*3+2]=L[k].visibility==null?1:L[k].visibility;}samples.push({t:mt,p:a});}else samples.push({t:mt,p:null});};
+    const dur=v.duration,samples=[];let lastTs=-1,busy=0,avg=.05;
+    const take=async mt=>{let ts=Math.round(mt*1000);if(ts<=lastTs)ts=lastTs+1;lastTs=ts;const t0=performance.now();const r=await lm.detectForVideo(v,ts);avg=avg*.8+(performance.now()-t0)/1000*.2;const L=r&&r.landmarks&&r.landmarks[0];
+      if(L&&L.length>=33){const a=new Float32Array(99);for(let k=0;k<33;k++){a[k*3]=L[k].x;a[k*3+1]=L[k].y;a[k*3+2]=L[k].visibility==null?1:L[k].visibility;}samples.push({t:mt,p:a});}else samples.push({t:mt,p:null});};
     let ok=false;
     if("requestVideoFrameCallback" in HTMLVideoElement.prototype){
-      // play at half speed and take every frame as it's shown
+      // play slowed down and take frames as they're shown; slower phones get a slower pass so few frames are missed
       ok=await new Promise((res,rej)=>{let done=false,got=false;const fin=r=>{if(!done){done=true;res(r);}};
-        const step=(now,md)=>{if(done)return;got=true;if(cancel.on){v.pause();fin(true);return;}try{take(md.mediaTime);}catch(e){done=true;rej(e);return;}onProg(Math.min(1,md.mediaTime/dur));v.requestVideoFrameCallback(step);};
-        v.requestVideoFrameCallback(step);v.addEventListener("ended",()=>setTimeout(()=>fin(true),60),{once:true});
-        setTimeout(()=>{if(!got){v.pause();fin(false);}},4000);
+        const step=async(now,md)=>{if(done)return;got=true;if(cancel.on){v.pause();fin(true);return;}
+          if(!busy){busy=1;try{await take(md.mediaTime);}catch(e){done=true;rej(e);return;}busy=0;v.playbackRate=Math.max(.2,Math.min(.5,.066/avg));onProg(Math.min(1,md.mediaTime/dur));}
+          if(!done)v.requestVideoFrameCallback(step);};
+        v.requestVideoFrameCallback(step);v.addEventListener("ended",()=>setTimeout(()=>fin(true),120),{once:true});
+        setTimeout(()=>{if(!got){v.pause();fin(false);}},6000);
         v.playbackRate=.5;v.play().catch(()=>fin(false));});
     }
-    if(!ok){
+    if(!ok&&!cancel.on){
       // fallback: seek through the clip at 15 frames a second
-      v.pause();const seek=t=>new Promise(r=>{const to=setTimeout(r,1500);v.addEventListener("seeked",()=>{clearTimeout(to);r();},{once:true});v.currentTime=t;});
-      for(let t=samples.length?samples[samples.length-1].t+1/15:0;t<dur&&!cancel.on;t+=1/15){await seek(t);take(t);onProg(t/dur);}
+      v.pause();const seek=t=>new Promise(r=>{const to=setTimeout(r,2000);v.addEventListener("seeked",()=>{clearTimeout(to);r();},{once:true});v.currentTime=t;});
+      if(v.readyState<2){v.play().catch(()=>{});await vidFrames(v);v.pause();}
+      for(let t=samples.length?samples[samples.length-1].t+1/15:0;t<dur&&!cancel.on;t+=1/15){await seek(t);await take(t);onProg(t/dur);}
     }
     return {dur,w:v.videoWidth,h:v.videoHeight,samples};
   }finally{v.pause();v.remove();}
@@ -6010,7 +6056,7 @@ async function exportPoseVideo(url,tr,o,extra,onProg,cancel){
   // start playback inside the tap so the browser lets this (unmuted) video play later
   let priming=true;v.play().then(()=>{if(priming)v.pause();}).catch(()=>{});
   try{
-    await vidReady(v);priming=false;v.pause();
+    await vidReady(v);await vidFrames(v);priming=false;v.pause();
     if(v.currentTime>0)await new Promise(r=>{const to=setTimeout(r,1500);v.addEventListener("seeked",()=>{clearTimeout(to);r();},{once:true});v.currentTime=0;});
     const [W,H]=outDims(o,tr,o.cam!=="follow"&&!CAM_SHAPES[o.shape]?Math.min(1920,Math.max(tr.w,tr.h)):1920);
     const cv=document.createElement("canvas");cv.width=W;cv.height=H;const x=cv.getContext("2d");
@@ -6027,7 +6073,7 @@ async function exportPoseVideo(url,tr,o,extra,onProg,cancel){
       const paint=()=>{if(done)return;if(cancel.on){v.pause();fin();return;}drawPoseFrame(x,v,tr,v.currentTime,W,H,o,extra);onProg(v.currentTime/(v.duration||1));
         if("requestVideoFrameCallback" in v)v.requestVideoFrameCallback(paint);else requestAnimationFrame(paint);};
       v.addEventListener("ended",()=>{drawPoseFrame(x,v,tr,v.duration,W,H,o,extra);setTimeout(fin,180);},{once:true});
-      v.play().then(paint).catch(rej);});
+      v.play().catch(()=>{v.muted=true;return v.play();}).then(paint).catch(rej);});
     rec.stop();await stopped;
     const type=(mime||chunks[0]&&chunks[0].type||"video/webm").split(";")[0];
     return cancel.on?null:new Blob(chunks,{type});
@@ -6059,19 +6105,24 @@ function openTracker(link,back){
     $("mt-pick").onclick=()=>{const fi=fileIn();fi.value="";fi.onchange=()=>{const fl=fi.files&&fi.files[0];if(!fl)return;if(st.url)URL.revokeObjectURL(st.url);st.url=URL.createObjectURL(fl);st.name=(fl.name||"send").replace(/\.[^.]+$/,"");analyze();};fi.click();};
   };
   const analyze=async()=>{
-    const cancel={on:false};
-    openSheet(`<h3>Tracking your climb</h3><p class="sub" id="mt-msg">Loading the pose model…</p><div class="mt-prog" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="mt-pb"><i id="mt-bar"></i></div><p class="hint">Keep the app open while it works.</p><div class="row"><button class="btn" id="mt-cancel">Cancel</button></div>`);
-    $("mt-cancel").onclick=()=>{cancel.on=true;pick();};
+    const cancel={on:false};let msg="Loading the pose model…";const t0=Date.now();
+    openSheet(`<h3>Tracking your climb</h3><p class="sub" id="mt-msg">${msg}</p><div class="mt-prog" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="mt-pb"><i id="mt-bar"></i></div><p class="hint" id="mt-wait">Keep the app open while it works.</p><div class="row"><button class="btn" id="mt-cancel">Cancel</button></div>`);
+    $("mt-cancel").onclick=()=>{cancel.on=true;clearInterval(tick);pick();};
+    const setMsg=m=>{msg=m;const el=$("mt-msg");if(el)el.textContent=m;};
+    let last=Date.now(),lastMsg=msg;
+    const tick=setInterval(()=>{const el=$("mt-wait");if(!el){clearInterval(tick);return;}if(msg!==lastMsg){lastMsg=msg;last=Date.now();}const s0=Math.round((Date.now()-last)/1000);
+      el.textContent=s0>=12?`Still working on this step (${s0}s). A slow connection makes the first run take longer.`:"Keep the app open while it works.";},1000);
     try{
-      const t0=Date.now();
-      const A=await analyzePose(st.url,o.q,p=>{const b=$("mt-bar");if(!b)return;b.style.transform=`scaleX(${p})`;$("mt-pb").setAttribute("aria-valuenow",Math.round(p*100));$("mt-msg").textContent=`Finding your movement, ${Math.round(p*100)}%`;},cancel);
-      if(cancel.on)return;
+      const A=await analyzePose(st.url,o.q,p=>{const b=$("mt-bar");if(!b)return;b.style.transform=`scaleX(${p})`;$("mt-pb").setAttribute("aria-valuenow",Math.round(p*100));setMsg(`Finding your movement, ${Math.round(p*100)}%`);},cancel,setMsg);
+      clearInterval(tick);
+      if(cancel.on||!A)return;
       const tr=buildTrack(A);
       if(!tr||tr.found<.15){pick();$("mt-err").textContent="Couldn't find a climber in that video. Try a clip where your whole body is in frame.";return;}
       st.A=A;st.tr=tr;st.stats=poseStats(tr);st.cam=camPath(tr);if(link)st.label=`${f.p.gl} · ${f.result}`.toUpperCase();ready();
     }catch(e){
+      clearInterval(tick);
       if(cancel.on)return;pick();
-      $("mt-err").textContent=e&&e.message==="decode"?"That video couldn't be opened here. Try exporting it from Photos as a normal (not HDR or Cinematic) video.":`Motion tracking couldn't start: the pose model didn't load. It downloads about 9 MB the first time, so check your connection and try again.${window.STANDALONE?"":" If this keeps happening here, open the app from your home screen, where it can load the model."}`;
+      $("mt-err").textContent=e&&e.message==="decode"?"That video couldn't be opened here. Try exporting it from Photos as a normal (not HDR or Cinematic) video.":`Motion tracking couldn't start: the tracking files didn't load (${(e&&(e.detail||e.message))||"unknown"}). They download about 9 MB the first time, so check your connection and try again.${window.STANDALONE?"":" If this keeps happening here, open the app from your home screen, where it can load them."}`;
     }
   };
   const ready=()=>{
