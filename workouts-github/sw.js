@@ -1,5 +1,5 @@
 // Offline support: the app shell is cached, so it opens with no connection.
-const VERSION = "workouts-v58";
+const VERSION = "workouts-v59";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-180.png"];
 
 self.addEventListener("install", (e) => {
@@ -8,7 +8,7 @@ self.addEventListener("install", (e) => {
 
 self.addEventListener("activate", (e) => {
   e.waitUntil(
-    caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== VERSION && !k.startsWith("tiles")).map((k) => caches.delete(k))))
+    caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== VERSION && !k.startsWith("tiles") && !k.startsWith("pose")).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
@@ -27,6 +27,12 @@ self.addEventListener("fetch", (e) => {
         return res;
       }).catch(() => caches.match(req).then((r) => r || caches.match("./index.html")))
     );
+    return;
+  }
+
+  // Motion tracking: the pose library and model never change for a pinned version, so keep them for offline use.
+  if (/cdn\.jsdelivr\.net\/npm\/@mediapipe\/|storage\.googleapis\.com\/mediapipe-models\//.test(req.url)) {
+    e.respondWith(caches.open("pose-v1").then((c) => c.match(req).then((hit) => hit || fetch(req).then((res) => { if (res.ok) c.put(req, res.clone()); return res; }))));
     return;
   }
 

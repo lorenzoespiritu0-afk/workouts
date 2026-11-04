@@ -4,6 +4,21 @@
 
 #sopts:not([data-logo="badge"]):not([data-logo="mark"]):not([data-logo="word"]) .lgo{display:none}
 
+/* v59 motion tracking */
+.mt-tips{margin:14px 0 4px;padding-left:20px;color:var(--muted);font-size:.9rem;line-height:1.45}.mt-tips li{margin:4px 0}
+.mt-prog{height:8px;border-radius:4px;background:rgba(255,255,255,.1);overflow:hidden;margin:18px 0 8px}
+.mt-prog i{display:block;height:100%;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform .25s linear}
+.mt-stage{position:relative;margin:4px auto 0;border-radius:18px;overflow:hidden;background:#000}
+.mt-stage canvas{display:block;width:100%;height:100%;object-fit:contain}
+.mt-play{position:absolute;right:12px;bottom:12px;width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;display:grid;place-items:center;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.mt-play .ico{width:20px;height:20px}
+#mt-seek{width:100%;margin:12px 0 4px;accent-color:var(--accent)}
+.mt-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:10px 0 4px}
+.mt-stats div{background:var(--bg);border-radius:12px;padding:10px;text-align:center}.mt-stats b{display:block;font-family:var(--num);font-size:1.3rem;font-variant-numeric:tabular-nums}.mt-stats span{font-size:.75rem;color:var(--muted)}
+.mt-out{display:block;width:100%;max-height:58vh;border-radius:18px;background:#000;margin:6px 0 4px}
+.mt-entry{width:100%;margin-top:14px;display:inline-flex;align-items:center;justify-content:center;gap:8px}.mt-entry .ico{width:18px;height:18px}
+#mt-pick{display:inline-flex;align-items:center;justify-content:center;gap:8px}#mt-pick .ico{width:20px;height:20px}
+@media (prefers-reduced-motion:reduce){.mt-prog i{transition:none}}
 /* v57 share mid-session */
 .prob .xshare .ico{width:19px;height:19px}
 .tshare,.lshare{display:inline-flex;align-items:center;gap:6px}
@@ -2638,7 +2653,7 @@ function openChooser(){
     <button class="ins" id="ch-start" style="width:100%;text-align:left;display:block;background:var(--accent);color:var(--on-accent);border-color:transparent"><h3 style="font-size:1.4rem"><span class="chico" style="background:rgba(0,0,0,.12)">${icon("play")}</span>Start a workout</h3><p style="margin:4px 0 0;opacity:.78;font-size:.9rem">Get a session built for your time, energy, recovery, and goals, then track it live.</p></button>
     <button class="ins" id="ch-tgt" style="width:100%;text-align:left;display:block"><h3 style="font-size:1.4rem"><span class="chico" style="color:var(--accent);background:rgba(205,245,74,.12)">${icon("target")}</span>Chase a target</h3><p class="hint" style="margin:4px 0 0">Aim for a time, pace, PR, lift, grade, or hang, and get an attempt built to hit it.</p></button>
     <button class="ins" id="ch-log" style="width:100%;text-align:left;display:block"><h3 style="font-size:1.4rem"><span class="chico">${icon("check")}</span>Log a finished workout</h3><p class="hint" style="margin:4px 0 0">Type it in, or import a GPX file from Strava, Garmin, or another app.</p></button>
-    <label>Quick tools</label><div class="tools"><button class="tool" id="ch-tmr"><span class="chico" style="color:var(--hang);background:rgba(255,138,76,.14)">${icon("timer")}</span><b>Interval timer</b><span>Hangs, core, Tabata, holds</span></button>
+    <label>Quick tools</label><div class="tools"><button class="tool" id="ch-tmr"><span class="chico" style="color:var(--hang);background:rgba(255,138,76,.14)">${icon("timer")}</span><b>Interval timer</b><span>Hangs, core, Tabata, holds</span></button><button class="tool" id="ch-mt"><span class="chico" style="color:var(--accent);background:rgba(205,245,74,.12)">${icon("climb")}</span><b>Motion tracking</b><span>Skeleton and tracers on a send video</span></button>
     ${climbDraft()?"":`<button class="tool" id="ch-cl2"><span class="chico" style="color:var(--climb);background:rgba(255,92,138,.14)">${icon("climb")}</span><b>Send counter</b><span>Tap + after every send</span></button>`}</div>
     ${routines().length?`<label>Your routines</label><div class="tlist">${routines().map(r=>`<div class="trow"><span class="mdot" style="background:${col(r.type)};font-size:.75rem">${TYPES[r.type][0]}</span><div class="tx"><b>${esc(r.name)}</b><span>${TYPES[r.type]}</span></div><button class="tchip" data-rstart="${r.id}" style="--c:#F5F5F7;--ct:#000">Start</button><button class="x" data-rdel="${r.id}" aria-label="Delete routine">×</button></div>`).join("")}</div>`:""}
     ${Object.keys(TYPES).some(t=>lastOfType(t))?`<label>Repeat your last</label><div class="tchips">${Object.entries(TYPES).filter(([t])=>lastOfType(t)).map(([t,n])=>`<button class="tchip" data-rep="${t}" style="background:${col(t)};color:#fff">${n}</button>`).join("")}</div>`:""}
@@ -2646,7 +2661,7 @@ function openChooser(){
   document.querySelectorAll("[data-rstart]").forEach(b=>b.onclick=()=>{const r=routines().find(x=>x.id===b.dataset.rstart);if(r)startActive(routinePlan(r));});
   document.querySelectorAll("[data-rdel]").forEach(b=>b.onclick=()=>{settings.routines=routines().filter(x=>x.id!==b.dataset.rdel);settings.updatedAt=Date.now();saveLocal();pushSettings();openChooser();});
   document.querySelectorAll("[data-rep]").forEach(b=>b.onclick=()=>repeatLast(b.dataset.rep));
-  $("ch-cancel").onclick=closeSheet;$("ch-start").onclick=()=>openPlanner();$("ch-log").onclick=()=>openForm(null);$("ch-tgt").onclick=()=>openTargetBuilder();if($("ch-res"))$("ch-res").onclick=()=>openActive();if($("ch-climb"))$("ch-climb").onclick=()=>openForm(null,{_resume:true});if($("ch-cl2"))$("ch-cl2").onclick=()=>openForm(null,{type:"climb"});$("ch-tmr").onclick=()=>openTimerPicker();
+  $("ch-cancel").onclick=closeSheet;$("ch-start").onclick=()=>openPlanner();$("ch-log").onclick=()=>openForm(null);$("ch-tgt").onclick=()=>openTargetBuilder();if($("ch-res"))$("ch-res").onclick=()=>openActive();if($("ch-climb"))$("ch-climb").onclick=()=>openForm(null,{_resume:true});if($("ch-cl2"))$("ch-cl2").onclick=()=>openForm(null,{type:"climb"});$("ch-tmr").onclick=()=>openTimerPicker();if($("ch-mt"))$("ch-mt").onclick=()=>openTracker(null,()=>openChooser());
 }
 $("app").addEventListener("click",e=>{
   const t=e.target.closest("[data-open],[data-filter],[data-period],[data-metric],[data-act],[data-go],[data-seg],[data-acc],[data-place],[data-newplace],[data-logmode],[data-cal],[data-day],[data-recap],[data-proj],[data-newproj],[data-ctab],[data-plan],[data-lg],[data-gear],[data-pain],[data-ev],[data-pday],[data-pstart],[data-tstart],[data-tdel]");if(!t)return;
@@ -5788,6 +5803,280 @@ async function drawSendCard(s,i,o){
   draw();
   return c;
 }
+/* ================= motion tracking for send videos =================
+   Pick a video, find the climber's body in every frame with MediaPipe Pose (runs on the phone, nothing is
+   uploaded), then replay it with a skeleton and/or tracers drawn on and save it as a new video.
+   The pose library and model load from Google's CDN the first time; the service worker keeps them after that. */
+const POSE_VER="0.10.14",POSE_CDN=`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${POSE_VER}`;
+const POSE_MODELS={lite:"https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",full:"https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task"};
+const POSE_BONES=[[11,12],[11,13],[13,15],[15,19],[12,14],[14,16],[16,20],[11,23],[12,24],[23,24],[23,25],[25,27],[27,31],[24,26],[26,28],[28,32]];
+const POSE_JOINTS=[11,12,13,14,15,16,23,24,25,26,27,28,31,32];
+let poseLM=null,poseKind=null;
+async function loadPose(kind){
+  if(window.__poseMock)return window.__poseMock;
+  if(poseLM&&poseKind===kind)return poseLM;
+  const mod=await import(POSE_CDN+"/vision_bundle.mjs");
+  const fs=await mod.FilesetResolver.forVisionTasks(POSE_CDN+"/wasm");
+  const mk=delegate=>mod.PoseLandmarker.createFromOptions(fs,{baseOptions:{modelAssetPath:POSE_MODELS[kind],delegate},runningMode:"VIDEO",numPoses:1,minPoseDetectionConfidence:.45,minPosePresenceConfidence:.45,minTrackingConfidence:.45});
+  let lm;try{lm=await mk("GPU");}catch(e){lm=await mk("CPU");}
+  if(poseLM&&poseLM.close)try{poseLM.close();}catch(e){}
+  poseLM=lm;poseKind=kind;return lm;
+}
+function hiddenVideo(url,muted){
+  const v=document.createElement("video");v.muted=muted;v.defaultMuted=muted;v.playsInline=true;v.setAttribute("playsinline","");v.preload="auto";
+  v.style.cssText="position:fixed;left:0;top:0;width:2px;height:2px;opacity:.01;pointer-events:none;z-index:-1";v.src=url;document.body.appendChild(v);return v;
+}
+const vidReady=v=>new Promise((res,rej)=>{if(v.readyState>=2){res();return;}v.addEventListener("loadeddata",()=>res(),{once:true});v.addEventListener("error",()=>rej(new Error("decode")),{once:true});});
+/* one pass over the video, a pose per frame */
+async function analyzePose(url,kind,onProg,cancel){
+  const lm=await loadPose(kind);
+  const v=hiddenVideo(url,true);
+  try{
+    await vidReady(v);
+    const dur=v.duration,samples=[];let lastTs=-1;
+    const take=mt=>{let ts=Math.round(mt*1000);if(ts<=lastTs)ts=lastTs+1;lastTs=ts;const r=lm.detectForVideo(v,ts);const L=r&&r.landmarks&&r.landmarks[0];
+      if(L){const a=new Float32Array(99);for(let k=0;k<33;k++){a[k*3]=L[k].x;a[k*3+1]=L[k].y;a[k*3+2]=L[k].visibility==null?1:L[k].visibility;}samples.push({t:mt,p:a});}else samples.push({t:mt,p:null});};
+    let ok=false;
+    if("requestVideoFrameCallback" in HTMLVideoElement.prototype){
+      // play at half speed and take every frame as it's shown
+      ok=await new Promise((res,rej)=>{let done=false,got=false;const fin=r=>{if(!done){done=true;res(r);}};
+        const step=(now,md)=>{if(done)return;got=true;if(cancel.on){v.pause();fin(true);return;}try{take(md.mediaTime);}catch(e){done=true;rej(e);return;}onProg(Math.min(1,md.mediaTime/dur));v.requestVideoFrameCallback(step);};
+        v.requestVideoFrameCallback(step);v.addEventListener("ended",()=>setTimeout(()=>fin(true),60),{once:true});
+        setTimeout(()=>{if(!got){v.pause();fin(false);}},4000);
+        v.playbackRate=.5;v.play().catch(()=>fin(false));});
+    }
+    if(!ok){
+      // fallback: seek through the clip at 15 frames a second
+      v.pause();const seek=t=>new Promise(r=>{const to=setTimeout(r,1500);v.addEventListener("seeked",()=>{clearTimeout(to);r();},{once:true});v.currentTime=t;});
+      for(let t=samples.length?samples[samples.length-1].t+1/15:0;t<dur&&!cancel.on;t+=1/15){await seek(t);take(t);onProg(t/dur);}
+    }
+    return {dur,w:v.videoWidth,h:v.videoHeight,samples};
+  }finally{v.pause();v.remove();}
+}
+/* smooth the raw landmarks: a median to drop glitches, then a gentle gaussian; both ignore low-visibility points */
+function buildTrack(A){
+  const S=A.samples.filter(s=>s.p);if(S.length<6)return null;
+  const n=S.length,T=Float64Array.from(S.map(s=>s.t)),X=[],Y=[],V=[];
+  const med=(a,i)=>{const w=[];for(let j=Math.max(0,i-2);j<=Math.min(n-1,i+2);j++)w.push(a[j]);w.sort((p,q)=>p-q);return w[w.length>>1];};
+  for(let k=0;k<33;k++){
+    const x=new Float32Array(n),y=new Float32Array(n),v=new Float32Array(n);
+    for(let i=0;i<n;i++){x[i]=S[i].p[k*3];y[i]=S[i].p[k*3+1];v[i]=S[i].p[k*3+2];}
+    const mx=x.map((_,i)=>med(x,i)),my=y.map((_,i)=>med(y,i)),sx=new Float32Array(n),sy=new Float32Array(n),sv=new Float32Array(n);
+    for(let i=0;i<n;i++){let ax=0,ay=0,av=0,wt=0,wv=0;for(let j=Math.max(0,i-4);j<=Math.min(n-1,i+4);j++){const dt=T[j]-T[i];if(Math.abs(dt)>.35)continue;const g=Math.exp(-(dt*dt)/(2*.06*.06)),w=g*(.15+v[j]);ax+=mx[j]*w;ay+=my[j]*w;wt+=w;av+=v[j]*g;wv+=g;}sx[i]=ax/wt;sy[i]=ay/wt;sv[i]=av/wv;}
+    X.push(sx);Y.push(sy);V.push(sv);}
+  // body size in pixels: shoulder-mid to hip-mid, median over the clip
+  const tor=[];for(let i=0;i<n;i++){const sx=(X[11][i]+X[12][i])/2*A.w,sy=(Y[11][i]+Y[12][i])/2*A.h,hx=(X[23][i]+X[24][i])/2*A.w,hy=(Y[23][i]+Y[24][i])/2*A.h;tor.push(Math.hypot(sx-hx,sy-hy));}
+  tor.sort((p,q)=>p-q);
+  return {T,X,Y,V,n,torso:tor[tor.length>>1]||Math.min(A.w,A.h)*.15,w:A.w,h:A.h,dur:A.dur,found:n/A.samples.length};
+}
+function poseIdx(tr,t){const T=tr.T;if(t<T[0]-.08||t>T[tr.n-1]+.08)return -1;let lo=0,hi=tr.n-1;while(hi-lo>1){const m=(lo+hi)>>1;if(T[m]<=t)lo=m;else hi=m;}return lo;}
+function poseAt(tr,t){
+  const i=poseIdx(tr,t);if(i<0)return null;const j=Math.min(tr.n-1,i+1),T=tr.T;if(T[j]-T[i]>.5&&t>T[i]+.08&&t<T[j]-.08)return null;
+  const f=T[j]>T[i]?Math.max(0,Math.min(1,(t-T[i])/(T[j]-T[i]))):0,P=[];
+  for(let k=0;k<33;k++)P.push([tr.X[k][i]+(tr.X[k][j]-tr.X[k][i])*f,tr.Y[k][i]+(tr.Y[k][j]-tr.Y[k][i])*f,tr.V[k][i]+(tr.V[k][j]-tr.V[k][i])*f]);
+  return P;
+}
+const hipOf=(tr,i)=>[(tr.X[23][i]+tr.X[24][i])/2,(tr.Y[23][i]+tr.Y[24][i])/2,Math.min(tr.V[23][i],tr.V[24][i])];
+/* what the clip says about the climb: time on the wall, hand moves, shake-outs */
+function poseStats(tr){
+  const T=tr.T,n=tr.n,tor=tr.torso,px=(k,i)=>[tr.X[k][i]*tr.w,tr.Y[k][i]*tr.h];
+  let moves=0;for(const k of [15,16]){let run=0,start=null;for(let i=1;i<n;i++){const dt=T[i]-T[i-1];if(dt<=0)continue;const a=px(k,i-1),b=px(k,i),sp=Math.hypot(b[0]-a[0],b[1]-a[1])/dt/tor;
+    if(sp>.9&&tr.V[k][i]>.3){if(start==null)start=i-1;run+=dt;}else{if(start!=null&&run>=.12){const s=px(k,start);if(Math.hypot(b[0]-s[0],b[1]-s[1])/tor>=.35)moves++;}start=null;run=0;}}}
+  let rests=0,longest=0,still=0;for(let i=1;i<n;i++){const dt=T[i]-T[i-1];if(dt<=0)continue;const a=hipOf(tr,i-1),b=hipOf(tr,i),sp=Math.hypot((b[0]-a[0])*tr.w,(b[1]-a[1])*tr.h)/dt/tor;
+    if(sp<.12)still+=dt;else{if(still>=2){rests++;longest=Math.max(longest,still);}still=0;}}
+  if(still>=2){rests++;longest=Math.max(longest,still);}
+  let top=1,bot=0;for(let i=0;i<n;i++){const h=hipOf(tr,i)[1];if(h<top)top=h;if(h>bot)bot=h;}
+  return {time:T[n-1]-T[0],moves,rests,longest,rise:(bot-top)*tr.h/tor};
+}
+/* draw the tracking on top of one frame. t is the video time, W and H the canvas size */
+function drawPoseLayer(x,tr,t,W,H,o){
+  const sc=W/tr.w,tor=tr.torso*sc,lw=Math.max(3,Math.min(W*.022,tor*.085)),col=o.col;
+  const P=poseAt(tr,t),ok=k=>P&&P[k][2]>.35,at=k=>[P[k][0]*W,P[k][1]*H];
+  x.save();x.lineCap="round";x.lineJoin="round";
+  // tracers
+  if(o.trail!=="off"&&tr.n>1){
+    const from=o.trailLen==="full"?-1:t-1.4,fade=o.trailLen!=="full";
+    const joints=o.trail==="hips"?["hip"]:o.trail==="limbs"?[15,16,27,28]:["hip",15,16,27,28];
+    for(const jn of joints){
+      const pts=[];for(let i=0;i<tr.n&&tr.T[i]<=t;i++){if(tr.T[i]<from)continue;const q=jn==="hip"?hipOf(tr,i):[tr.X[jn][i],tr.Y[jn][i],tr.V[jn][i]];pts.push([q[0]*W,q[1]*H,tr.T[i],q[2]]);}
+      if(P){const q=jn==="hip"?[(P[23][0]+P[24][0])/2,(P[23][1]+P[24][1])/2,Math.min(P[23][2],P[24][2])]:P[jn];pts.push([q[0]*W,q[1]*H,t,q[2]]);}
+      const w0=jn==="hip"?lw*1.05:lw*.55,base=jn==="hip"?1:.75;
+      x.shadowColor=col;x.shadowBlur=w0*2.4;x.strokeStyle=col;
+      for(let i=1;i<pts.length;i++){const a=pts[i-1],b=pts[i];if(b[2]-a[2]>.5||a[3]<.2||b[3]<.2)continue;const age=t-b[2],al=fade?Math.pow(Math.max(0,1-age/1.4),1.4):1;if(al<=.01)continue;
+        x.globalAlpha=al*base;x.lineWidth=w0*(fade?.35+.65*al:1);x.beginPath();x.moveTo(a[0],a[1]);x.lineTo(b[0],b[1]);x.stroke();}
+      if(jn==="hip"&&P&&ok(23)&&ok(24)){const h=pts[pts.length-1];x.globalAlpha=1;x.fillStyle="#FFFFFF";x.shadowBlur=lw*3;x.beginPath();x.arc(h[0],h[1],lw*.75,0,Math.PI*2);x.fill();}
+    }
+    x.globalAlpha=1;x.shadowBlur=0;
+  }
+  // skeleton
+  if(P&&o.skel!=="off"){
+    const segs=POSE_BONES.filter(([a,b])=>ok(a)&&ok(b));
+    const head=(()=>{if(!(ok(11)&&ok(12)))return null;const sw=Math.hypot((P[11][0]-P[12][0])*W,(P[11][1]-P[12][1])*H);let c=null;if(ok(7)&&ok(8))c=[(P[7][0]+P[8][0])/2*W,(P[7][1]+P[8][1])/2*H];else if(ok(0))c=at(0);if(!c)return null;return [c[0],c[1],Math.max(lw*1.4,Math.min(sw*.36,tor*.32))];})();
+    const path=()=>{x.beginPath();for(const [a,b] of segs){const p=at(a),q=at(b);x.moveTo(p[0],p[1]);x.lineTo(q[0],q[1]);}};
+    if(o.skel==="neon"){
+      x.strokeStyle=col;x.lineWidth=lw;x.shadowColor=col;x.shadowBlur=lw*2.6;path();x.stroke();if(head){x.beginPath();x.arc(head[0],head[1],head[2],0,Math.PI*2);x.stroke();}
+      x.shadowBlur=0;x.strokeStyle="rgba(255,255,255,.92)";x.lineWidth=lw*.36;path();x.stroke();if(head){x.lineWidth=lw*.3;x.beginPath();x.arc(head[0],head[1],head[2],0,Math.PI*2);x.stroke();}
+      x.fillStyle="#FFFFFF";for(const k of POSE_JOINTS)if(ok(k)){const p=at(k);x.beginPath();x.arc(p[0],p[1],lw*.42,0,Math.PI*2);x.fill();}
+    }else if(o.skel==="clean"){
+      x.shadowColor="rgba(0,0,0,.45)";x.shadowBlur=lw*1.2;x.strokeStyle="rgba(255,255,255,.95)";x.lineWidth=lw*.55;path();x.stroke();if(head){x.beginPath();x.arc(head[0],head[1],head[2],0,Math.PI*2);x.stroke();}
+      x.shadowBlur=0;for(const k of POSE_JOINTS)if(ok(k)){const p=at(k);x.beginPath();x.arc(p[0],p[1],lw*.62,0,Math.PI*2);x.fillStyle=col;x.fill();x.lineWidth=lw*.22;x.strokeStyle="#FFFFFF";x.stroke();}
+    }else{ // dots
+      x.shadowColor=col;x.shadowBlur=lw*2.2;x.fillStyle=col;for(const k of POSE_JOINTS)if(ok(k)){const p=at(k);x.beginPath();x.arc(p[0],p[1],lw*.75,0,Math.PI*2);x.fill();}
+      x.shadowBlur=0;x.fillStyle="#FFFFFF";for(const k of POSE_JOINTS)if(ok(k)){const p=at(k);x.beginPath();x.arc(p[0],p[1],lw*.3,0,Math.PI*2);x.fill();}
+      if(head){x.strokeStyle=col;x.lineWidth=lw*.4;x.shadowColor=col;x.shadowBlur=lw*2;x.beginPath();x.arc(head[0],head[1],head[2],0,Math.PI*2);x.stroke();x.shadowBlur=0;}
+    }
+  }
+  x.restore();
+}
+function drawPoseFrame(x,v,tr,t,W,H,o,extra){
+  x.drawImage(v,0,0,W,H);
+  if(o.dim){x.fillStyle="rgba(6,8,12,.42)";x.fillRect(0,0,W,H);}
+  drawPoseLayer(x,tr,t,W,H,o);
+  const portrait=H>W,u=Math.min(W,H)/1080;
+  if(o.timer){const t0=tr.T[0],tt=Math.max(0,Math.min(t,tr.T[tr.n-1])-t0),m=Math.floor(tt/60),s=tt%60;
+    x.save();x.font=`700 ${Math.round(46*u)}px "WkMono",monospace`;x.fillStyle="#FFFFFF";x.shadowColor="rgba(0,0,0,.6)";x.shadowBlur=14*u;x.textBaseline="alphabetic";
+    const ty=portrait?H*.15:80*u,txt=`${m}:${s.toFixed(1).padStart(4,"0")}`;x.textAlign="left";x.fillText(txt,64*u+30*u,ty);
+    x.fillStyle=o.col;x.beginPath();x.arc(64*u+9*u,ty-15*u,9*u,0,Math.PI*2);x.fill();x.restore();}
+  if(extra&&extra.sticker&&o.sticker!=="off"){
+    const sk=extra.sticker,dur=tr.dur||v.duration||0;let al=1;if(o.sticker==="top"){al=Math.max(0,Math.min(1,(t-(dur-2.6))/.45));}
+    if(al>0){x.save();x.globalAlpha=al;
+      if(sk.width===1080&&sk.height===1920&&portrait)x.drawImage(sk,0,0,W,H);
+      else{const sw=Math.min(W*(portrait?.62:.36),sk.width*u*1.0),sh=sw*sk.height/sk.width;x.drawImage(sk,W*.06,portrait?H*.16:H*.06,sw,sh);}
+      x.restore();}
+  }
+}
+/* replay at normal speed onto a canvas and record it */
+async function exportPoseVideo(url,tr,o,extra,onProg,cancel){
+  const v=hiddenVideo(url,!o.sound);let actx=null;
+  if(o.sound){try{const AC=window.AudioContext||window.webkitAudioContext;actx=new AC();actx.resume&&actx.resume();}catch(e){actx=null;}}
+  // start playback inside the tap so the browser lets this (unmuted) video play later
+  let priming=true;v.play().then(()=>{if(priming)v.pause();}).catch(()=>{});
+  try{
+    await vidReady(v);priming=false;v.pause();
+    if(v.currentTime>0)await new Promise(r=>{const to=setTimeout(r,1500);v.addEventListener("seeked",()=>{clearTimeout(to);r();},{once:true});v.currentTime=0;});
+    const sc=Math.min(1,1920/Math.max(tr.w,tr.h)),W=Math.round(tr.w*sc/2)*2,H=Math.round(tr.h*sc/2)*2;
+    const cv=document.createElement("canvas");cv.width=W;cv.height=H;const x=cv.getContext("2d");
+    const stream=cv.captureStream(30);
+    if(actx){try{const src=actx.createMediaElementSource(v),dst=actx.createMediaStreamDestination();src.connect(dst);dst.stream.getAudioTracks().forEach(tk=>stream.addTrack(tk));}catch(e){v.muted=true;}}
+    const types=["video/mp4;codecs=avc1.640028,mp4a.40.2","video/mp4;codecs=avc1","video/mp4","video/webm;codecs=vp9,opus","video/webm;codecs=vp8,opus","video/webm"];
+    const mime=types.find(t=>window.MediaRecorder&&MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(t))||"";
+    if(!window.MediaRecorder)throw new Error("norec");
+    const rec=new MediaRecorder(stream,mime?{mimeType:mime,videoBitsPerSecond:Math.max(4e6,Math.min(16e6,Math.round(W*H*30*.16)))}:{});
+    const chunks=[];rec.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data);};
+    const stopped=new Promise(r=>rec.onstop=r);
+    drawPoseFrame(x,v,tr,0,W,H,o,extra);rec.start(250);
+    await new Promise((res,rej)=>{let done=false;const fin=()=>{if(!done){done=true;res();}};
+      const paint=()=>{if(done)return;if(cancel.on){v.pause();fin();return;}drawPoseFrame(x,v,tr,v.currentTime,W,H,o,extra);onProg(v.currentTime/(v.duration||1));
+        if("requestVideoFrameCallback" in v)v.requestVideoFrameCallback(paint);else requestAnimationFrame(paint);};
+      v.addEventListener("ended",()=>{drawPoseFrame(x,v,tr,v.duration,W,H,o,extra);setTimeout(fin,180);},{once:true});
+      v.play().then(paint).catch(rej);});
+    rec.stop();await stopped;
+    const type=(mime||chunks[0]&&chunks[0].type||"video/webm").split(";")[0];
+    return cancel.on?null:new Blob(chunks,{type});
+  }finally{v.pause();v.remove();if(actx)try{actx.close();}catch(e){}}
+}
+/* ---------- the sheet ---------- */
+function openTracker(link,back){
+  const st={url:null,A:null,tr:null,stats:null,sticker:null};
+  const f=link?sendFacts(link.s,link.i):null,gc=f&&f.p.gc;
+  const o={skel:"neon",trail:"hips",trailLen:"fade",color:gc?"grade":"#CDF54A",dim:false,timer:false,sound:true,sticker:link?"top":"off",q:"full"};
+  try{const sv=JSON.parse(localStorage.getItem("workouts-motion-v1")||"{}");for(const k of ["skel","trail","trailLen","color","dim","timer","sound","q"])if(sv[k]!=null)o[k]=sv[k];if(o.color==="grade"&&!gc)o.color="#CDF54A";}catch(e){}
+  const saveO=()=>{try{const sv={};for(const k of ["skel","trail","trailLen","color","dim","timer","sound","q"])sv[k]=o[k];localStorage.setItem("workouts-motion-v1",JSON.stringify(sv));}catch(e){}};
+  const colOf=()=>o.color==="grade"?(gc||"#CDF54A"):o.color;
+  let loop=0,pv=null;
+  const stopPreview=()=>{cancelAnimationFrame(loop);loop=0;if(pv){pv.pause();pv.remove();pv=null;}};
+  const goBack=()=>{stopPreview();if(st.url)URL.revokeObjectURL(st.url);(back||closeSheet)();};
+  const fileIn=()=>{let fi=$("mt-file");if(!fi){fi=document.createElement("input");fi.type="file";fi.accept="video/*";fi.id="mt-file";fi.hidden=true;document.body.appendChild(fi);}return fi;};
+  const pick=()=>{
+    stopPreview();
+    openSheet(`<h3>Motion tracking</h3><p class="sub">Pick a send video and the app finds your body in every frame, then plays it back with a skeleton, tracers, or both. It all runs on this phone; the video isn't uploaded.</p>
+      ${link?`<div class="banner" style="margin:4px 0 12px"><b>${esc(f.p.gl)}, ${esc(f.result)}</b>${f.gym?` at ${esc(f.gym)}`:""}. Your send sticker can go on the video too.</div>`:""}
+      <button class="btn primary" id="mt-pick" style="width:100%">${icon("climb")} Choose a video</button>
+      <label>Tracking</label><div class="seg" id="mt-q"><button data-v="full" aria-pressed="${o.q==="full"}">Accurate</button><button data-v="lite" aria-pressed="${o.q==="lite"}">Faster</button></div>
+      <ul class="mt-tips"><li>Tripod or propped phone, so the wall stays still.</li><li>Your whole body in frame for the whole climb.</li><li>Clips under a minute track fastest. Tracking runs at half speed, so a 40 second clip takes about 80 seconds.</li><li>The first time, about ${o.q==="full"?"9":"6"} MB of tracking files download. After that it works offline.</li></ul>
+      <p class="err" id="mt-err"></p>
+      <div class="row"><button class="btn" id="mt-back">${back?"Back":"Close"}</button></div>`);
+    $("mt-back").onclick=goBack;
+    document.querySelectorAll("#mt-q button").forEach(b=>b.onclick=()=>{o.q=b.dataset.v;saveO();document.querySelectorAll("#mt-q button").forEach(z=>z.setAttribute("aria-pressed",z===b));});
+    $("mt-pick").onclick=()=>{const fi=fileIn();fi.value="";fi.onchange=()=>{const fl=fi.files&&fi.files[0];if(!fl)return;if(st.url)URL.revokeObjectURL(st.url);st.url=URL.createObjectURL(fl);st.name=(fl.name||"send").replace(/\.[^.]+$/,"");analyze();};fi.click();};
+  };
+  const analyze=async()=>{
+    const cancel={on:false};
+    openSheet(`<h3>Tracking your climb</h3><p class="sub" id="mt-msg">Loading the pose model…</p><div class="mt-prog" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="mt-pb"><i id="mt-bar"></i></div><p class="hint">Keep the app open while it works.</p><div class="row"><button class="btn" id="mt-cancel">Cancel</button></div>`);
+    $("mt-cancel").onclick=()=>{cancel.on=true;pick();};
+    try{
+      const t0=Date.now();
+      const A=await analyzePose(st.url,o.q,p=>{const b=$("mt-bar");if(!b)return;b.style.transform=`scaleX(${p})`;$("mt-pb").setAttribute("aria-valuenow",Math.round(p*100));$("mt-msg").textContent=`Finding your movement, ${Math.round(p*100)}%`;},cancel);
+      if(cancel.on)return;
+      const tr=buildTrack(A);
+      if(!tr||tr.found<.15){pick();$("mt-err").textContent="Couldn't find a climber in that video. Try a clip where your whole body is in frame.";return;}
+      st.A=A;st.tr=tr;st.stats=poseStats(tr);ready();
+    }catch(e){
+      if(cancel.on)return;pick();
+      $("mt-err").textContent=e&&e.message==="decode"?"That video couldn't be opened here. Try exporting it from Photos as a normal (not HDR or Cinematic) video.":`Motion tracking couldn't start: the pose model didn't load. It downloads about 9 MB the first time, so check your connection and try again.${window.STANDALONE?"":" If this keeps happening here, open the app from your home screen, where it can load the model."}`;
+    }
+  };
+  const ready=()=>{
+    const tr=st.tr,S=st.stats,ar=tr.w/tr.h;
+    const seg=(label,key,opts)=>`<div class="plabel">${label}</div><div class="seg" data-mk="${key}">${opts.map(([v,t])=>`<button data-v="${v}" aria-pressed="${String(o[key])===String(v)}">${t}</button>`).join("")}</div>`;
+    const cols=[...(gc?[["grade","Grade color"]]:[]),["#CDF54A","Volt"],["#FFFFFF","White"],["#FC4C02","Orange"],["#8B7CFF","Aura"]];
+    openSheet(`<h3>Your climb, tracked</h3>
+      <div class="mt-stage" style="aspect-ratio:${tr.w}/${tr.h};width:min(100%,calc(58vh * ${ar.toFixed(4)}))"><canvas id="mt-cv" aria-label="Video preview with tracking"></canvas><button class="mt-play" id="mt-play" aria-label="Pause">${icon("pause")}</button></div>
+      <input type="range" id="mt-seek" min="0" max="1000" value="0" aria-label="Scrub through the video">
+      <div class="mt-stats"><div><b>${fmtClock(Math.round(S.time))}</b><span>On the wall</span></div><div><b>${S.moves}</b><span>Hand moves</span></div><div><b>${S.rests}</b><span>${S.rests===1?"Shake-out":"Shake-outs"}${S.longest?`, ${Math.round(S.longest)}s max`:""}</span></div></div>
+      ${tr.found<.6?`<p class="hint">You were tracked in ${Math.round(tr.found*100)}% of frames, so parts may flicker. A steadier, wider shot helps.</p>`:""}
+      <div class="opts" style="--c:#F5F5F7;--ct:#000">
+      ${seg("Skeleton","skel",[["neon","Neon"],["clean","Clean"],["dots","Joints"],["off","None"]])}
+      ${seg("Tracers","trail",[["off","None"],["hips","Hips"],["limbs","Hands and feet"],["all","All"]])}
+      ${seg("Tracer length","trailLen",[["fade","Fading"],["full","Whole route"]])}
+      ${seg("Color","color",cols)}
+      ${link?seg("Send sticker","sticker",[["off","Off"],["top","At the top"],["all","Whole video"]]):""}
+      <div class="plabel">Extras</div><div class="tchips">${[["dim","Darken video"],["timer","Climb timer"],["sound","Keep the sound"]].map(([k,t])=>`<button class="tchip" data-mt="${k}" aria-pressed="${!!o[k]}">${t}</button>`).join("")}</div></div>
+      <div class="row" style="margin-top:16px"><button class="btn primary" id="mt-save">Save video</button></div>
+      <div class="row" style="margin-top:10px"><button class="btn" id="mt-new">Another video</button><button class="btn" id="mt-back">${back?"Back":"Done"}</button></div>`);
+    const cv=$("mt-cv"),sc=Math.min(1,720/Math.max(tr.w,tr.h));cv.width=Math.round(tr.w*sc);cv.height=Math.round(tr.h*sc);const x=cv.getContext("2d");
+    pv=hiddenVideo(st.url,true);pv.loop=true;
+    const prep=async()=>{if(link&&o.sticker!=="off"&&!st.sticker){try{const lo={layout:"stack",font:"sport",color:"#FFFFFF",accent:f.p.gc?"grade":"text",bg:"none",shadow:true,outline:false,gym:!!f.gym,date:true,tries:true,name:!!f.name,style:false,high:true,logo:"none"};
+      const sv=JSON.parse(localStorage.getItem("workouts-send-look-v1")||"{}");for(const k of ["layout","color","font","bg","shadow","outline","date","gym","tries"])if(sv[k]!=null)lo[k]=sv[k];if(sv.accent==="text")lo.accent="text";lo.layout=({tape:"aura",dymo:"plaque",volume:"chrome",diecut:"seal"})[lo.layout]||lo.layout;if(lo.bg==="glass"&&STORY_LAYOUTS.includes(lo.layout))lo.bg="none";
+      st.sticker=await drawSendCard(link.s,link.i,lo);}catch(e){st.sticker=null;}}};
+    prep();
+    const frame=()=>{if(!document.body.contains(cv)){stopPreview();return;}o.col=colOf();if(pv.readyState>=2)drawPoseFrame(x,pv,tr,pv.currentTime,cv.width,cv.height,o,st);const sk=$("mt-seek");if(sk&&!sk.matches(":active")&&pv.duration)sk.value=Math.round(pv.currentTime/pv.duration*1000);loop=requestAnimationFrame(frame);};
+    vidReady(pv).then(()=>{pv.play().catch(()=>{});frame();});
+    const setPlay=()=>{const b=$("mt-play");if(!b)return;const pl=!pv.paused;b.innerHTML=icon(pl?"pause":"play");b.setAttribute("aria-label",pl?"Pause":"Play");b.classList.toggle("off",!pl);};
+    pv.addEventListener("play",setPlay);pv.addEventListener("pause",setPlay);
+    const tog=()=>{if(pv.paused)pv.play().catch(()=>{});else pv.pause();};
+    $("mt-play").onclick=tog;cv.onclick=tog;
+    $("mt-seek").oninput=e=>{if(pv.duration)pv.currentTime=e.target.value/1000*pv.duration;};
+    document.querySelectorAll("[data-mk]").forEach(el=>el.querySelectorAll("button").forEach(b=>b.onclick=()=>{o[el.dataset.mk]=b.dataset.v;el.querySelectorAll("button").forEach(z=>z.setAttribute("aria-pressed",z===b));saveO();prep();haptic("light");}));
+    document.querySelectorAll("[data-mt]").forEach(b=>b.onclick=()=>{const k=b.dataset.mt;o[k]=!o[k];b.setAttribute("aria-pressed",o[k]);saveO();});
+    $("mt-new").onclick=()=>{stopPreview();pick();$("mt-pick").click();};
+    $("mt-back").onclick=goBack;
+    $("mt-save").onclick=()=>render_();
+  };
+  const render_=async()=>{
+    const cancel={on:false},tr=st.tr;stopPreview();o.col=colOf();
+    const job=exportPoseVideo(st.url,tr,{...o},st,p=>{const b=$("mt-bar");if(!b)return;b.style.transform=`scaleX(${p})`;$("mt-pb").setAttribute("aria-valuenow",Math.round(p*100));$("mt-msg").textContent=`Rendering, ${fmtClock(Math.round(p*tr.dur))} of ${fmtClock(Math.round(tr.dur))}`;},cancel);
+    openSheet(`<h3>Making your video</h3><p class="sub" id="mt-msg">Starting…</p><div class="mt-prog" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="mt-pb"><i id="mt-bar"></i></div><p class="hint">It plays through once in real time to record, so keep the app open.</p><div class="row"><button class="btn" id="mt-cancel">Cancel</button></div>`);
+    $("mt-cancel").onclick=()=>{cancel.on=true;};
+    try{
+      const blob=await job;if(!blob){ready();return;}
+      const ext=blob.type.includes("mp4")?"mp4":"webm",fname=`${(link?(f.p.gl+"-"+f.result):st.name||"send").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")}-tracked.${ext}`;
+      const file=new File([blob],fname,{type:blob.type}),url=URL.createObjectURL(blob);
+      openSheet(`<h3>Your video is ready</h3><video class="mt-out" src="${url}" controls playsinline loop muted autoplay></video>
+        <div class="row"><button class="btn primary" id="mt-share">Save or share</button></div><p class="hint" id="mt-hint">${ext==="webm"?"This browser saves WebM video. On iPhone, open the app in Safari for an MP4 that saves to Photos.":"Choose Save Video to put it in Photos, or send it straight to Instagram."}</p>
+        <div class="row" style="margin-top:10px"><button class="btn" id="mt-edit">Change the look</button><button class="btn" id="mt-done">${back?"Back":"Done"}</button></div>`);
+      $("mt-share").onclick=async()=>{
+        if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file]});return;}catch(e){if(e&&e.name==="AbortError")return;}}
+        if(shareDl===null){try{shareDl=(window.claude&&window.claude.use)?(await window.claude.use("downloads"))||false:false}catch(e){shareDl=false}}
+        if(shareDl){try{await shareDl.save({filename:fname,data:blob});toast("Video saved");return;}catch(e){if(e&&e.code==="declined")return;}}
+        const a=document.createElement("a");a.href=url;a.download=fname;document.body.appendChild(a);a.click();a.remove();$("mt-hint").textContent="If nothing downloaded, press and hold the video above to save it.";};
+      $("mt-edit").onclick=()=>{URL.revokeObjectURL(url);ready();};
+      $("mt-done").onclick=()=>{URL.revokeObjectURL(url);goBack();};
+    }catch(e){ready();toast(e&&e.message==="norec"?"This browser can't record video":"Couldn't make the video, try again");}
+  };
+  pick();
+}
+
 function openSendShare(s,i,back){
   const f=sendFacts(s,i);if(!f)return;
   const o={layout:"stack",font:"sport",color:"#FFFFFF",accent:f.p.gc?"grade":"text",bg:"none",shadow:true,outline:false,gym:!!f.gym,date:true,tries:true,name:!!f.name,style:false,high:true};
@@ -5808,6 +6097,7 @@ function openSendShare(s,i,back){
   const saveSL=()=>{try{const sv={accent:o.accent};for(const k of SLOOK)sv[k]=o[k];localStorage.setItem(SSK,JSON.stringify(sv));}catch(e){}};
   segs.push({label:"App logo",key:"logo",opts:[["none","None"],["badge","Badge"],["mark","Mark"],["word","Wordmark"]]},{label:"Logo color",key:"lcol",opts:[["volt","Volt"],["white","White"],["black","Black"],["text","Text"]]},{label:"Logo position",key:"lpos",opts:[["tl","Top left"],["tc","Top"],["tr","Top right"],["bl","Bottom left"],["bc","Bottom"],["br","Bottom right"]]});
   imageSheet("Share this send","A transparent sticker for your send video. Drop it into an empty corner of the frame in your editor or Instagram.",async()=>{saveSL();const lg=o.logo&&o.logo!=="none";return withLogo(await drawSendCard(s,i,lg&&o.bg==="glass"?{...o,bg:"none"}:o),o,f.p.gc||"#FF5C8A");},slug+".png",segs,tg,o,back||(()=>openDetail(s)));
+  $("is-extra").innerHTML=`<button class="btn mt-entry" id="ss-track">${icon("climb")} Track a send video</button><p class="hint" style="margin-top:6px">Adds a skeleton and tracers to your send video, with this sticker on it.</p>`;$("ss-track").onclick=()=>openTracker({s,i},()=>openSendShare(s,i,back));
 }
 
 function openPRShare(s){
