@@ -39,7 +39,7 @@
 .mt-out{display:block;width:100%;max-height:58vh;border-radius:18px;background:#000;margin:6px 0 4px}
 .mt-entry{width:100%;margin-top:14px;display:inline-flex;align-items:center;justify-content:center;gap:8px}.mt-entry .ico{width:18px;height:18px}
 #mt-pick{display:inline-flex;align-items:center;justify-content:center;gap:8px}#mt-pick .ico{width:20px;height:20px}
-.mt-diag{white-space:pre-line;font-size:.78rem;opacity:.75;margin-top:6px}.mt-alt{display:block;margin:8px auto 0}
+.mt-diag{white-space:pre-line;font-size:.78rem;opacity:.75;margin-top:6px}.mt-alt{display:block;width:max-content;margin:8px auto 0;cursor:pointer}
 .mt-pickl{width:100%;cursor:pointer}.vh-file{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0 0 0 0);pointer-events:none}.mt-pickl:has(+.vh-file:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){.mt-prog i{transition:none}}
 /* v57 share mid-session */
@@ -5876,7 +5876,7 @@ async function drawSendCard(s,i,o){
    Pick a video, find the climber's body in every frame with MediaPipe Pose (runs on the phone, nothing is
    uploaded), then replay it with a skeleton and/or tracers drawn on and save it as a new video.
    The pose library and model load from Google's CDN the first time; the service worker keeps them after that. */
-const MT_VER="v71",POSE_VER="0.10.14",POSE_CDN=`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${POSE_VER}`;
+const MT_VER="v72",POSE_VER="0.10.14",POSE_CDN=`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${POSE_VER}`;
 const POSE_MODELS={lite:"https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",full:"https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task"};
 const POSE_BONES=[[11,12],[11,13],[13,15],[15,19],[12,14],[14,16],[16,20],[11,23],[12,24],[23,24],[23,25],[25,27],[27,31],[24,26],[26,28],[28,32]];
 const POSE_JOINTS=[11,12,13,14,15,16,23,24,25,26,27,28,31,32];
@@ -6260,11 +6260,11 @@ function openTracker(link,back){
     stopPreview();
     openSheet(`<h3>Motion tracking</h3><p class="sub">Pick a send video and the app finds you in every frame. It can reframe the shot to follow and zoom in on you like an editor's motion tracking, and add a skeleton, tracers and a tracking box. It all runs on this phone; the video isn't uploaded.</p>
       ${link?`<div class="banner" style="margin:4px 0 12px"><b>${esc(f.p.gl)}, ${esc(f.result)}</b>${f.gym?` at ${esc(f.gym)}`:""}. Your send sticker can go on the video too.</div>`:""}
-      <label class="btn primary mt-pickl" id="mt-pick" for="mt-file-in">${icon("climb")} Choose a video</label><input type="file" accept="video/*" id="mt-file-in" class="vh-file">
+      <button type="button" class="btn primary mt-pickl" id="mt-pick">${icon("climb")} Choose a video</button>
       <label>Tracking</label><div class="seg" id="mt-q"><button data-v="full" aria-pressed="${o.q==="full"}">Accurate</button><button data-v="lite" aria-pressed="${o.q==="lite"}">Faster</button></div>
       <ul class="mt-tips"><li>Tripod or propped phone, so the wall stays still.</li><li>Your whole body in frame for the whole climb.</li><li>Clips under a minute track fastest. Tracking runs at half speed, so a 40 second clip takes about 80 seconds.</li><li>The first time, about ${o.q==="full"?"9":"6"} MB of tracking files download. After that it works offline.</li></ul>
       <p class="err" id="mt-err"></p>
-      <button type="button" class="link mt-alt" id="mt-alt">Video not loading? Try the other picker</button>
+      <label class="link mt-alt" id="mt-alt" for="mt-file-in">Video not loading? Try the other picker</label><input type="file" accept="video/*" id="mt-file-in" class="vh-file">
       <p class="hint mt-diag" id="mt-diag" aria-live="polite">Motion tracking ${MT_VER}</p>
       <div class="row"><button class="btn" id="mt-back">${back?"Back":"Close"}</button></div>`);
     $("mt-back").onclick=goBack;
@@ -6282,10 +6282,13 @@ function openTracker(link,back){
       const recheck=()=>{setTimeout(()=>take(inp),700);setTimeout(()=>take(inp,"No video came back from the picker yet. If it's an iCloud video, wait for it to download, or try the other picker."),2500);};
       window.addEventListener("focus",recheck,{once:true});document.addEventListener("visibilitychange",()=>{if(!document.hidden)recheck();},{once:true});};
     watch(fi);
-    $("mt-pick").addEventListener("click",()=>diag("Opening your videos…"));
-    // second route: a fresh input opened from a button tap, with explicit video types
-    $("mt-alt").onclick=()=>{const alt=document.createElement("input");alt.type="file";alt.accept="video/mp4,video/quicktime,video/*";alt.style.cssText="position:fixed;left:-100px;top:0;width:1px;height:1px;opacity:0";document.body.appendChild(alt);
-      watch(alt);diag("Opening the other picker…");alt.click();};
+    // main route (the one that works on iPhone): a fresh input with explicit video types, opened from the tap
+    const openPicker=()=>{document.querySelectorAll(".mt-fresh").forEach(e=>e.remove());const inp=document.createElement("input");inp.type="file";inp.accept="video/mp4,video/quicktime,video/*";inp.className="mt-fresh";inp.style.cssText="position:fixed;left:-100px;top:0;width:1px;height:1px;opacity:0";document.body.appendChild(inp);
+      watch(inp);diag("Opening your videos…");inp.click();};
+    $("mt-pick").onclick=openPicker;
+    // backup route: the label-wrapped input
+    $("mt-alt").addEventListener("click",()=>diag("Opening the other picker…"));
+    st.openPicker=openPicker;
   };
   const analyze=async()=>{
     const cancel={on:false};let msg="Loading the pose model…";const t0=Date.now();
@@ -6349,7 +6352,7 @@ function openTracker(link,back){
     document.querySelectorAll("[data-mk]").forEach(el=>el.querySelectorAll("button").forEach(b=>b.onclick=()=>{o[el.dataset.mk]=b.dataset.v;el.querySelectorAll("button").forEach(z=>z.setAttribute("aria-pressed",z===b));saveO();prep();haptic("light");
       if(el.dataset.mk==="shape")setStage();if(el.dataset.mk==="intro"){$("mt-ilen").hidden=o.intro==="off";try{localStorage.setItem("workouts-motion-intro","1");}catch(e){}if(pv){pv.currentTime=0;pv.play().catch(()=>{});}}if(el.dataset.mk==="cam"){$("mt-follow").hidden=o.cam!=="follow";const pb=document.querySelector('[data-mt="push"]');if(pb)pb.hidden=o.cam!=="follow";}}));
     document.querySelectorAll("[data-mt]").forEach(b=>b.onclick=()=>{const k=b.dataset.mt;o[k]=!o[k];b.setAttribute("aria-pressed",o[k]);saveO();});
-    $("mt-new").onclick=()=>{stopPreview();pick();const fi=$("mt-file-in");if(fi)fi.click();};
+    $("mt-new").onclick=()=>{stopPreview();pick();st.openPicker&&st.openPicker();};
     $("mt-back").onclick=goBack;
     $("mt-save").onclick=()=>render_();
   };
