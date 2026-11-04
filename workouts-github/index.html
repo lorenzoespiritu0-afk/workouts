@@ -5812,7 +5812,7 @@ const POSE_MODELS={lite:"https://storage.googleapis.com/mediapipe-models/pose_la
 const POSE_BONES=[[11,12],[11,13],[13,15],[15,19],[12,14],[14,16],[16,20],[11,23],[12,24],[23,24],[23,25],[25,27],[27,31],[24,26],[26,28],[28,32]];
 const POSE_JOINTS=[11,12,13,14,15,16,23,24,25,26,27,28,31,32];
 const POSE_LEGACY="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404";
-let poseLM=null,poseKind=null;
+let poseLM=null,poseKind=null,poseClock=0;/* the tracker needs ever-increasing timestamps across every video it sees */
 const isIOSWeb=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
 const withTimeout=(p,ms,what)=>Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej(new Error("timeout:"+what)),ms))]);
 /* download with progress, giving up if nothing arrives for a while */
@@ -5869,15 +5869,15 @@ const vidReady=v=>new Promise((res,rej)=>{if(v.readyState>=1){res();return;}cons
   v.addEventListener("loadedmetadata",()=>{clearTimeout(to);res();},{once:true});v.addEventListener("error",()=>{clearTimeout(to);rej(new Error("decode"));},{once:true});});
 const vidFrames=v=>new Promise(res=>{if(v.readyState>=2){res();return;}const to=setTimeout(res,4000);const ok=()=>{clearTimeout(to);res();};v.addEventListener("loadeddata",ok,{once:true});v.addEventListener("playing",ok,{once:true});});
 /* one pass over the video, a pose per frame */
-async function analyzePose(url,kind,onProg,cancel,stage){
+async function analyzePose(url,kind,onProg,cancel,stage,retried){
   const lm=await loadPose(kind,stage);
   if(cancel.on)return null;
   stage&&stage("Reading your video…");
   const v=hiddenVideo(url,true);
   try{
     await vidReady(v);
-    const dur=v.duration,samples=[];let lastTs=-1,busy=0,avg=.05;
-    const take=async mt=>{let ts=Math.round(mt*1000);if(ts<=lastTs)ts=lastTs+1;lastTs=ts;const t0=performance.now();const r=await lm.detectForVideo(v,ts);avg=avg*.8+(performance.now()-t0)/1000*.2;const L=r&&r.landmarks&&r.landmarks[0];
+    const dur=v.duration,samples=[],base=poseClock+1;let lastTs=poseClock,busy=0,avg=.05;
+    const take=async mt=>{let ts=Math.round(base+mt*1000);if(ts<=lastTs)ts=lastTs+1;lastTs=ts;poseClock=ts;const t0=performance.now();const r=await lm.detectForVideo(v,ts);avg=avg*.8+(performance.now()-t0)/1000*.2;const L=r&&r.landmarks&&r.landmarks[0];
       if(L&&L.length>=33){const a=new Float32Array(99);for(let k=0;k<33;k++){a[k*3]=L[k].x;a[k*3+1]=L[k].y;a[k*3+2]=L[k].visibility==null?1:L[k].visibility;}samples.push({t:mt,p:a});}else samples.push({t:mt,p:null});};
     let ok=false;
     if("requestVideoFrameCallback" in HTMLVideoElement.prototype){
@@ -5897,6 +5897,12 @@ async function analyzePose(url,kind,onProg,cancel,stage){
       for(let t=samples.length?samples[samples.length-1].t+1/15:0;t<dur&&!cancel.on;t+=1/15){await seek(t);await take(t);onProg(t/dur);}
     }
     return {dur,w:v.videoWidth,h:v.videoHeight,samples};
+  }catch(e){
+    if(e&&e.message==="decode")throw e;
+    if(poseLM&&poseLM.close)try{poseLM.close();}catch(_){}
+    poseLM=null;poseKind=null;
+    if(!retried&&!cancel.on){v.pause();v.remove();stage&&stage("Restarting the tracker…");return analyzePose(url,kind,onProg,cancel,stage,true);}
+    const er=new Error("track");er.detail=String(e&&e.message||e).slice(0,160);throw er;
   }finally{v.pause();v.remove();}
 }
 /* smooth the raw landmarks: a median to drop glitches, then a gentle gaussian; both ignore low-visibility points */
@@ -6122,7 +6128,7 @@ function openTracker(link,back){
     }catch(e){
       clearInterval(tick);
       if(cancel.on)return;pick();
-      $("mt-err").textContent=e&&e.message==="decode"?"That video couldn't be opened here. Try exporting it from Photos as a normal (not HDR or Cinematic) video.":`Motion tracking couldn't start: the tracking files didn't load (${(e&&(e.detail||e.message))||"unknown"}). They download about 9 MB the first time, so check your connection and try again.${window.STANDALONE?"":" If this keeps happening here, open the app from your home screen, where it can load them."}`;
+      $("mt-err").textContent=e&&e.message==="track"?`Tracking stopped partway through the video (${e.detail}). Try again, or switch to Faster.`:e&&e.message==="decode"?"That video couldn't be opened here. Try exporting it from Photos as a normal (not HDR or Cinematic) video.":`Motion tracking couldn't start: the tracking files didn't load (${String((e&&(e.detail||e.message))||"unknown").slice(0,160)}). They download about 9 MB the first time, so check your connection and try again.${window.STANDALONE?"":" If this keeps happening here, open the app from your home screen, where it can load them."}`;
     }
   };
   const ready=()=>{
