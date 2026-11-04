@@ -108,7 +108,7 @@
   padding-top:env(safe-area-inset-top,0px);
   padding-bottom:env(safe-area-inset-bottom,0px);
   --bg:#000000;--surface:#141416;--ink:#F5F5F7;--muted:#8E8E93;--line:#26272B;--chip:#1E1F23;
-  --run:#4F8DFF;--walk:#A58BFF;--ride:#2FC48D;--lift:#4CC4E0;--climb:#FF5C8A;--hike:#C99A5B;--core:#FF7A59;--hang:#FF8A4C;--pickle:#E4D33C;--other:#8E8E93;
+  --run:#4F8DFF;--walk:#A58BFF;--ride:#2FC48D;--lift:#4CC4E0;--climb:#FF5C8A;--hike:#C99A5B;--core:#FF7A59;--hang:#FF8A4C;--pickle:#E4D33C;--stair:#2DD4BF;--other:#8E8E93;
   --gold:#F4B63F;--silver:#C0C6CF;--bronze:#C8834B;--xp:#F4B63F;--accent:#CDF54A;--on-accent:#0B0F00;--red:#FF453A;--accent2:#5AC8FA;
   --num:-apple-system,BlinkMacSystemFont,"SF Pro Display","Inter",system-ui,sans-serif;
   --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter",system-ui,sans-serif;
@@ -1017,7 +1017,7 @@ button.trow:not(.sendrow)::after{content:"";flex:none;width:7px;height:7px;borde
 #sopts:not([data-style="classic"]) .op{display:block}
 #sopts:not([data-style="classic"]) .oc{display:none}
 
-.typepick button[data-type="pickle"][aria-pressed=true]{color:#141414}
+.typepick button[data-type="pickle"][aria-pressed=true],.typepick button[data-type="stair"][aria-pressed=true]{color:#141414}
 </style>
 </head>
 <body>
@@ -1048,6 +1048,7 @@ button.trow:not(.sendrow)::after{content:"";flex:none;width:7px;height:7px;borde
 (function(){
 /* ================= constants & helpers ================= */
 const ICONS={"pickle":"<rect x=\"4.2\" y=\"2.6\" width=\"9.6\" height=\"12\" rx=\"4.8\" transform=\"rotate(-35 9 8.6)\"/><path d=\"M12.3 13.6l3.4 4.9\" stroke-width=\"2.4\"/><circle cx=\"18.6\" cy=\"6\" r=\"2.4\"/>","search":"<circle cx=\"11\" cy=\"11\" r=\"6.5\"/><path d=\"M16 16l4.5 4.5\"/>","close":"<path d=\"M6 6l12 12M18 6L6 18\" stroke-width=\"2.2\"/>","pause":"<rect x=\"6.5\" y=\"5\" width=\"3.8\" height=\"14\" rx=\"1.2\" fill=\"currentColor\" stroke=\"none\"/><rect x=\"13.7\" y=\"5\" width=\"3.8\" height=\"14\" rx=\"1.2\" fill=\"currentColor\" stroke=\"none\"/>","prev":"<path d=\"M17.5 6v12L9 12z\" fill=\"currentColor\"/><path d=\"M6.5 6v12\" stroke-width=\"2.4\"/>","next":"<path d=\"M6.5 6v12L15 12z\" fill=\"currentColor\"/><path d=\"M17.5 6v12\" stroke-width=\"2.4\"/>","sound":"<path d=\"M4 9.5h3.5L12 5.5v13l-4.5-4H4z\" fill=\"currentColor\" stroke-linejoin=\"round\"/><path d=\"M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11\"/>","mute":"<path d=\"M4 9.5h3.5L12 5.5v13l-4.5-4H4z\" fill=\"currentColor\" stroke-linejoin=\"round\"/><path d=\"M16 9.5l5 5M21 9.5l-5 5\"/>","timer":"<circle cx=\"12\" cy=\"13.5\" r=\"7.5\"/><path d=\"M12 13.5V9.5M10 2.8h4M18.2 7.2l1.5-1.5\"/>","core":"<path d=\"M12 3.5v17\"/><path d=\"M7.5 6.5c1.5 1 3 1.4 4.5 1.4s3-.4 4.5-1.4M7 12h10M7.5 17.5c1.5-1 3-1.4 4.5-1.4s3 .4 4.5 1.4\"/>","log": "<rect x=\"4\" y=\"3.5\" width=\"16\" height=\"17\" rx=\"4\"/><path d=\"M8.5 9h7M8.5 12.5h7M8.5 16h4\"/>", "coach": "<path d=\"M3 12.5h3.6l2.4-6 4.2 11.5 2.6-5.5H21\"/>", "places": "<path d=\"M12 21s-6.8-6.3-6.8-11.3a6.8 6.8 0 0 1 13.6 0C18.8 14.7 12 21 12 21z\"/><circle cx=\"12\" cy=\"9.8\" r=\"2.5\"/>", "records": "<path d=\"M5 20v-7M12 20V5M19 20v-10\"/>", "trophies": "<path d=\"M8 4h8v5.5a4 4 0 0 1-8 0z\"/><path d=\"M8 6H5.5a2.5 2.5 0 0 0 2.5 4M16 6h2.5a2.5 2.5 0 0 1-2.5 4M12 13.5V18M8.5 20.5h7\"/>", "plus": "<path d=\"M12 5v14M5 12h14\" stroke-width=\"2.6\"/>", "play": "<path d=\"M8 5.5v13l10.5-6.5z\" fill=\"currentColor\"/>", "target": "<circle cx=\"12\" cy=\"12\" r=\"8\"/><circle cx=\"12\" cy=\"12\" r=\"4.5\"/><circle cx=\"12\" cy=\"12\" r=\"1.2\" fill=\"currentColor\"/>", "check": "<path d=\"M5 12.5l4.5 4.5L19 7.5\" stroke-width=\"2.2\"/>", "run": "<circle cx=\"15.5\" cy=\"4.6\" r=\"1.9\"/><path d=\"M7.5 21l3.4-5.6 3.1 2.6V21M10.9 15.4l1.9-6.2-3.6 1.3-2 3M12.8 9.2l2.3 2.9 3.5.9\"/>", "walk": "<circle cx=\"13\" cy=\"4.6\" r=\"1.9\"/><path d=\"M9.6 21l2.1-6.1 2.7 2.6V21M11.7 14.9l1.2-6-2.9 1.9-1.1 3.5M12.9 8.9l1.6 3.1 2.6 1\"/>", "hike": "<path d=\"M2.5 19.5l7-12 4.2 7 2.6-3.6 5.2 8.6z\"/><path d=\"M7.4 11.1l2.1 1.4 1.6-1.6\"/>", "ride": "<circle cx=\"5.8\" cy=\"16\" r=\"3.6\"/><circle cx=\"18.2\" cy=\"16\" r=\"3.6\"/><path d=\"M5.8 16l4.2-7.2h5.2l3 7.2M10 8.8l3.6 7.2H5.8M13.8 5.8h2.6\"/>", "lift": "<path d=\"M6.5 6.5v11M17.5 6.5v11M3.5 9.5v5M20.5 9.5v5M6.5 12h11\"/>", "climb": "<path d=\"M3.5 19.5l2.8-8 4.6-3.8 5.4 1.2 3.4 5.6.8 5z\"/><circle cx=\"10\" cy=\"12.6\" r=\"1.1\" fill=\"currentColor\"/><circle cx=\"14.6\" cy=\"11.4\" r=\"1.1\" fill=\"currentColor\"/><circle cx=\"12.6\" cy=\"16.2\" r=\"1.1\" fill=\"currentColor\"/>", "hang": "<rect x=\"3\" y=\"4.5\" width=\"18\" height=\"5.5\" rx=\"1.8\"/><path d=\"M8.5 10v8.5M15.5 10v8.5M7 7.25h1.5M11.25 7.25h1.5M15.5 7.25h1.5\"/>", "other": "<circle cx=\"12\" cy=\"12\" r=\"8\"/><path d=\"M12 7.8V12l2.8 2\"/>"};
+ICONS.stair='<path d="M3 20.5h4.5V16H12v-4.5h4.5V7H21"/><path d="M14.5 3.5h5v5" opacity=".55"/>';
 ICONS.share='<path d="M12 3.5v11"/><path d="M8 7.5l4-4 4 4"/><path d="M8 10.5H6.5a1.5 1.5 0 0 0-1.5 1.5v7a1.5 1.5 0 0 0 1.5 1.5h11a1.5 1.5 0 0 0 1.5-1.5v-7a1.5 1.5 0 0 0-1.5-1.5H16"/>';
 const icon=(k,cls)=>`<svg class="${cls||"ico"}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[k]||ICONS.other}</svg>`;
 Object.assign(ICONS,{"flag": "<path d=\"M5.5 21V3.8M5.5 4h12.5l-2.8 4.2L18 12.5H5.5\"/>", "boot": "<path d=\"M6 3.5h5v8l5.5 2.5c2 .9 3.5 2.2 3.5 4V20H4.5V9z\"/><path d=\"M4.5 16.5h15.5M11 7.5H8.5M11 10.5H8.5\"/>", "medal": "<circle cx=\"12\" cy=\"15\" r=\"5.6\"/><path d=\"M8.3 3.5l2.3 6.4M15.7 3.5l-2.3 6.4M8.3 3.5h7.4\"/><path d=\"M12 12.4l.9 1.8 2 .3-1.4 1.4.3 2-1.8-.9-1.8.9.3-2-1.4-1.4 2-.3z\" fill=\"currentColor\" stroke=\"none\"/>", "bolt": "<path d=\"M13.5 2.5L5 13.5h6l-1 8 8.5-11h-6z\" fill=\"currentColor\" fill-opacity=\".2\"/>", "flame": "<path d=\"M12 21.5c-4 0-6.5-2.8-6.5-6.3 0-3.6 2.7-5.6 3.5-9 .9 1.6 1.4 2.6 1.6 4.2C12.8 8.8 14 6 13.5 2.5c3.6 2.4 5 6.6 5 10.6 0 4.5-2.8 8.4-6.5 8.4z\" fill=\"currentColor\" fill-opacity=\".18\"/><path d=\"M12 21.5c-1.7 0-2.8-1.2-2.8-2.8 0-1.8 1.4-2.8 2.2-4.5 1.6 1.4 3.4 2.8 3.4 4.6 0 1.6-1.1 2.7-2.8 2.7z\"/>", "drop": "<path d=\"M12 3s6.5 7.2 6.5 11.5a6.5 6.5 0 0 1-13 0C5.5 10.2 12 3 12 3z\" fill=\"currentColor\" fill-opacity=\".18\"/><path d=\"M9 15a3 3 0 0 0 3 3\"/>", "arrowR": "<path d=\"M4.5 12h15M14 6.5l5.5 5.5-5.5 5.5\"/>", "trend": "<path d=\"M3.5 17l6-6 4 4 7-7.5M15 7.5h5.5V13\"/>", "arrowUp": "<path d=\"M12 19.5v-15M6.5 10L12 4.5l5.5 5.5\"/>", "shield": "<path d=\"M12 3l7.5 3v5.5c0 4.6-3.2 8.2-7.5 9.5-4.3-1.3-7.5-4.9-7.5-9.5V6z\"/><path d=\"M8.5 12l2.5 2.5 4.5-5\"/>", "star": "<path d=\"M12 3.2l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 17l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z\" fill=\"currentColor\" fill-opacity=\".22\"/>", "sparkle": "<path d=\"M11 3c.6 4.6 2.4 6.4 7 7-4.6.6-6.4 2.4-7 7-.6-4.6-2.4-6.4-7-7 4.6-.6 6.4-2.4 7-7z\" fill=\"currentColor\" fill-opacity=\".2\"/><path d=\"M19 14.5c.3 1.9 1 2.6 2.9 2.9-1.9.3-2.6 1-2.9 2.9-.3-1.9-1-2.6-2.9-2.9 1.9-.3 2.6-1 2.9-2.9z\"/>", "stadium": "<path d=\"M3.5 9.5L12 4l8.5 5.5M5.5 10v7.5M9.8 10v7.5M14.2 10v7.5M18.5 10v7.5M3.5 20h17\"/>", "road": "<path d=\"M8.5 3.5L4 20.5M15.5 3.5L20 20.5M12 4.5v2.5M12 10.5v3M12 17v3\"/>", "compass": "<circle cx=\"12\" cy=\"12\" r=\"8.5\"/><path d=\"M15.5 8.5l-2 5-5 2 2-5z\" fill=\"currentColor\" fill-opacity=\".25\"/>", "bag": "<path d=\"M7 8.5a5 5 0 0 1 10 0V20H7z\"/><path d=\"M9.5 6V4.5h5V6M7 13h10M10 13v2.5h4V13\"/>", "calendar": "<rect x=\"3.5\" y=\"5\" width=\"17\" height=\"15.5\" rx=\"3\"/><path d=\"M3.5 10h17M8 3v4M16 3v4\"/>", "tally": "<path d=\"M5.5 5v14M9.5 5v14M13.5 5v14M17.5 5v14M3.5 15.5L20 8.5\"/>", "crown": "<path d=\"M3.5 8l4 3.5L12 5l4.5 6.5 4-3.5-1.5 10.5h-14z\" fill=\"currentColor\" fill-opacity=\".2\"/><path d=\"M5.5 21h13\"/>", "rocket": "<path d=\"M12 2.8c3.4 2.4 5 6 4.6 10.5L14 16h-4l-2.6-2.7C7 8.8 8.6 5.2 12 2.8z\"/><circle cx=\"12\" cy=\"9.2\" r=\"1.7\"/><path d=\"M8 13.5l-2.8 2.3.7 3.4 3.3-2.2M16 13.5l2.8 2.3-.7 3.4-3.3-2.2M10.5 19.5l1.5 2 1.5-2\"/>", "glove": "<path d=\"M7 10.5V7a4 4 0 0 1 4-4h3a4.5 4.5 0 0 1 4.5 4.5V13a5 5 0 0 1-5 5H11a4 4 0 0 1-4-4z\"/><path d=\"M7 10.5c-2 0-3 1-3 2.5S5 15.5 7 15.5M10 8.5h6M8.5 18v3h8v-3.4\"/>", "gem": "<path d=\"M6.5 4h11l3.5 5-9 11.5L3 9z\" fill=\"currentColor\" fill-opacity=\".15\"/><path d=\"M3 9h18M9.5 4L8 9l4 11.5L16 9l-1.5-5\"/>", "light": "<path d=\"M12 2.8c1.6 1.8 2.3 3 2.3 4.3a2.3 2.3 0 0 1-4.6 0C9.7 5.8 10.4 4.6 12 2.8z\" fill=\"currentColor\" fill-opacity=\".25\"/><rect x=\"9\" y=\"11\" width=\"6\" height=\"10\" rx=\"1.5\"/>", "wind": "<path d=\"M3 9h11a3 3 0 1 0-3-3M3 13h15a3 3 0 1 1-3 3M3 17h7\"/>", "checkc": "<circle cx=\"12\" cy=\"12\" r=\"8.5\"/><path d=\"M8 12.3l2.8 2.8L16.2 9.5\"/>", "goat": "<path d=\"M8 8C6.5 5 4.5 3.8 3 4c.4 2.5 2 4.5 4.5 5.5M16 8c1.5-3 3.5-4.2 5-4 .4 2.5-2 4.5-4.5 5.5\"/><path d=\"M8 8.5s1.5-1 4-1 4 1 4 1v6c0 3-1.8 5.5-4 6.5-2.2-1-4-3.5-4-6.5z\"/><circle cx=\"10.3\" cy=\"12\" r=\".9\" fill=\"currentColor\"/><circle cx=\"13.7\" cy=\"12\" r=\".9\" fill=\"currentColor\"/>", "face": "<circle cx=\"12\" cy=\"12\" r=\"8.5\"/><path d=\"M8.5 14.3c.9 1.4 2.1 2.1 3.5 2.1s2.6-.7 3.5-2.1\"/><circle cx=\"9.3\" cy=\"10\" r=\".9\" fill=\"currentColor\"/><circle cx=\"14.7\" cy=\"10\" r=\".9\" fill=\"currentColor\"/>", "sprout": "<path d=\"M12 21v-9\"/><path d=\"M12 12c0-4 2.5-6.5 7-6.5 0 4.2-2.7 6.5-7 6.5zM12 14.5C12 11 9.8 9 6 9c0 3.5 2.3 5.5 6 5.5z\" fill=\"currentColor\" fill-opacity=\".2\"/>", "waves": "<path d=\"M3 8c1.5-1.3 3-1.3 4.5 0s3 1.3 4.5 0 3-1.3 4.5 0 3 1.3 4.5 0M3 13c1.5-1.3 3-1.3 4.5 0s3 1.3 4.5 0 3-1.3 4.5 0 3 1.3 4.5 0M3 18c1.5-1.3 3-1.3 4.5 0s3 1.3 4.5 0 3-1.3 4.5 0 3 1.3 4.5 0\"/>", "home": "<path d=\"M4 10.5L12 4l8 6.5V20H4z\"/><path d=\"M10 20v-5.5h4V20\"/>", "scale": "<path d=\"M12 4v16M7 20h10M5 7h14M5 7l-2.5 6a2.8 2.8 0 0 0 5 0zM19 7l-2.5 6a2.8 2.8 0 0 0 5 0z\"/>", "heart": "<path d=\"M12 20s-7.5-4.6-7.5-10A4.2 4.2 0 0 1 12 7.4 4.2 4.2 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z\" fill=\"currentColor\" fill-opacity=\".25\"/>", "party": "<path d=\"M4 20l4.5-12 7.5 7.5z\" fill=\"currentColor\" fill-opacity=\".18\"/><path d=\"M13 4.5c.4 1.4 0 2.7-1 3.5M18 9.5c-1.2-.6-2.6-.4-3.6.5M16 3.5V5M20.5 6.5H19M19 13l1.5.5\"/>", "globe": "<circle cx=\"12\" cy=\"12\" r=\"8.5\"/><path d=\"M3.5 12h17M12 3.5c2.3 2.3 3.4 5.2 3.4 8.5s-1.1 6.2-3.4 8.5c-2.3-2.3-3.4-5.2-3.4-8.5S9.7 5.8 12 3.5z\"/>", "gear": "<circle cx=\"12\" cy=\"12\" r=\"3\"/><circle cx=\"12\" cy=\"12\" r=\"6.5\"/><path d=\"M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8\"/>", "paw": "<circle cx=\"6.8\" cy=\"10\" r=\"1.8\"/><circle cx=\"10.2\" cy=\"6\" r=\"1.8\"/><circle cx=\"13.8\" cy=\"6\" r=\"1.8\"/><circle cx=\"17.2\" cy=\"10\" r=\"1.8\"/><path d=\"M12 11.5c-3 0-5.5 3.7-5.5 6 0 1.6 1.2 2.5 2.7 2.5 1.2 0 1.8-.6 2.8-.6s1.6.6 2.8.6c1.5 0 2.7-.9 2.7-2.5 0-2.3-2.5-6-5.5-6z\" fill=\"currentColor\" fill-opacity=\".2\"/>", "flask": "<path d=\"M9.5 3.5h5M10.5 3.5V9L5 18.5A1.6 1.6 0 0 0 6.4 21h11.2a1.6 1.6 0 0 0 1.4-2.5L13.5 9V3.5M7.5 14.5h9\"/>", "bowl": "<path d=\"M3.5 11.5h17a8.5 8.5 0 0 1-17 0zM8 20.5h8\"/><path d=\"M9 8.5c0-1.5 1-1.5 1-3M13 8.5c0-1.5 1-1.5 1-3\"/>", "car": "<path d=\"M3.5 16.5v-4l2.5-5h12l2.5 5v4z\"/><circle cx=\"7.5\" cy=\"17\" r=\"1.8\"/><circle cx=\"16.5\" cy=\"17\" r=\"1.8\"/><path d=\"M3.5 12.5h17\"/>", "robot": "<rect x=\"5\" y=\"8\" width=\"14\" height=\"11\" rx=\"3\"/><path d=\"M12 8V5M9.5 16h5M3 12.5v3M21 12.5v3\"/><circle cx=\"12\" cy=\"4\" r=\"1\"/><circle cx=\"9.5\" cy=\"12.5\" r=\".9\" fill=\"currentColor\"/><circle cx=\"14.5\" cy=\"12.5\" r=\".9\" fill=\"currentColor\"/>", "speech": "<path d=\"M4.5 5.5h15v10h-8l-4.5 4v-4h-2.5z\"/><path d=\"M8.5 10.5h7\"/>", "dot": "<circle cx=\"12\" cy=\"12\" r=\"6\" fill=\"currentColor\"/>", "book": "<path d=\"M12 6.5c-2-1.6-4.6-2-8-2V18c3.4 0 6 .4 8 2 2-1.6 4.6-2 8-2V4.5c-3.4 0-6 .4-8 2zM12 6.5V20\"/>", "hand": "<path d=\"M8 12V6.5a1.5 1.5 0 0 1 3 0V11M11 10.5V5a1.5 1.5 0 0 1 3 0v6M14 10.5V6.5a1.5 1.5 0 0 1 3 0V14c0 4-2.5 6.5-6 6.5-2.5 0-4-1.5-5.5-4L3.8 13.6a1.5 1.5 0 0 1 2.5-1.6L8 14\"/>", "game": "<path d=\"M7 7.5h10a4 4 0 0 1 4 4.4l-.5 4.3a2.6 2.6 0 0 1-4.6 1.4L14.5 16h-5l-1.4 1.6a2.6 2.6 0 0 1-4.6-1.4L3 11.9a4 4 0 0 1 4-4.4z\"/><path d=\"M8 10.5v3M6.5 12h3\"/><circle cx=\"15.5\" cy=\"11\" r=\".9\" fill=\"currentColor\"/><circle cx=\"17.5\" cy=\"13\" r=\".9\" fill=\"currentColor\"/>", "ticket": "<path d=\"M3.5 7.5h17V10a2 2 0 0 0 0 4v2.5h-17V14a2 2 0 0 0 0-4z\"/><path d=\"M14 8.5v7\" stroke-dasharray=\"1.5 2\"/>", "link": "<path d=\"M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1\"/>", "moon": "<path d=\"M19.5 14.5A8 8 0 1 1 9.5 4.5a6.5 6.5 0 0 0 10 10z\" fill=\"currentColor\" fill-opacity=\".2\"/>", "snow": "<path d=\"M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5L12 6.5l2.5-2M9.5 19.5L12 17.5l2.5 2\"/>", "tent": "<path d=\"M3 20L12 4.5 21 20zM9 20l3-5 3 5\"/>", "rain": "<path d=\"M7 15.5a4 4 0 0 1-.3-8 5.5 5.5 0 0 1 10.6 1.3A3.4 3.4 0 0 1 17 15.5z\"/><path d=\"M9 18.5l-1 2M13 18.5l-1 2M17 18.5l-1 2\"/>", "warn": "<path d=\"M12 4l9 15.5H3z\"/><path d=\"M12 10v4M12 17h.01\"/>", "glasses": "<circle cx=\"7\" cy=\"14\" r=\"3.5\"/><circle cx=\"17\" cy=\"14\" r=\"3.5\"/><path d=\"M10.5 14h3M3.5 13.5L5 8M20.5 13.5L19 8\"/>", "sleep": "<path d=\"M3 19V7M3 15h18v4M21 15v-3a3 3 0 0 0-3-3h-7v6\"/><circle cx=\"7\" cy=\"12\" r=\"2\"/>", "sunrise": "<path d=\"M3 18h18M6.5 18a5.5 5.5 0 0 1 11 0M12 4.5v3M4.5 10l2 1.5M19.5 10l-2 1.5M8 21h8\"/>", "music": "<path d=\"M9 18V5.5l11-2V16\"/><circle cx=\"6.5\" cy=\"18\" r=\"2.5\"/><circle cx=\"17.5\" cy=\"16\" r=\"2.5\"/>", "phflag": "<rect x=\"3\" y=\"5.5\" width=\"18\" height=\"13\" rx=\"1.5\"/><path d=\"M3 12h18M3.3 6l8.2 6-8.2 6\"/><circle cx=\"6.4\" cy=\"12\" r=\"1\" fill=\"currentColor\"/>", "ladder": "<path d=\"M8 3v18M16 3v18M8 7h8M8 11h8M8 15h8M8 19h8\"/>", "shuffle": "<path d=\"M3.5 7h3.5c4.5 0 5.5 10 10 10h3.5M3.5 17h3.5c1.8 0 3-1.6 4-3.5M20.5 7H17c-1.8 0-3 1.6-4 3.5M17.5 4l3 3-3 3M17.5 14l3 3-3 3\"/>"});
@@ -1081,7 +1082,7 @@ const haptic=(()=>{let lbl=null;return (kind)=>{try{
 }catch(e){}};})();
 function countUp(el,to,pre,suf,ms){if(!el||!(to>0))return;if(matchMedia("(prefers-reduced-motion: reduce)").matches){el.textContent=pre+to.toLocaleString()+suf;return;}const t0=performance.now(),D=ms||900;const f=t=>{const k=Math.min(1,(t-t0)/D),e=1-Math.pow(1-k,4);el.textContent=pre+Math.round(to*e).toLocaleString()+suf;if(k<1)requestAnimationFrame(f);};el.textContent=pre+"0"+suf;requestAnimationFrame(f);}
 
-const TYPES={run:"Run",walk:"Walk",hike:"Hike",ride:"Ride",lift:"Lift",climb:"Boulder",hang:"Hangboard",pickle:"Pickleball",other:"Other"};
+const TYPES={run:"Run",walk:"Walk",hike:"Hike",ride:"Ride",lift:"Lift",climb:"Boulder",hang:"Hangboard",pickle:"Pickleball",stair:"Stairmaster",other:"Other"};
 const DIST_TYPES=["run","walk","hike","ride","other"];
 const EFFORTS={
   run:[[400,"400m"],[800,"800m"],[1000,"1K"],[1609.34,"1 mile"],[3218.69,"2 mile"],[5000,"5K"],[10000,"10K"],[16093.4,"10 mile"],[21097.5,"Half marathon"],[42195,"Marathon"]],
@@ -1160,7 +1161,7 @@ const hasTimes=s=>!!(s.track&&s.track.length>1&&s.track[0][3]!=null);
 function defaultTitle(type,time){
   let part="";
   if(time){const h=+time.split(":")[0];part=h<5?"Night ":h<12?"Morning ":h<17?"Afternoon ":h<21?"Evening ":"Night ";}
-  const name={run:"Run",walk:"Walk",hike:"Hike",ride:"Ride",lift:"Lifting session",climb:"Bouldering session",hang:"Hangboard session",pickle:"Pickleball",other:"Workout"}[type];
+  const name={run:"Run",walk:"Walk",hike:"Hike",ride:"Ride",lift:"Lifting session",climb:"Bouldering session",hang:"Hangboard session",pickle:"Pickleball",stair:"Stairmaster",other:"Workout"}[type];
   return cap(part+(part?name.toLowerCase():name));
 }
 const titleOf=s=>s.title||defaultTitle(s.type,s.time);
@@ -1752,7 +1753,7 @@ const ACC=[
   {id:"d5",icon:"🗓️",name:"Five-day week",desc:"Work out on 5 different days in one week",xp:150,test:(s,c)=>c.weekDays[weekKey(s.date)].size>=5},
   {id:"m20",icon:"📆",name:"Twenty in a month",desc:"Log 20 workouts in one calendar month",xp:250,test:(s,c)=>c.months[s.date.slice(0,7)]>=20},
   {id:"allr",icon:"🔀",name:"All-rounder",desc:"Do 4 different activity types in one week",xp:150,test:(s,c)=>c.weekTypes[weekKey(s.date)].size>=4},
-  {id:"jack",icon:"🃏",name:"Jack of all trades",desc:"Log every activity type at least once",xp:300,prog:c=>[[...c.types].filter(t=>t!=="pickle").length,Object.keys(TYPES).length-1]},
+  {id:"jack",icon:"🃏",name:"Jack of all trades",desc:"Log every activity type at least once",xp:300,prog:c=>[[...c.types].filter(t=>t!=="pickle"&&t!=="stair").length,Object.keys(TYPES).length-2]},
   {id:"d100",icon:"💯",name:"Century of days",desc:"Work out on 100 different days",xp:300,prog:c=>[c.days.size,100]},
   {id:"dawn",icon:"🌄",name:"Dawn patrol",desc:"Start 10 workouts before 6:00 am",xp:150,prog:c=>[c.early,10]},
   {id:"5k",icon:"🥾",name:"5K finisher",desc:"Run at least 5 km in one go",test:s=>s.type==="run"&&s.dist>=5},
@@ -1786,6 +1787,8 @@ function cats(s){
   if(s.maxEle!=null&&s.type!=="lift"&&s.type!=="climb")out.push({key:"alt",kind:"highest",noun:"elevation reached",value:s.maxEle,dir:1,fmt:fmtElev});
   for(const [D,name] of EFFORTS[s.type]||[]){const v=s.efforts&&s.efforts[String(D)];if(v>0)out.push({key:`eff-${s.type}-${D}`,kind:"fastest",noun:name,value:v,dir:-1,fmt:fmtClock,pr:true,sub:s.type==="ride"?fmtSpeed(D/1000,v):fmtPace(v/(D/1000))});}
   if(s.type==="pickle"&&s.won>0)out.push({key:"pk-won",kind:"most",noun:"pickleball games won",value:s.won,dir:1,fmt:v=>v+(v===1?" game":" games")});
+  if(s.type==="stair"&&s.floors>0)out.push({key:"st-floors",kind:"most",noun:"stairmaster floors",value:s.floors,dir:1,fmt:v=>Math.round(v)+(v===1?" floor":" floors")});
+  if(s.type==="stair"&&s.floors>0&&s.dur>=600)out.push({key:"st-rate",kind:"fastest",noun:"stairmaster pace",value:s.floors/(s.dur/60),dir:1,fmt:v=>v.toFixed(1)+" floors/min"});
   if(s.type==="pickle"&&s.games>0)out.push({key:"pk-games",kind:"most",noun:"pickleball games played",value:s.games,dir:1,fmt:v=>v+(v===1?" game":" games")});
   if(s.type==="hike"&&s.elev>=100&&s.dur>0)out.push({key:"vrate-hike",kind:"fastest",noun:"climbing rate",value:s.elev/(s.dur/3600),dir:1,fmt:v=>Math.round(toDispElev(v))+" "+elevU()+"/h"});
   if(s.type==="lift"){
@@ -1986,7 +1989,7 @@ function effortOf(s){
   const mh=maxHR(),rh=bio().rhr;
   if(s.hr&&mh&&rh&&mh>rh){const p=(s.hr-rh)/(mh-rh);return {v:Math.max(1,Math.min(10,Math.round(p*10))),est:true};}
   const pt=s.placeId&&typeof placeById==="function"&&placeById(s.placeId);
-  return {v:({lift:6,climb:6,hang:7,run:5,ride:5,walk:3,hike:5,pickle:6,other:5}[s.type]||5)+(pt&&pt.terrain==="steep"&&(s.type==="run"||s.type==="walk")?1:0),est:true};
+  return {v:({lift:6,climb:6,hang:7,run:5,ride:5,walk:3,hike:5,pickle:6,stair:7,other:5}[s.type]||5)+(pt&&pt.terrain==="steep"&&(s.type==="run"||s.type==="walk")?1:0),est:true};
 }
 const loadOf=s=>effortOf(s).v*(s.dur||0)/60;
 const recoveryHours=s=>Math.max(4,Math.min(72,12+(loadOf(s)-150)/12));
@@ -2381,6 +2384,10 @@ function cardNums(s){
     out.push(["Hang time",fmtDur(hangTime(s))]);
     if(maxAdd(s)!=null)out.push(["Max load",fmtAdd(maxAdd(s))]);
     out.push(["Sets",hangSets(s)]);
+  }else if(s.type==="stair"){
+    if(s.floors)out.push(["Floors",Math.round(s.floors).toLocaleString()]);
+    if(s.elev)out.push(["Vertical",fmtElev(s.elev)]);
+    if(s.dur)out.push(["Time",fmtDur(s.dur)]);
   }else if(s.type==="pickle"){
     if(s.games)out.push(["Games won",(s.won||0)+"/"+s.games]);
     if(s.games)out.push(["Win rate",Math.round((s.won||0)/s.games*100)+"%"]);
@@ -2525,6 +2532,7 @@ function renderRecords(){
   </div>`;
   html+=renderClimbRecords(all);
   html+=renderPickleRecords(all);
+  html+=renderStairRecords(all);
   const bp20=best(rides,s=>s.p20||null);
   html+=`<h2 class="sec" style="--c:var(--ride)"><i></i>Cycling</h2><div class="recs">
     ${recCard("Longest ride",best(rides,s=>s.dist),fmtDist,"ride")}
@@ -2722,6 +2730,18 @@ let fqT;$("app").addEventListener("input",e=>{if(e.target.id!=="fd-q")return;foo
 let lqT;$("app").addEventListener("input",e=>{if(e.target.id!=="lq")return;logQ=e.target.value;clearTimeout(lqT);lqT=setTimeout(()=>{const y=window.scrollY;render();const i=$("lq");if(i){i.focus();const n=i.value.length;try{i.setSelectionRange(n,n);}catch(_){}}window.scrollTo(0,y);},160);});
 $("app").addEventListener("keydown",e=>{if(e.target.id==="lq"&&e.key==="Escape"){e.stopPropagation();logSearch=false;logQ="";render();}});
 
+/* a floor on a Stairmaster is 16 steps, about 3 m of climbing */
+const STAIR_FLOOR_M=3.05,STAIR_STEP_M=.19;
+function renderStairRecords(all){
+  const P=all.filter(s=>s.type==="stair");if(!P.length)return "";
+  const fl=P.reduce((a,s)=>a+(s.floors||0),0),vert=P.reduce((a,s)=>a+(s.elev||0),0),ev=vert/8849;
+  let html=`<h2 class="sec" style="--c:var(--stair)"><i></i>Stairmaster</h2><div class="recs">`;
+  html+=recCard("Most floors",best(P,s=>s.floors||null),v=>Math.round(v)+(v===1?" floor":" floors"),"stair");
+  html+=recCard("Longest session",best(P,s=>s.dur||null),fmtDur,"stair");
+  html+=`<div class="rec" style="--c:var(--stair)"><div class="l">Floors climbed</div><div class="v">${Math.round(fl).toLocaleString()}</div><div class="s">${P.length} ${P.length===1?"session":"sessions"}</div></div>`;
+  html+=`<div class="rec" style="--c:var(--stair)"><div class="l">Vertical</div><div class="v">${fmtElev(vert)}</div><div class="s">${ev>=.1?`${ev.toFixed(ev>=10?0:1)}× Everest`:`${Math.round(vert/330*10)/10}× the Eiffel Tower`}</div></div></div>`;
+  return html;
+}
 function renderPickleRecords(all){
   const P=all.filter(s=>s.type==="pickle");if(!P.length)return "";
   const G=P.filter(s=>s.games>0),games=G.reduce((a,s)=>a+s.games,0),won=G.reduce((a,s)=>a+(s.won||0),0);
@@ -3219,7 +3239,7 @@ function workoutKcal(s){
   if((s.type==="run")&&s.dist)return kg*s.dist*1.0*(1+(elevOf(s)||0)/Math.max(1,s.dist*1000)*8);
   if((s.type==="walk"||s.type==="hike")&&s.dist)return kg*s.dist*.65+(elevOf(s)||0)*kg*.0075;
   if(s.type==="ride"&&s.dist)return kg*s.dist*.28;
-  const met={lift:5,climb:6.5,hang:4,pickle:6.5,other:6,run:9,walk:3.5,hike:6,ride:7}[s.type]||6;
+  const met={lift:5,climb:6.5,hang:4,pickle:6.5,stair:9,other:6,run:9,walk:3.5,hike:6,ride:7}[s.type]||6;
   return met*kg*h*fx;
 }
 function bmrNow(){const b=bio(),kg=weightOn(keyOf(new Date()))||b.weight;if(!kg||!b.height||!b.age||!b.sex)return null;return Math.round(10*kg+6.25*b.height-5*b.age+(b.sex==="f"||b.sex==="female"?-161:5));}
@@ -3602,7 +3622,7 @@ function openForm(existing,preset){
   const v=x=>x==null?"":x;
   const draw=()=>{
     const h=Math.floor((d.dur||0)/3600),m=Math.floor((d.dur||0)%3600/60),s=Math.round((d.dur||0)%60);
-    const isLift=d.type==="lift",isClimb=d.type==="climb",isHang=d.type==="hang",isPickle=d.type==="pickle",noRoute=isLift||isClimb||isHang||isPickle;
+    const isLift=d.type==="lift",isClimb=d.type==="climb",isHang=d.type==="hang",isPickle=d.type==="pickle",isStair=d.type==="stair",noRoute=isLift||isClimb||isHang||isPickle||isStair;
     let body=tgtFormHTML(d)+(isClimb&&!existing?`<h3>Bouldering session</h3><p class="sub">Tap + on a grade every time you send. Your count is kept on this phone until you save, even if you close the app.</p>`:`<h3>${existing?"Edit workout":"Add workout"}</h3><p class="sub">Copy the numbers from your other app, or import a GPX file. Only time is required.</p>`);
     if(!noRoute){
       body+=d.track?`<div class="gpx" style="--c:${col(d.type)}"><div class="route" style="margin:0;width:88px;flex:none">${routeSVG(d.track,{w:220,h:160,pad:12,sw:5})}</div><p style="flex:1">Route attached with ${d.track.length} points.${Object.keys(d.efforts).length?" Best efforts were calculated from it.":""}</p><button class="btn" id="rmroute">Remove</button></div>`
@@ -3643,6 +3663,12 @@ function openForm(existing,preset){
       <div class="grid2" style="margin-top:14px"><div><label for="f-gp">Games played</label><input id="f-gp" type="number" inputmode="numeric" min="0" placeholder="0" value="${v(d.games)}"></div>
       <div><label for="f-gw">Games won</label><input id="f-gw" type="number" inputmode="numeric" min="0" placeholder="0" value="${v(d.won)}"></div></div>
       <p class="hint">Games are kept per session, so you can see your win rate and most games won in Records.</p>`;
+    }
+    if(isStair){
+      body+=`<div class="grid2" style="margin-top:14px"><div><label for="f-fl">Floors</label><input id="f-fl" type="number" inputmode="numeric" min="0" placeholder="0" value="${v(d.floors)}"></div>
+      <div><label for="f-lvl">Level</label><input id="f-lvl" type="number" inputmode="numeric" min="1" max="30" placeholder="Avg level" value="${v(d.lvl)}"></div></div>
+      <label for="f-steps">Steps</label><input id="f-steps" type="number" inputmode="numeric" min="0" placeholder="Optional" value="${v(d.steps)}">
+      <p class="hint" id="sthint">Copy these from the machine's summary screen. A floor is 16 steps, about ${fmtElev(STAIR_FLOOR_M)} of climbing, so your vertical is worked out for you.</p>`;
     }
     if(d.type==="ride"){
       body+=`<label>Power (optional)</label><div class="grid2">
@@ -3708,7 +3734,7 @@ function openForm(existing,preset){
       <div><label for="f-cal">Calories</label><input id="f-cal" type="number" inputmode="numeric" min="0" placeholder="Optional" value="${v(d.cal)}"></div></div>
     ${gearList().some(g=>!g.retired&&(g.types||[]).includes(d.type))?`<label for="f-gear">Gear</label><select id="f-gear"><option value="">None</option>${gearList().filter(g=>!g.retired&&(g.types||[]).includes(d.type)).map(g=>`<option value="${g.id}"${d.gearId===g.id?" selected":""}>${esc(g.name)}</option>`).join("")}</select>`:""}
     <label>Photo</label><div id="f-photo" style="display:flex;gap:10px;align-items:center"><div id="f-ph-prev"></div><button class="btn" id="f-ph-add" style="flex:none">${d.photo||d._photo?"Change photo":"Add photo"}</button>${d.photo||d._photo?`<button class="btn danger" id="f-ph-del" style="flex:none">Remove</button>`:""}</div><p class="hint">Photos stay on this device.</p>
-    ${["run","walk","hike","ride","climb","other"].includes(d.type)?`<details${d.fuel?" open":""}><summary>💧 Fueling and sweat rate (optional)</summary><p class="hint">Weigh yourself right before and after, without clothes if you can, to learn your sweat rate.</p>
+    ${["run","walk","hike","ride","climb","stair","other"].includes(d.type)?`<details${d.fuel?" open":""}><summary>💧 Fueling and sweat rate (optional)</summary><p class="hint">Weigh yourself right before and after, without clothes if you can, to learn your sweat rate.</p>
       <div class="grid2" style="margin-top:8px"><div><label for="fu-pre">Weight before (${wU()})</label><input id="fu-pre" type="number" inputmode="decimal" step="any" value="${d.fuel&&d.fuel.pre?round(toDispWt(d.fuel.pre),1):""}"></div><div><label for="fu-post">Weight after (${wU()})</label><input id="fu-post" type="number" inputmode="decimal" step="any" value="${d.fuel&&d.fuel.post?round(toDispWt(d.fuel.post),1):""}"></div>
       <div><label for="fu-fl">Fluid drunk (ml)</label><input id="fu-fl" type="number" inputmode="numeric" value="${d.fuel&&d.fuel.fl||""}"></div><div><label for="fu-g">Gels or carb servings</label><input id="fu-g" type="number" inputmode="numeric" value="${d.fuel&&d.fuel.gels||""}"></div></div></details>`:""}
     </details>
@@ -3721,6 +3747,7 @@ function openForm(existing,preset){
     d.dur=(num($("f-h").value)||0)*3600+(num($("f-m").value)||0)*60+(num($("f-s").value)||0);
     d.hr=num($("f-hr").value);d.cal=num($("f-cal").value);d.notes=$("f-notes").value.trim();
     const rp=+$("f-rpe").value;d.rpe=rp>0?rp:null;
+    if($("f-fl")){d.floors=num($("f-fl").value);d.lvl=num($("f-lvl").value);}
     if($("f-gp")){d.games=num($("f-gp").value);d.won=num($("f-gw").value);if(!d.fmt)d.fmt="doubles";}
     if($("f-pw")){d.pw=num($("f-pw").value);d.np=num($("f-np").value);d.p20=num($("f-p20").value);d.pmax=num($("f-pmax").value);}
     document.querySelectorAll(".pname").forEach(i=>{const p=d.probs[+i.dataset.i];if(p)p.name=i.value.trim();});
@@ -3858,7 +3885,9 @@ function openForm(existing,preset){
       if(d.type!=="ride"){d.pw=d.np=d.p20=d.pmax=null;}
       if(d.type!=="pickle"){delete d.games;delete d.won;delete d.fmt;}else{if(d.games!=null)d.games=Math.max(0,Math.round(d.games));if(d.won!=null)d.won=Math.max(0,Math.round(d.won));if(d.games!=null&&d.won>d.games)d.games=d.won;if(d.won!=null&&d.games==null)d.games=d.won;}
       if(d.type!=="hike"){delete d.rests;delete d.restSec;delete d.pack;delete d.diff;delete d.cond;delete d.summit;delete d.eloss;}
-      if(!["run","walk","hike"].includes(d.type))delete d.steps;
+      if(!["run","walk","hike","stair"].includes(d.type))delete d.steps;
+      if(d.type!=="stair"){delete d.floors;delete d.lvl;}else{if(d.floors!=null)d.floors=Math.max(0,Math.round(d.floors));if(d.lvl!=null)d.lvl=Math.max(1,Math.min(30,Math.round(d.lvl)));if(d.steps!=null)d.steps=Math.max(0,Math.round(d.steps));
+        d.elev=d.floors?d.floors*STAIR_FLOOR_M:d.steps?d.steps*STAIR_STEP_M:null;if(!d.floors&&d.steps)d.floors=Math.round(d.steps/16);}
       if(d.type!=="hang")delete d.hangs;else d.hangs=d.hangs.filter(h=>h.hang&&h.sets);
       if(d.gearId&&!(gearById(d.gearId)&&(gearById(d.gearId).types||[]).includes(d.type)))d.gearId="";
       if(d._photo){const blob=d._photo;delete d._photo;d.photo=true;photoPut(d.id,blob).then(ok=>{if(!ok)toast("Photo couldn't be saved on this device");delete photoURLs[d.id];});}
@@ -4026,6 +4055,13 @@ function openDetail(s){
     const v=volume(s);if(v)st.push(["Volume",fmtVol(v)]);st.push(["Time",fmtDur(s.dur)]);const sets=totalSets(s);if(sets)st.push(["Sets",sets]);
   }else if(s.type==="hang"){
     st.push(["Hang time",fmtDur(hangTime(s))]);if(maxAdd(s)!=null)st.push(["Max load",fmtAdd(maxAdd(s))]);st.push(["Sets",hangSets(s)]);st.push(["Session",fmtDur(s.dur)]);
+  }else if(s.type==="stair"){
+    if(s.floors)st.push(["Floors",Math.round(s.floors).toLocaleString()]);
+    if(s.elev)st.push(["Vertical",fmtElev(s.elev)]);
+    if(s.floors&&s.dur)st.push(["Floors/min",(s.floors/(s.dur/60)).toFixed(1)]);
+    if(s.steps)st.push(["Steps",Math.round(s.steps).toLocaleString()]);
+    if(s.lvl)st.push(["Level",String(s.lvl)]);
+    if(s.dur)st.push(["Time",fmtDur(s.dur)]);
   }else if(s.type==="pickle"){
     if(s.games){st.push(["Games",String(s.games)]);st.push(["Won",String(s.won||0)]);st.push(["Win rate",Math.round((s.won||0)/s.games*100)+"%"]);}
     if(s.fmt)st.push(["Format",s.fmt==="singles"?"Singles":"Doubles"]);
@@ -4232,7 +4268,7 @@ function drawMuscleMap(x,cx,top,h,v,ink,hi){
 }
 
 const STRAVA="#FC4C02";
-const TYPE_HEX={run:"#4F8DFF",walk:"#A58BFF",hike:"#C99A5B",ride:"#2FC48D",lift:"#E8A93A",climb:"#FF5C8A",hang:"#FF8A4C",pickle:"#E4D33C",other:"#8E8E93"};
+const TYPE_HEX={run:"#4F8DFF",walk:"#A58BFF",hike:"#C99A5B",ride:"#2FC48D",lift:"#E8A93A",climb:"#FF5C8A",hang:"#FF8A4C",pickle:"#E4D33C",stair:"#2DD4BF",other:"#8E8E93"};
 const FONTS={
   sport:{num:'800 {s}px "Barlow Condensed","Arial Narrow",sans-serif',label:'600 {s}px "Barlow",system-ui,sans-serif',title:'700 {s}px "Barlow",system-ui,sans-serif',k:1},
   clean:{num:'700 {s}px "Barlow",system-ui,sans-serif',label:'500 {s}px "Barlow",system-ui,sans-serif',title:'600 {s}px "Barlow",system-ui,sans-serif',k:.78},
@@ -4309,6 +4345,8 @@ function allStats(s){
    const gp=gapOf(s);if(gp)o.push({k:"gap",l:"Adj. pace",v:fmtPace(gp)});}
   if(s.type==="pickle"&&s.games){o.push({k:"pkwon",l:"Games won",v:(s.won||0)+"/"+s.games});o.push({k:"pkrate",l:"Win rate",v:Math.round((s.won||0)/s.games*100)+"%"});o.push({k:"pkgames",l:"Games",v:String(s.games)});}
   if(s.type==="pickle"&&s.fmt)o.push({k:"pkfmt",l:"Format",v:s.fmt==="singles"?"Singles":"Doubles"});
+  if(s.type==="stair"&&s.floors){o.push({k:"floors",l:"Floors",v:Math.round(s.floors).toLocaleString()});if(s.dur)o.push({k:"fpm",l:"Floors/min",v:(s.floors/(s.dur/60)).toFixed(1)});}
+  if(s.type==="stair"&&s.lvl)o.push({k:"lvl",l:"Level",v:String(s.lvl)});
   if(s.type==="hang"){o.push({k:"htime",l:"Hang time",v:fmtDur(hangTime(s))});if(maxAdd(s)!=null)o.push({k:"hload",l:"Max load",v:fmtAdd(maxAdd(s))});o.push({k:"hsets",l:"Sets",v:String(hangSets(s))});}
   if(s.eloss)o.push({k:"eloss",l:"Elev loss",v:fmtElev(s.eloss)});
   if(s.type==="hike"&&s.maxEle!=null)o.push({k:"maxele",l:"Highest point",v:fmtElev(s.maxEle)});
@@ -4323,7 +4361,7 @@ function allStats(s){
   return o;
 }
 function defaultStats(s){
-  const pref={pickle:["pkwon","pkrate","time"],run:["dist","pace","time"],walk:["dist","pace","time"],hike:["dist","elev","time"],ride:["dist","speed","time","pw"],lift:["vol","time","sets"],climb:["sends","hard","flash","time"],hang:["htime","hload","hsets"],other:["time","dist","cal"]}[s.type];
+  const pref={pickle:["pkwon","pkrate","time"],stair:["floors","elev","time"],run:["dist","pace","time"],walk:["dist","pace","time"],hike:["dist","elev","time"],ride:["dist","speed","time","pw"],lift:["vol","time","sets"],climb:["sends","hard","flash","time"],hang:["htime","hload","hsets"],other:["time","dist","cal"]}[s.type];
   const have=allStats(s).map(x=>x.k);
   const out=pref.filter(k=>have.includes(k)).slice(0,s.type==="ride"&&s.pw?4:3);
   return out.length?out:have.slice(0,3);
@@ -4618,12 +4656,13 @@ async function p3Compose(s,o,art){
 /* ---------- more workout poster styles: Ticked (hollow number + marker tick), Bib (race bib), Billboard (stats set full width) ---------- */
 const P3_STYLES=["tick","bib","bill"];
 function workoutSentence(s,o){
-  const verb={run:"Ran",walk:"Walked",hike:"Hiked",ride:"Rode",lift:"Lifted",climb:"Climbed",hang:"Hung on the board",pickle:"Played pickleball",other:"Trained"}[s.type]||"Trained";
+  const verb={run:"Ran",walk:"Walked",hike:"Hiked",ride:"Rode",lift:"Lifted",climb:"Climbed",hang:"Hung on the board",pickle:"Played pickleball",stair:"Climbed",other:"Trained"}[s.type]||"Trained";
   let t=verb;
   if(s.dist&&DIST_TYPES.includes(s.type))t+=` ${fmtDist(s.dist)}`;
   else if(s.type==="lift"&&volume(s))t+=` ${fmtVol(volume(s))}`;
   else if(s.type==="climb"&&sends(s).length)t+=`, ${sends(s).length} ${sends(s).length===1?"send":"sends"}`;
   else if(s.type==="pickle"&&s.games)t+=`${s.fmt?" "+s.fmt:""}, won ${s.won||0} of ${s.games}`;
+  else if(s.type==="stair")t+=s.floors?` ${Math.round(s.floors)} floors on the Stairmaster`:" the Stairmaster";
   if(s.dur)t+=` in ${fmtDur(s.dur)}`;
   if((s.type==="run"||s.type==="walk"||s.type==="hike")&&s.dist&&s.dur)t+=` at ${fmtPace(s.dur/s.dist)}`;
   if(o.place&&placeName(s))t+=`, ${placeName(s)}`;
@@ -4846,7 +4885,7 @@ function parseCSVText(t){
     else if(c==='"')q=true;else if(c===","){row.push(f);f="";}else if(c==="\n"||c==="\r"){if(c==="\r"&&t[i+1]==="\n")i++;row.push(f);f="";if(row.some(x=>x.trim()!==""))rows.push(row);row=[];}else f+=c;}
   row.push(f);if(row.some(x=>x.trim()!==""))rows.push(row);return rows;
 }
-function csvType(v){v=String(v||"").toLowerCase();if(TYPES[v])return v;if(/pickle/.test(v))return "pickle";if(/trail ?run|run/.test(v))return "run";if(/hike/.test(v))return "hike";if(/walk/.test(v))return "walk";if(/ride|cycl|bike|spin/.test(v))return "ride";if(/weight|lift|strength|crossfit/.test(v))return "lift";if(/boulder|climb/.test(v))return "climb";if(/hang/.test(v))return "hang";return "other";}
+function csvType(v){v=String(v||"").toLowerCase();if(TYPES[v])return v;if(/pickle/.test(v))return "pickle";if(/stair|step ?mill|stepper|step ?climb/.test(v))return "stair";if(/trail ?run|run/.test(v))return "run";if(/hike/.test(v))return "hike";if(/walk/.test(v))return "walk";if(/ride|cycl|bike|spin/.test(v))return "ride";if(/weight|lift|strength|crossfit/.test(v))return "lift";if(/boulder|climb/.test(v))return "climb";if(/hang/.test(v))return "hang";return "other";}
 function csvDate(v){v=String(v||"").trim();let m=v.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{1,2}):(\d{2}))?/);if(m)return {date:`${m[1]}-${m[2]}-${m[3]}`,time:m[4]?pad(+m[4])+":"+m[5]:""};
   m=v.match(/^([A-Za-z]{3})[a-z]*\.? (\d{1,2}),? (\d{4}),?\s*(\d{1,2}):(\d{2})(?::\d{2})?\s*([AP]M)?/i);
   if(m){const mo=["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"].indexOf(m[1].toLowerCase());if(mo<0)return null;let h=+m[4];if(m[6]){const pm=/p/i.test(m[6]);if(pm&&h<12)h+=12;if(!pm&&h===12)h=0;}return {date:`${m[3]}-${pad(mo+1)}-${pad(+m[2])}`,time:pad(h)+":"+m[5]};}
