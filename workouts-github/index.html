@@ -2735,7 +2735,7 @@ let lqT;$("app").addEventListener("input",e=>{if(e.target.id!=="lq")return;logQ=
 $("app").addEventListener("keydown",e=>{if(e.target.id==="lq"&&e.key==="Escape"){e.stopPropagation();logSearch=false;logQ="";render();}});
 
 /* a floor on a Stairmaster is 16 steps, about 3 m of climbing */
-const STAIR_FLOOR_M=3.05,STAIR_STEP_M=.19,STAIR_DIST_FLOOR_M=5.1;/* 16 steps of about 0.32 m along the stairs */
+const STAIR_FLOOR_M=3.05,STAIR_STEP_M=.19,STAIR_DIST_FLOOR_M=36;/* machine "distance" is an equivalent distance, not the stairs themselves: about 36 per floor, calibrated on a real session (1.9 km in 14 min at levels 4 and 9 is roughly 53 floors) */
 /* steps a minute for a resistance level, anchored on level 2 = 34 */
 const stairSpm=lvl=>lvl?Math.max(20,Math.round(34+(lvl-2)*7.1)):null;
 /* floors from whatever the machine showed: steps, then distance, then level and time */
@@ -3686,7 +3686,7 @@ function openForm(existing,preset){
       <div class="grid2" style="margin-top:14px">${smode==="dist"?`<div><label for="f-sd">Distance (${dU()})</label><input id="f-sd" type="number" inputmode="decimal" step="any" min="0" placeholder="0.00" value="${d.sdist!=null?round(toDispDist(d.sdist),2):""}"></div>`:`<div><label for="f-fl">Floors</label><input id="f-fl" type="number" inputmode="numeric" min="0" placeholder="0" value="${v(d.floors)}"></div>`}
       <div><label for="f-lvl">Level</label><input id="f-lvl" type="number" inputmode="numeric" min="1" max="30" placeholder="Avg level" value="${v(d.lvl)}"></div></div>
       <label for="f-steps">Steps</label><input id="f-steps" type="number" inputmode="numeric" min="0" placeholder="Optional" value="${v(d.steps)}">
-      <p class="hint stest" id="stest" aria-live="polite"></p><p class="hint" id="sthint">${smode==="dist"?`Copy these from the machine's summary screen. Floors are estimated from the distance (a floor is 16 steps, about ${STAIR_DIST_FLOOR_M} m of stepping), or from steps if you add them.`:`Copy these from the machine's summary screen. A floor is 16 steps, about ${fmtElev(STAIR_FLOOR_M)} of climbing, so your vertical is worked out for you.`}</p>`;
+      <p class="hint stest" id="stest" aria-live="polite"></p><p class="hint" id="sthint">${smode==="dist"?`Copy these from the machine's summary screen. Floors are estimated from the distance (the machine counts about ${STAIR_DIST_FLOOR_M} m of its distance per floor), or from steps if you add them.`:`Copy these from the machine's summary screen. A floor is 16 steps, about ${fmtElev(STAIR_FLOOR_M)} of climbing, so your vertical is worked out for you.`}</p>`;
     }
     if(d.type==="ride"){
       body+=`<label>Power (optional)</label><div class="grid2">
