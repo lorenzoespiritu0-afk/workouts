@@ -1788,6 +1788,7 @@ function cats(s){
   for(const [D,name] of EFFORTS[s.type]||[]){const v=s.efforts&&s.efforts[String(D)];if(v>0)out.push({key:`eff-${s.type}-${D}`,kind:"fastest",noun:name,value:v,dir:-1,fmt:fmtClock,pr:true,sub:s.type==="ride"?fmtSpeed(D/1000,v):fmtPace(v/(D/1000))});}
   if(s.type==="pickle"&&s.won>0)out.push({key:"pk-won",kind:"most",noun:"pickleball games won",value:s.won,dir:1,fmt:v=>v+(v===1?" game":" games")});
   if(s.type==="stair"&&s.floors>0)out.push({key:"st-floors",kind:"most",noun:"stairmaster floors",value:s.floors,dir:1,fmt:v=>Math.round(v)+(v===1?" floor":" floors")});
+  if(s.type==="stair"&&s.sdist>0)out.push({key:"st-dist",kind:"longest",noun:"stairmaster distance",value:s.sdist,dir:1,fmt:fmtDist});
   if(s.type==="stair"&&s.floors>0&&s.dur>=600)out.push({key:"st-rate",kind:"fastest",noun:"stairmaster pace",value:s.floors/(s.dur/60),dir:1,fmt:v=>v.toFixed(1)+" floors/min"});
   if(s.type==="pickle"&&s.games>0)out.push({key:"pk-games",kind:"most",noun:"pickleball games played",value:s.games,dir:1,fmt:v=>v+(v===1?" game":" games")});
   if(s.type==="hike"&&s.elev>=100&&s.dur>0)out.push({key:"vrate-hike",kind:"fastest",noun:"climbing rate",value:s.elev/(s.dur/3600),dir:1,fmt:v=>Math.round(toDispElev(v))+" "+elevU()+"/h"});
@@ -2386,6 +2387,7 @@ function cardNums(s){
     out.push(["Sets",hangSets(s)]);
   }else if(s.type==="stair"){
     if(s.floors)out.push(["Floors",Math.round(s.floors).toLocaleString()]);
+    if(s.sdist)out.push(["Distance",fmtDist(s.sdist)]);
     if(s.elev)out.push(["Vertical",fmtElev(s.elev)]);
     if(s.dur)out.push(["Time",fmtDur(s.dur)]);
   }else if(s.type==="pickle"){
@@ -2734,12 +2736,15 @@ $("app").addEventListener("keydown",e=>{if(e.target.id==="lq"&&e.key==="Escape")
 const STAIR_FLOOR_M=3.05,STAIR_STEP_M=.19;
 function renderStairRecords(all){
   const P=all.filter(s=>s.type==="stair");if(!P.length)return "";
-  const fl=P.reduce((a,s)=>a+(s.floors||0),0),vert=P.reduce((a,s)=>a+(s.elev||0),0),ev=vert/8849;
+  const fl=P.reduce((a,s)=>a+(s.floors||0),0),vert=P.reduce((a,s)=>a+(s.elev||0),0),ev=vert/8849,sd=P.reduce((a,s)=>a+(s.sdist||0),0);
   let html=`<h2 class="sec" style="--c:var(--stair)"><i></i>Stairmaster</h2><div class="recs">`;
-  html+=recCard("Most floors",best(P,s=>s.floors||null),v=>Math.round(v)+(v===1?" floor":" floors"),"stair");
+  if(fl)html+=recCard("Most floors",best(P,s=>s.floors||null),v=>Math.round(v)+(v===1?" floor":" floors"),"stair");
+  if(sd)html+=recCard("Longest distance",best(P,s=>s.sdist||null),fmtDist,"stair");
   html+=recCard("Longest session",best(P,s=>s.dur||null),fmtDur,"stair");
-  html+=`<div class="rec" style="--c:var(--stair)"><div class="l">Floors climbed</div><div class="v">${Math.round(fl).toLocaleString()}</div><div class="s">${P.length} ${P.length===1?"session":"sessions"}</div></div>`;
-  html+=`<div class="rec" style="--c:var(--stair)"><div class="l">Vertical</div><div class="v">${fmtElev(vert)}</div><div class="s">${ev>=.1?`${ev.toFixed(ev>=10?0:1)}× Everest`:`${Math.round(vert/330*10)/10}× the Eiffel Tower`}</div></div></div>`;
+  if(fl)html+=`<div class="rec" style="--c:var(--stair)"><div class="l">Floors climbed</div><div class="v">${Math.round(fl).toLocaleString()}</div><div class="s">${P.length} ${P.length===1?"session":"sessions"}</div></div>`;
+  if(sd)html+=`<div class="rec" style="--c:var(--stair)"><div class="l">Distance stepped</div><div class="v">${fmtDist(sd)}</div><div class="s">All sessions</div></div>`;
+  if(vert)html+=`<div class="rec" style="--c:var(--stair)"><div class="l">Vertical</div><div class="v">${fmtElev(vert)}</div><div class="s">${ev>=.1?`${ev.toFixed(ev>=10?0:1)}× Everest`:`${Math.round(vert/330*10)/10}× the Eiffel Tower`}</div></div>`;
+  html+=`</div>`;
   return html;
 }
 function renderPickleRecords(all){
@@ -3665,10 +3670,12 @@ function openForm(existing,preset){
       <p class="hint">Games are kept per session, so you can see your win rate and most games won in Records.</p>`;
     }
     if(isStair){
-      body+=`<div class="grid2" style="margin-top:14px"><div><label for="f-fl">Floors</label><input id="f-fl" type="number" inputmode="numeric" min="0" placeholder="0" value="${v(d.floors)}"></div>
+      const smode=d.smode||(d.sdist&&!d.floors?"dist":"floors");
+      body+=`<label>Your machine shows</label><div class="seg" id="f-smode">${[["floors","Floors"],["dist","Distance"]].map(([k,t])=>`<button type="button" data-sm="${k}" aria-pressed="${smode===k}">${t}</button>`).join("")}</div>
+      <div class="grid2" style="margin-top:14px">${smode==="dist"?`<div><label for="f-sd">Distance (${dU()})</label><input id="f-sd" type="number" inputmode="decimal" step="any" min="0" placeholder="0.00" value="${d.sdist!=null?round(toDispDist(d.sdist),2):""}"></div>`:`<div><label for="f-fl">Floors</label><input id="f-fl" type="number" inputmode="numeric" min="0" placeholder="0" value="${v(d.floors)}"></div>`}
       <div><label for="f-lvl">Level</label><input id="f-lvl" type="number" inputmode="numeric" min="1" max="30" placeholder="Avg level" value="${v(d.lvl)}"></div></div>
       <label for="f-steps">Steps</label><input id="f-steps" type="number" inputmode="numeric" min="0" placeholder="Optional" value="${v(d.steps)}">
-      <p class="hint" id="sthint">Copy these from the machine's summary screen. A floor is 16 steps, about ${fmtElev(STAIR_FLOOR_M)} of climbing, so your vertical is worked out for you.</p>`;
+      <p class="hint" id="sthint">${smode==="dist"?"Copy these from the machine's summary screen. Add steps too if it shows them, and your floors and vertical are worked out from those.":`Copy these from the machine's summary screen. A floor is 16 steps, about ${fmtElev(STAIR_FLOOR_M)} of climbing, so your vertical is worked out for you.`}</p>`;
     }
     if(d.type==="ride"){
       body+=`<label>Power (optional)</label><div class="grid2">
@@ -3747,7 +3754,8 @@ function openForm(existing,preset){
     d.dur=(num($("f-h").value)||0)*3600+(num($("f-m").value)||0)*60+(num($("f-s").value)||0);
     d.hr=num($("f-hr").value);d.cal=num($("f-cal").value);d.notes=$("f-notes").value.trim();
     const rp=+$("f-rpe").value;d.rpe=rp>0?rp:null;
-    if($("f-fl")){d.floors=num($("f-fl").value);d.lvl=num($("f-lvl").value);}
+    if($("f-smode")){const sm=$("f-smode").querySelector('[aria-pressed="true"]');d.smode=sm?sm.dataset.sm:"floors";d.lvl=num($("f-lvl").value);
+      if($("f-fl"))d.floors=num($("f-fl").value);if($("f-sd")){const x=num($("f-sd").value);d.sdist=x!=null&&x>0?fromDispDist(x):null;}}
     if($("f-gp")){d.games=num($("f-gp").value);d.won=num($("f-gw").value);if(!d.fmt)d.fmt="doubles";}
     if($("f-pw")){d.pw=num($("f-pw").value);d.np=num($("f-np").value);d.p20=num($("f-p20").value);d.pmax=num($("f-pmax").value);}
     document.querySelectorAll(".pname").forEach(i=>{const p=d.probs[+i.dataset.i];if(p)p.name=i.value.trim();});
@@ -3787,6 +3795,7 @@ function openForm(existing,preset){
       d.placeId=p.id;placeTouched=true;addingPlace=false;makeDefault=!settings.defPlace||!settings.defPlace[d.type];draw();toast("Place added");
     };
     $("sheet").querySelectorAll("[data-pf]").forEach(b=>b.onclick=()=>{read();d.fmt=b.dataset.pf;draw();});
+    $("sheet").querySelectorAll("[data-sm]").forEach(b=>b.onclick=()=>{read();d.smode=b.dataset.sm;draw();});
     $("sheet").querySelectorAll("[data-type]").forEach(b=>b.onclick=()=>{read();d.type=b.dataset.type;if(!placeTouched){d.placeId=defaultPlaceFor(d.type);}if(!gearTouched)d.gearId=defaultGearFor(d.type);if(d.type==="lift"&&!d.ex.length)d.ex=[{name:"",sets:null,reps:null,w:null}];if(d.type==="climb"&&!d.probs.length)d.probs=[newProb()];draw();});
     if($("f-now"))$("f-now").onclick=()=>{read();d.dur=sinceMin*60;draw();};
     ["f-h","f-m","f-s","f-dist"].forEach(id=>{const el=$(id);if(el)el.oninput=updPace;});updPace();
@@ -3886,7 +3895,7 @@ function openForm(existing,preset){
       if(d.type!=="pickle"){delete d.games;delete d.won;delete d.fmt;}else{if(d.games!=null)d.games=Math.max(0,Math.round(d.games));if(d.won!=null)d.won=Math.max(0,Math.round(d.won));if(d.games!=null&&d.won>d.games)d.games=d.won;if(d.won!=null&&d.games==null)d.games=d.won;}
       if(d.type!=="hike"){delete d.rests;delete d.restSec;delete d.pack;delete d.diff;delete d.cond;delete d.summit;delete d.eloss;}
       if(!["run","walk","hike","stair"].includes(d.type))delete d.steps;
-      if(d.type!=="stair"){delete d.floors;delete d.lvl;}else{if(d.floors!=null)d.floors=Math.max(0,Math.round(d.floors));if(d.lvl!=null)d.lvl=Math.max(1,Math.min(30,Math.round(d.lvl)));if(d.steps!=null)d.steps=Math.max(0,Math.round(d.steps));
+      if(d.type!=="stair"){delete d.floors;delete d.lvl;delete d.sdist;delete d.smode;}else{if(d.smode==="dist"){d.floors=null;}else{d.sdist=null;}if(!d.sdist)delete d.sdist;if(d.floors!=null)d.floors=Math.max(0,Math.round(d.floors));if(d.lvl!=null)d.lvl=Math.max(1,Math.min(30,Math.round(d.lvl)));if(d.steps!=null)d.steps=Math.max(0,Math.round(d.steps));
         d.elev=d.floors?d.floors*STAIR_FLOOR_M:d.steps?d.steps*STAIR_STEP_M:null;if(!d.floors&&d.steps)d.floors=Math.round(d.steps/16);}
       if(d.type!=="hang")delete d.hangs;else d.hangs=d.hangs.filter(h=>h.hang&&h.sets);
       if(d.gearId&&!(gearById(d.gearId)&&(gearById(d.gearId).types||[]).includes(d.type)))d.gearId="";
@@ -4057,6 +4066,7 @@ function openDetail(s){
     st.push(["Hang time",fmtDur(hangTime(s))]);if(maxAdd(s)!=null)st.push(["Max load",fmtAdd(maxAdd(s))]);st.push(["Sets",hangSets(s)]);st.push(["Session",fmtDur(s.dur)]);
   }else if(s.type==="stair"){
     if(s.floors)st.push(["Floors",Math.round(s.floors).toLocaleString()]);
+    if(s.sdist)st.push(["Distance",fmtDist(s.sdist)]);
     if(s.elev)st.push(["Vertical",fmtElev(s.elev)]);
     if(s.floors&&s.dur)st.push(["Floors/min",(s.floors/(s.dur/60)).toFixed(1)]);
     if(s.steps)st.push(["Steps",Math.round(s.steps).toLocaleString()]);
@@ -4346,6 +4356,7 @@ function allStats(s){
   if(s.type==="pickle"&&s.games){o.push({k:"pkwon",l:"Games won",v:(s.won||0)+"/"+s.games});o.push({k:"pkrate",l:"Win rate",v:Math.round((s.won||0)/s.games*100)+"%"});o.push({k:"pkgames",l:"Games",v:String(s.games)});}
   if(s.type==="pickle"&&s.fmt)o.push({k:"pkfmt",l:"Format",v:s.fmt==="singles"?"Singles":"Doubles"});
   if(s.type==="stair"&&s.floors){o.push({k:"floors",l:"Floors",v:Math.round(s.floors).toLocaleString()});if(s.dur)o.push({k:"fpm",l:"Floors/min",v:(s.floors/(s.dur/60)).toFixed(1)});}
+  if(s.type==="stair"&&s.sdist)o.push({k:"sdist",l:"Distance",v:fmtDist(s.sdist)});
   if(s.type==="stair"&&s.lvl)o.push({k:"lvl",l:"Level",v:String(s.lvl)});
   if(s.type==="hang"){o.push({k:"htime",l:"Hang time",v:fmtDur(hangTime(s))});if(maxAdd(s)!=null)o.push({k:"hload",l:"Max load",v:fmtAdd(maxAdd(s))});o.push({k:"hsets",l:"Sets",v:String(hangSets(s))});}
   if(s.eloss)o.push({k:"eloss",l:"Elev loss",v:fmtElev(s.eloss)});
@@ -4361,7 +4372,7 @@ function allStats(s){
   return o;
 }
 function defaultStats(s){
-  const pref={pickle:["pkwon","pkrate","time"],stair:["floors","elev","time"],run:["dist","pace","time"],walk:["dist","pace","time"],hike:["dist","elev","time"],ride:["dist","speed","time","pw"],lift:["vol","time","sets"],climb:["sends","hard","flash","time"],hang:["htime","hload","hsets"],other:["time","dist","cal"]}[s.type];
+  const pref={pickle:["pkwon","pkrate","time"],stair:["floors","sdist","elev","time"],run:["dist","pace","time"],walk:["dist","pace","time"],hike:["dist","elev","time"],ride:["dist","speed","time","pw"],lift:["vol","time","sets"],climb:["sends","hard","flash","time"],hang:["htime","hload","hsets"],other:["time","dist","cal"]}[s.type];
   const have=allStats(s).map(x=>x.k);
   const out=pref.filter(k=>have.includes(k)).slice(0,s.type==="ride"&&s.pw?4:3);
   return out.length?out:have.slice(0,3);
@@ -4662,7 +4673,7 @@ function workoutSentence(s,o){
   else if(s.type==="lift"&&volume(s))t+=` ${fmtVol(volume(s))}`;
   else if(s.type==="climb"&&sends(s).length)t+=`, ${sends(s).length} ${sends(s).length===1?"send":"sends"}`;
   else if(s.type==="pickle"&&s.games)t+=`${s.fmt?" "+s.fmt:""}, won ${s.won||0} of ${s.games}`;
-  else if(s.type==="stair")t+=s.floors?` ${Math.round(s.floors)} floors on the Stairmaster`:" the Stairmaster";
+  else if(s.type==="stair")t+=s.floors?` ${Math.round(s.floors)} floors on the Stairmaster`:s.sdist?` ${fmtDist(s.sdist)} on the Stairmaster`:" the Stairmaster";
   if(s.dur)t+=` in ${fmtDur(s.dur)}`;
   if((s.type==="run"||s.type==="walk"||s.type==="hike")&&s.dist&&s.dur)t+=` at ${fmtPace(s.dur/s.dist)}`;
   if(o.place&&placeName(s))t+=`, ${placeName(s)}`;
