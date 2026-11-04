@@ -23,6 +23,8 @@
 
 #sopts:not([data-logo="badge"]):not([data-logo="mark"]):not([data-logo="word"]) .lgo{display:none}
 
+/* v68 stairmaster estimate */
+.stest:not(:empty){color:var(--stair);font-weight:600;margin-top:10px}
 /* v59 motion tracking */
 .mt-tips{margin:14px 0 4px;padding-left:20px;color:var(--muted);font-size:.9rem;line-height:1.45}.mt-tips li{margin:4px 0}
 .mt-prog{height:8px;border-radius:4px;background:rgba(255,255,255,.1);overflow:hidden;margin:18px 0 8px}
@@ -2386,7 +2388,7 @@ function cardNums(s){
     if(maxAdd(s)!=null)out.push(["Max load",fmtAdd(maxAdd(s))]);
     out.push(["Sets",hangSets(s)]);
   }else if(s.type==="stair"){
-    if(s.floors)out.push(["Floors",Math.round(s.floors).toLocaleString()]);
+    if(s.floors)out.push(["Floors",(s.fest?"≈":"")+Math.round(s.floors).toLocaleString()]);
     if(s.sdist)out.push(["Distance",fmtDist(s.sdist)]);
     if(s.elev)out.push(["Vertical",fmtElev(s.elev)]);
     if(s.dur)out.push(["Time",fmtDur(s.dur)]);
@@ -2733,7 +2735,16 @@ let lqT;$("app").addEventListener("input",e=>{if(e.target.id!=="lq")return;logQ=
 $("app").addEventListener("keydown",e=>{if(e.target.id==="lq"&&e.key==="Escape"){e.stopPropagation();logSearch=false;logQ="";render();}});
 
 /* a floor on a Stairmaster is 16 steps, about 3 m of climbing */
-const STAIR_FLOOR_M=3.05,STAIR_STEP_M=.19;
+const STAIR_FLOOR_M=3.05,STAIR_STEP_M=.19,STAIR_DIST_FLOOR_M=5.1;/* 16 steps of about 0.32 m along the stairs */
+/* steps a minute for a resistance level, anchored on level 2 = 34 */
+const stairSpm=lvl=>lvl?Math.max(20,Math.round(34+(lvl-2)*7.1)):null;
+/* floors from whatever the machine showed: steps, then distance, then level and time */
+function stairEstimate(d){
+  if(d.steps)return {floors:Math.round(d.steps/16),from:"steps"};
+  if(d.sdist)return {floors:Math.round(d.sdist*1000/STAIR_DIST_FLOOR_M),from:"distance"};
+  const spm=stairSpm(d.lvl);if(spm&&d.dur)return {floors:Math.round(spm*d.dur/60/16),from:"level and time"};
+  return {floors:null};
+}
 function renderStairRecords(all){
   const P=all.filter(s=>s.type==="stair");if(!P.length)return "";
   const fl=P.reduce((a,s)=>a+(s.floors||0),0),vert=P.reduce((a,s)=>a+(s.elev||0),0),ev=vert/8849,sd=P.reduce((a,s)=>a+(s.sdist||0),0);
@@ -3675,7 +3686,7 @@ function openForm(existing,preset){
       <div class="grid2" style="margin-top:14px">${smode==="dist"?`<div><label for="f-sd">Distance (${dU()})</label><input id="f-sd" type="number" inputmode="decimal" step="any" min="0" placeholder="0.00" value="${d.sdist!=null?round(toDispDist(d.sdist),2):""}"></div>`:`<div><label for="f-fl">Floors</label><input id="f-fl" type="number" inputmode="numeric" min="0" placeholder="0" value="${v(d.floors)}"></div>`}
       <div><label for="f-lvl">Level</label><input id="f-lvl" type="number" inputmode="numeric" min="1" max="30" placeholder="Avg level" value="${v(d.lvl)}"></div></div>
       <label for="f-steps">Steps</label><input id="f-steps" type="number" inputmode="numeric" min="0" placeholder="Optional" value="${v(d.steps)}">
-      <p class="hint" id="sthint">${smode==="dist"?"Copy these from the machine's summary screen. Add steps too if it shows them, and your floors and vertical are worked out from those.":`Copy these from the machine's summary screen. A floor is 16 steps, about ${fmtElev(STAIR_FLOOR_M)} of climbing, so your vertical is worked out for you.`}</p>`;
+      <p class="hint stest" id="stest" aria-live="polite"></p><p class="hint" id="sthint">${smode==="dist"?`Copy these from the machine's summary screen. Floors are estimated from the distance (a floor is 16 steps, about ${STAIR_DIST_FLOOR_M} m of stepping), or from steps if you add them.`:`Copy these from the machine's summary screen. A floor is 16 steps, about ${fmtElev(STAIR_FLOOR_M)} of climbing, so your vertical is worked out for you.`}</p>`;
     }
     if(d.type==="ride"){
       body+=`<label>Power (optional)</label><div class="grid2">
@@ -3796,6 +3807,10 @@ function openForm(existing,preset){
     };
     $("sheet").querySelectorAll("[data-pf]").forEach(b=>b.onclick=()=>{read();d.fmt=b.dataset.pf;draw();});
     $("sheet").querySelectorAll("[data-sm]").forEach(b=>b.onclick=()=>{read();d.smode=b.dataset.sm;draw();});
+    if($("stest")){const upd=()=>{const g=id=>$(id)?num($(id).value):null,sd=g("f-sd"),dur=(g("f-h")||0)*3600+(g("f-m")||0)*60+(g("f-s")||0),fl=g("f-fl");
+      const e=fl?{floors:fl}:stairEstimate({steps:g("f-steps"),sdist:sd?fromDispDist(sd):null,lvl:g("f-lvl"),dur});
+      $("stest").textContent=e.floors?`${fl?"":"≈ "}${Math.round(e.floors)} floors, about ${fmtElev(e.floors*STAIR_FLOOR_M)} climbed${e.from?`, estimated from ${e.from}`:""}${g("f-lvl")?`. Level ${g("f-lvl")} is about ${stairSpm(g("f-lvl"))} steps a minute.`:"."}`:"";};
+      ["f-sd","f-fl","f-lvl","f-steps","f-h","f-m","f-s"].forEach(id=>{if($(id))$(id).addEventListener("input",upd);});upd();}
     $("sheet").querySelectorAll("[data-type]").forEach(b=>b.onclick=()=>{read();d.type=b.dataset.type;if(!placeTouched){d.placeId=defaultPlaceFor(d.type);}if(!gearTouched)d.gearId=defaultGearFor(d.type);if(d.type==="lift"&&!d.ex.length)d.ex=[{name:"",sets:null,reps:null,w:null}];if(d.type==="climb"&&!d.probs.length)d.probs=[newProb()];draw();});
     if($("f-now"))$("f-now").onclick=()=>{read();d.dur=sinceMin*60;draw();};
     ["f-h","f-m","f-s","f-dist"].forEach(id=>{const el=$(id);if(el)el.oninput=updPace;});updPace();
@@ -3896,7 +3911,8 @@ function openForm(existing,preset){
       if(d.type!=="hike"){delete d.rests;delete d.restSec;delete d.pack;delete d.diff;delete d.cond;delete d.summit;delete d.eloss;}
       if(!["run","walk","hike","stair"].includes(d.type))delete d.steps;
       if(d.type!=="stair"){delete d.floors;delete d.lvl;delete d.sdist;delete d.smode;}else{if(d.smode==="dist"){d.floors=null;}else{d.sdist=null;}if(!d.sdist)delete d.sdist;if(d.floors!=null)d.floors=Math.max(0,Math.round(d.floors));if(d.lvl!=null)d.lvl=Math.max(1,Math.min(30,Math.round(d.lvl)));if(d.steps!=null)d.steps=Math.max(0,Math.round(d.steps));
-        d.elev=d.floors?d.floors*STAIR_FLOOR_M:d.steps?d.steps*STAIR_STEP_M:null;if(!d.floors&&d.steps)d.floors=Math.round(d.steps/16);}
+        delete d.fest;delete d.ffrom;if(!d.floors){const e=stairEstimate(d);if(e.floors){d.floors=e.floors;d.fest=true;d.ffrom=e.from;}}
+        d.elev=d.floors?d.floors*STAIR_FLOOR_M:null;}
       if(d.type!=="hang")delete d.hangs;else d.hangs=d.hangs.filter(h=>h.hang&&h.sets);
       if(d.gearId&&!(gearById(d.gearId)&&(gearById(d.gearId).types||[]).includes(d.type)))d.gearId="";
       if(d._photo){const blob=d._photo;delete d._photo;d.photo=true;photoPut(d.id,blob).then(ok=>{if(!ok)toast("Photo couldn't be saved on this device");delete photoURLs[d.id];});}
@@ -4065,12 +4081,12 @@ function openDetail(s){
   }else if(s.type==="hang"){
     st.push(["Hang time",fmtDur(hangTime(s))]);if(maxAdd(s)!=null)st.push(["Max load",fmtAdd(maxAdd(s))]);st.push(["Sets",hangSets(s)]);st.push(["Session",fmtDur(s.dur)]);
   }else if(s.type==="stair"){
-    if(s.floors)st.push(["Floors",Math.round(s.floors).toLocaleString()]);
+    if(s.floors)st.push([s.fest?`Floors, est. from ${s.ffrom||"distance"}`:"Floors",(s.fest?"≈":"")+Math.round(s.floors).toLocaleString()]);
     if(s.sdist)st.push(["Distance",fmtDist(s.sdist)]);
     if(s.elev)st.push(["Vertical",fmtElev(s.elev)]);
     if(s.floors&&s.dur)st.push(["Floors/min",(s.floors/(s.dur/60)).toFixed(1)]);
     if(s.steps)st.push(["Steps",Math.round(s.steps).toLocaleString()]);
-    if(s.lvl)st.push(["Level",String(s.lvl)]);
+    if(s.lvl)st.push(["Level",`${s.lvl}, ≈${stairSpm(s.lvl)} steps/min`]);
     if(s.dur)st.push(["Time",fmtDur(s.dur)]);
   }else if(s.type==="pickle"){
     if(s.games){st.push(["Games",String(s.games)]);st.push(["Won",String(s.won||0)]);st.push(["Win rate",Math.round((s.won||0)/s.games*100)+"%"]);}
@@ -4355,9 +4371,9 @@ function allStats(s){
    const gp=gapOf(s);if(gp)o.push({k:"gap",l:"Adj. pace",v:fmtPace(gp)});}
   if(s.type==="pickle"&&s.games){o.push({k:"pkwon",l:"Games won",v:(s.won||0)+"/"+s.games});o.push({k:"pkrate",l:"Win rate",v:Math.round((s.won||0)/s.games*100)+"%"});o.push({k:"pkgames",l:"Games",v:String(s.games)});}
   if(s.type==="pickle"&&s.fmt)o.push({k:"pkfmt",l:"Format",v:s.fmt==="singles"?"Singles":"Doubles"});
-  if(s.type==="stair"&&s.floors){o.push({k:"floors",l:"Floors",v:Math.round(s.floors).toLocaleString()});if(s.dur)o.push({k:"fpm",l:"Floors/min",v:(s.floors/(s.dur/60)).toFixed(1)});}
+  if(s.type==="stair"&&s.floors){o.push({k:"floors",l:"Floors",v:(s.fest?"≈":"")+Math.round(s.floors).toLocaleString()});if(s.dur)o.push({k:"fpm",l:"Floors/min",v:(s.floors/(s.dur/60)).toFixed(1)});}
   if(s.type==="stair"&&s.sdist)o.push({k:"sdist",l:"Distance",v:fmtDist(s.sdist)});
-  if(s.type==="stair"&&s.lvl)o.push({k:"lvl",l:"Level",v:String(s.lvl)});
+  if(s.type==="stair"&&s.lvl){o.push({k:"lvl",l:"Level",v:String(s.lvl)});o.push({k:"spm",l:"Steps/min",v:"≈"+stairSpm(s.lvl)});}
   if(s.type==="hang"){o.push({k:"htime",l:"Hang time",v:fmtDur(hangTime(s))});if(maxAdd(s)!=null)o.push({k:"hload",l:"Max load",v:fmtAdd(maxAdd(s))});o.push({k:"hsets",l:"Sets",v:String(hangSets(s))});}
   if(s.eloss)o.push({k:"eloss",l:"Elev loss",v:fmtElev(s.eloss)});
   if(s.type==="hike"&&s.maxEle!=null)o.push({k:"maxele",l:"Highest point",v:fmtElev(s.maxEle)});
@@ -4673,7 +4689,7 @@ function workoutSentence(s,o){
   else if(s.type==="lift"&&volume(s))t+=` ${fmtVol(volume(s))}`;
   else if(s.type==="climb"&&sends(s).length)t+=`, ${sends(s).length} ${sends(s).length===1?"send":"sends"}`;
   else if(s.type==="pickle"&&s.games)t+=`${s.fmt?" "+s.fmt:""}, won ${s.won||0} of ${s.games}`;
-  else if(s.type==="stair")t+=s.floors?` ${Math.round(s.floors)} floors on the Stairmaster`:s.sdist?` ${fmtDist(s.sdist)} on the Stairmaster`:" the Stairmaster";
+  else if(s.type==="stair")t+=s.floors?` ${s.fest?"about ":""}${Math.round(s.floors)} floors on the Stairmaster`:s.sdist?` ${fmtDist(s.sdist)} on the Stairmaster`:" the Stairmaster";
   if(s.dur)t+=` in ${fmtDur(s.dur)}`;
   if((s.type==="run"||s.type==="walk"||s.type==="hike")&&s.dist&&s.dur)t+=` at ${fmtPace(s.dur/s.dist)}`;
   if(o.place&&placeName(s))t+=`, ${placeName(s)}`;
