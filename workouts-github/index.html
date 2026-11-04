@@ -39,6 +39,7 @@
 .mt-out{display:block;width:100%;max-height:58vh;border-radius:18px;background:#000;margin:6px 0 4px}
 .mt-entry{width:100%;margin-top:14px;display:inline-flex;align-items:center;justify-content:center;gap:8px}.mt-entry .ico{width:18px;height:18px}
 #mt-pick{display:inline-flex;align-items:center;justify-content:center;gap:8px}#mt-pick .ico{width:20px;height:20px}
+.mt-diag{white-space:pre-line;font-size:.78rem;opacity:.75;margin-top:6px}.mt-alt{display:block;margin:8px auto 0}
 .mt-pickl{width:100%;cursor:pointer}.vh-file{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0 0 0 0);pointer-events:none}.mt-pickl:has(+.vh-file:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){.mt-prog i{transition:none}}
 /* v57 share mid-session */
@@ -5875,7 +5876,7 @@ async function drawSendCard(s,i,o){
    Pick a video, find the climber's body in every frame with MediaPipe Pose (runs on the phone, nothing is
    uploaded), then replay it with a skeleton and/or tracers drawn on and save it as a new video.
    The pose library and model load from Google's CDN the first time; the service worker keeps them after that. */
-const POSE_VER="0.10.14",POSE_CDN=`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${POSE_VER}`;
+const MT_VER="v71",POSE_VER="0.10.14",POSE_CDN=`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${POSE_VER}`;
 const POSE_MODELS={lite:"https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",full:"https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task"};
 const POSE_BONES=[[11,12],[11,13],[13,15],[15,19],[12,14],[14,16],[16,20],[11,23],[12,24],[23,24],[23,25],[25,27],[27,31],[24,26],[26,28],[28,32]];
 const POSE_JOINTS=[11,12,13,14,15,16,23,24,25,26,27,28,31,32];
@@ -6263,16 +6264,28 @@ function openTracker(link,back){
       <label>Tracking</label><div class="seg" id="mt-q"><button data-v="full" aria-pressed="${o.q==="full"}">Accurate</button><button data-v="lite" aria-pressed="${o.q==="lite"}">Faster</button></div>
       <ul class="mt-tips"><li>Tripod or propped phone, so the wall stays still.</li><li>Your whole body in frame for the whole climb.</li><li>Clips under a minute track fastest. Tracking runs at half speed, so a 40 second clip takes about 80 seconds.</li><li>The first time, about ${o.q==="full"?"9":"6"} MB of tracking files download. After that it works offline.</li></ul>
       <p class="err" id="mt-err"></p>
+      <button type="button" class="link mt-alt" id="mt-alt">Video not loading? Try the other picker</button>
+      <p class="hint mt-diag" id="mt-diag" aria-live="polite">Motion tracking ${MT_VER}</p>
       <div class="row"><button class="btn" id="mt-back">${back?"Back":"Close"}</button></div>`);
     $("mt-back").onclick=goBack;
     document.querySelectorAll("#mt-q button").forEach(b=>b.onclick=()=>{o.q=b.dataset.v;saveO();document.querySelectorAll("#mt-q button").forEach(z=>z.setAttribute("aria-pressed",z===b));});
     // a real file input under a label: iPhones are more reliable with a direct tap than a scripted click
     const fi=$("mt-file-in");let taken=false;
-    const take=()=>{if(taken)return;const fl=fi.files&&fi.files[0];if(!fl)return;taken=true;if(st.url)URL.revokeObjectURL(st.url);st.url=URL.createObjectURL(fl);st.name=(fl.name||"send").replace(/\.[^.]+$/,"");analyze();};
-    fi.addEventListener("change",take);fi.addEventListener("input",take);
-    // if the change event never arrives, look again when the picker closes
-    const recheck=()=>{setTimeout(take,600);setTimeout(take,2000);};
-    $("mt-pick").addEventListener("click",()=>{window.addEventListener("focus",recheck,{once:true});document.addEventListener("visibilitychange",()=>{if(!document.hidden)recheck();},{once:true});});
+    const diag=m=>{const el=$("mt-diag");if(!el)return;const L=el.textContent.split("\n").slice(-5);L.push(m);el.textContent=L.join("\n");};
+    const take=(inp,why)=>{if(taken)return;const fl=inp.files&&inp.files[0];
+      if(!fl){if(why)diag(why);return;}
+      taken=true;diag(`Got ${fl.name||"a video"}, ${(fl.size/1048576).toFixed(1)} MB, ${fl.type||"unknown type"}`);
+      try{if(st.url)URL.revokeObjectURL(st.url);st.url=URL.createObjectURL(fl);st.name=(fl.name||"send").replace(/\.[^.]+$/,"");}catch(e){taken=false;diag("Couldn't read the video: "+(e&&e.message||e));return;}
+      setTimeout(()=>analyze().catch(e=>{pick();const er=$("mt-err");if(er)er.textContent="Tracking hit an error: "+(e&&e.message||e);}),30);};
+    const watch=inp=>{inp.addEventListener("change",()=>take(inp,"The picker closed without a video."));inp.addEventListener("input",()=>take(inp));
+      // if the change event never arrives, look again when the picker closes
+      const recheck=()=>{setTimeout(()=>take(inp),700);setTimeout(()=>take(inp,"No video came back from the picker yet. If it's an iCloud video, wait for it to download, or try the other picker."),2500);};
+      window.addEventListener("focus",recheck,{once:true});document.addEventListener("visibilitychange",()=>{if(!document.hidden)recheck();},{once:true});};
+    watch(fi);
+    $("mt-pick").addEventListener("click",()=>diag("Opening your videos…"));
+    // second route: a fresh input opened from a button tap, with explicit video types
+    $("mt-alt").onclick=()=>{const alt=document.createElement("input");alt.type="file";alt.accept="video/mp4,video/quicktime,video/*";alt.style.cssText="position:fixed;left:-100px;top:0;width:1px;height:1px;opacity:0";document.body.appendChild(alt);
+      watch(alt);diag("Opening the other picker…");alt.click();};
   };
   const analyze=async()=>{
     const cancel={on:false};let msg="Loading the pose model…";const t0=Date.now();
