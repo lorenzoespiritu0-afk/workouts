@@ -3,8 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Workouts</title>
-<link rel="manifest" href="manifest.webmanifest">
+<title>Workouts</title><link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#000000">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -5876,7 +5875,7 @@ async function drawSendCard(s,i,o){
    Pick a video, find the climber's body in every frame with MediaPipe Pose (runs on the phone, nothing is
    uploaded), then replay it with a skeleton and/or tracers drawn on and save it as a new video.
    The pose library and model load from Google's CDN the first time; the service worker keeps them after that. */
-const MT_VER="v72",POSE_VER="0.10.14",POSE_CDN=`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${POSE_VER}`;
+const MT_VER="v73",POSE_VER="0.10.14",POSE_CDN=`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${POSE_VER}`;
 const POSE_MODELS={lite:"https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",full:"https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task"};
 const POSE_BONES=[[11,12],[11,13],[13,15],[15,19],[12,14],[14,16],[16,20],[11,23],[12,24],[23,24],[23,25],[25,27],[27,31],[24,26],[26,28],[28,32]];
 const POSE_JOINTS=[11,12,13,14,15,16,23,24,25,26,27,28,31,32];
@@ -6011,8 +6010,9 @@ function poseStats(tr){
 }
 /* draw the tracking on top of one frame. t is the video time, W and H the canvas size */
 function drawPoseLayer(x,tr,t,W,H,o,zk){
-  const bk=zk||1;
-  const sc=W/tr.w,tor=tr.torso*sc,lw=Math.max(3,Math.min(W*.022,tor*.085)),col=o.col;
+  // zk=0 turns the (slow) canvas shadows off; o.glowPass draws only the coloured parts, thicker, for the low-res glow layer
+  const bk=zk===0?0:(zk||1),gp=!!o.glowPass;
+  const sc=W/tr.w,tor=tr.torso*sc,lw=Math.max(3,Math.min(W*.022,tor*.085))*(gp?2.3:1),col=o.col;
   const P=poseAt(tr,t),ok=k=>P&&P[k][2]>.35,at=k=>[P[k][0]*W,P[k][1]*H];
   x.save();x.lineCap="round";x.lineJoin="round";
   // tracers
@@ -6026,7 +6026,7 @@ function drawPoseLayer(x,tr,t,W,H,o,zk){
       x.shadowColor=col;x.shadowBlur=(w0*2.4)*bk;x.strokeStyle=col;
       for(let i=1;i<pts.length;i++){const a=pts[i-1],b=pts[i];if(b[2]-a[2]>.5||a[3]<.2||b[3]<.2)continue;const age=t-b[2],al=fade?Math.pow(Math.max(0,1-age/1.4),1.4):1;if(al<=.01)continue;
         x.globalAlpha=al*base;x.lineWidth=w0*(fade?.35+.65*al:1);x.beginPath();x.moveTo(a[0],a[1]);x.lineTo(b[0],b[1]);x.stroke();}
-      if(jn==="hip"&&P&&ok(23)&&ok(24)){const h=pts[pts.length-1];x.globalAlpha=1;x.fillStyle="#FFFFFF";x.shadowBlur=(lw*3)*bk;x.beginPath();x.arc(h[0],h[1],lw*.75,0,Math.PI*2);x.fill();}
+      if(!gp&&jn==="hip"&&P&&ok(23)&&ok(24)){const h=pts[pts.length-1];x.globalAlpha=1;x.fillStyle="#FFFFFF";x.shadowBlur=(lw*3)*bk;x.beginPath();x.arc(h[0],h[1],lw*.75,0,Math.PI*2);x.fill();}
     }
     x.globalAlpha=1;x.shadowBlur=0;
   }
@@ -6037,14 +6037,15 @@ function drawPoseLayer(x,tr,t,W,H,o,zk){
     const path=()=>{x.beginPath();for(const [a,b] of segs){const p=at(a),q=at(b);x.moveTo(p[0],p[1]);x.lineTo(q[0],q[1]);}};
     if(o.skel==="neon"){
       x.strokeStyle=col;x.lineWidth=lw;x.shadowColor=col;x.shadowBlur=(lw*2.6)*bk;path();x.stroke();if(head){x.beginPath();x.arc(head[0],head[1],head[2],0,Math.PI*2);x.stroke();}
-      x.shadowBlur=0;x.strokeStyle="rgba(255,255,255,.92)";x.lineWidth=lw*.36;path();x.stroke();if(head){x.lineWidth=lw*.3;x.beginPath();x.arc(head[0],head[1],head[2],0,Math.PI*2);x.stroke();}
-      x.fillStyle="#FFFFFF";for(const k of POSE_JOINTS)if(ok(k)){const p=at(k);x.beginPath();x.arc(p[0],p[1],lw*.42,0,Math.PI*2);x.fill();}
+      if(!gp){x.shadowBlur=0;x.strokeStyle="rgba(255,255,255,.92)";x.lineWidth=lw*.36;path();x.stroke();if(head){x.lineWidth=lw*.3;x.beginPath();x.arc(head[0],head[1],head[2],0,Math.PI*2);x.stroke();}
+      x.fillStyle="#FFFFFF";for(const k of POSE_JOINTS)if(ok(k)){const p=at(k);x.beginPath();x.arc(p[0],p[1],lw*.42,0,Math.PI*2);x.fill();}}
     }else if(o.skel==="clean"){
+      if(gp){x.restore();return;}
       x.shadowColor="rgba(0,0,0,.45)";x.shadowBlur=(lw*1.2)*bk;x.strokeStyle="rgba(255,255,255,.95)";x.lineWidth=lw*.55;path();x.stroke();if(head){x.beginPath();x.arc(head[0],head[1],head[2],0,Math.PI*2);x.stroke();}
       x.shadowBlur=0;for(const k of POSE_JOINTS)if(ok(k)){const p=at(k);x.beginPath();x.arc(p[0],p[1],lw*.62,0,Math.PI*2);x.fillStyle=col;x.fill();x.lineWidth=lw*.22;x.strokeStyle="#FFFFFF";x.stroke();}
     }else{ // dots
       x.shadowColor=col;x.shadowBlur=(lw*2.2)*bk;x.fillStyle=col;for(const k of POSE_JOINTS)if(ok(k)){const p=at(k);x.beginPath();x.arc(p[0],p[1],lw*.75,0,Math.PI*2);x.fill();}
-      x.shadowBlur=0;x.fillStyle="#FFFFFF";for(const k of POSE_JOINTS)if(ok(k)){const p=at(k);x.beginPath();x.arc(p[0],p[1],lw*.3,0,Math.PI*2);x.fill();}
+      x.shadowBlur=0;if(!gp){x.fillStyle="#FFFFFF";for(const k of POSE_JOINTS)if(ok(k)){const p=at(k);x.beginPath();x.arc(p[0],p[1],lw*.3,0,Math.PI*2);x.fill();}}
       if(head){x.strokeStyle=col;x.lineWidth=lw*.4;x.shadowColor=col;x.shadowBlur=(lw*2)*bk;x.beginPath();x.arc(head[0],head[1],head[2],0,Math.PI*2);x.stroke();x.shadowBlur=0;}
     }
   }
@@ -6181,6 +6182,74 @@ function drawIntro_(x,W,H,t,D,o,I,sticker){
     by-=10*u;x.globalAlpha=A*ph(.45,.3);x.font=SXF.wide(56*u);x.fillStyle=col;x.fillText(I.word.toUpperCase(),L+34*u,by);by-=74*u;
     const gs=fit2(x,I.grade,SXF.anton,250*u,W*.6,90*u);x.globalAlpha=A*ph(.3,.3);x.font=SXF.anton(gs);x.fillStyle="#FFFFFF";x.fillText(I.grade,L+30*u,by);
     if(I.gc){const gw=x.measureText(I.grade).width;x.shadowBlur=0;drawGM(x,I.grade,I.gc,L+30*u+gw+70*u,by-gs*.38,40*u);}
+  }else if(o.intro==="tick"){
+    // the check: the grade pops in, then a brush tick draws itself through it
+    x.fillStyle=`rgba(6,8,12,${.42*A})`;x.fillRect(0,0,W,H);
+    const cy=portrait?H*.44:H*.48,acc=I.gc||col;x.globalAlpha=A;
+    const gs=fit2(x,I.grade,SXF.anton,(portrait?300:240)*u,W*.6,90*u);x.font=SXF.anton(gs);const gw=x.measureText(I.grade).width,pop=easeBack(t/.45);
+    x.save();x.translate(cx-30*u,cy);x.scale(.7+.3*pop,.7+.3*pop);x.textAlign="center";x.fillStyle="#FFFFFF";x.shadowColor="rgba(0,0,0,.45)";x.shadowBlur=24*u;x.fillText(I.grade,0,gs*.34);x.restore();
+    const s0=gs*.95,ox=cx-30*u+gw/2-gs*.02,oy=cy+gs*.04,P1=[ox-s0*.45,oy-s0*.05],P2=[ox-s0*.12,oy+s0*.32],P3=[ox+s0*.58,oy-s0*.6],pts=[];
+    for(let i=0;i<=14;i++){const q=i/14;pts.push([P1[0]+(P2[0]-P1[0])*q,P1[1]+(P2[1]-P1[1])*q]);}
+    for(let i=1;i<=34;i++){const q=i/34;pts.push([P2[0]+(P3[0]-P2[0])*q,P2[1]+(P3[1]-P2[1])*q-Math.sin(q*Math.PI)*s0*.07]);}
+    const m=Math.max(1,Math.round(pts.length*easeOut((t-.35)/.5)));
+    x.save();x.lineCap="round";x.lineJoin="round";x.strokeStyle=acc;
+    for(let i=1;i<m;i++){x.lineWidth=(22+22*Math.sin(i/pts.length*Math.PI))*u;x.beginPath();x.moveTo(pts[i-1][0],pts[i-1][1]);x.lineTo(pts[i][0],pts[i][1]);x.stroke();}
+    x.restore();
+    const ty=cy+gs*.62+50*u;x.save();x.globalAlpha=A*ph(.75,.5);x.textAlign="center";x.font=SXF.wide(60*u);x.fillStyle="#FFFFFF";x.shadowColor="rgba(0,0,0,.5)";x.shadowBlur=16*u;x.fillText(I.word.toUpperCase(),cx,ty);
+    const sub=[I.tries,I.gym].filter(Boolean).join("  ·  ").toUpperCase();if(sub){x.font=`700 ${Math.round(28*u)}px "WkMono",monospace`;x.fillStyle="rgba(255,255,255,.85)";x.fillText(sub,cx,ty+54*u);}x.restore();
+  }else if(o.intro==="kinetic"){
+    // kinetic type: three lines slam in from alternating sides, then fly back out
+    x.fillStyle=`rgba(6,8,12,${.38*A})`;x.fillRect(0,0,W,H);
+    const acc=I.gc&&lum(I.gc)>.22?I.gc:col,M=60*u,maxW=W-2*M;
+    const L=[[I.grade,"#FFFFFF",false],[I.word.toUpperCase(),acc,false],[(I.tries||"").toUpperCase(),"#FFFFFF",true]].filter(q=>q[0]);
+    const sizes=L.map(([tx],i)=>fit2(x,tx,SXF.anton,i===2?120*u:330*u,maxW,40*u)),total=sizes.reduce((a,b)=>a+b*.92,0);
+    let y=(portrait?H*.46:H*.5)-total/2;
+    L.forEach(([tx,c,outline],i)=>{const sz=sizes[i];y+=sz*.92;const dir=i%2?1:-1,inq=easeOut((t-.09*i)/.5),outq=easeOut((t-(D-.5)+.05*i)/.45);
+      const dx=(1-inq)*dir*W*1.1-outq*dir*W*1.1;x.save();x.font=SXF.anton(sz);x.textAlign="left";const tw=x.measureText(tx).width,xx=M+(maxW-tw)/2+dx;
+      x.shadowColor="rgba(0,0,0,.35)";x.shadowBlur=20*u;if(outline){x.lineWidth=3*u;x.strokeStyle=c;x.strokeText(tx,xx,y);}else{x.fillStyle=c;x.fillText(tx,xx,y);}x.restore();});
+    if(I.gym){x.save();x.globalAlpha=A*ph(.5);x.fillStyle="rgba(255,255,255,.85)";capsT(x,I.gym.toUpperCase(),cx,y+60*u,WSF.caps(28*u),28*u*.34,"center");x.restore();}
+  }else if(o.intro==="plaque"){
+    // gallery placard rising from the lower left
+    const Wp=Math.min(W*.82,740*u),pad=48*u,rise=(1-inA)*60*u+(1-outA)*30*u,it=`${I.word}${I.tries?", "+I.tries.toLowerCase():""}.`;
+    const gs=fit2(x,I.grade,WSF.serif,170*u,Wp-2*pad,60*u),is=fit2(x,it,WSF.ital,50*u,Wp-2*pad,26*u);
+    const Hp=pad*2+30*u+gs*.9+20*u+is*1.2+(I.name?52*u:0)+(I.date?76*u:0),X0=64*u,Y0=(portrait?H*.8:H*.9)-Hp+rise;
+    x.globalAlpha=A;x.fillStyle="rgba(14,14,16,.85)";x.fillRect(X0,Y0,Wp,Hp);
+    if(I.gc){const g=x.createRadialGradient(X0+Wp*.85,Y0+Hp*.15,0,X0+Wp*.85,Y0+Hp*.15,Wp*.7);g.addColorStop(0,I.gc+"55");g.addColorStop(1,I.gc+"00");x.fillStyle=g;x.fillRect(X0,Y0,Wp,Hp);}
+    x.strokeStyle="rgba(255,255,255,.4)";x.lineWidth=1.5*u;x.strokeRect(X0+16*u,Y0+16*u,Wp-32*u,Hp-32*u);
+    let y=Y0+pad+24*u;x.textAlign="left";x.fillStyle="rgba(255,255,255,.78)";x.globalAlpha=A*ph(.2);capsT(x,(I.gym||"Bouldering").toUpperCase(),X0+pad,y,WSF.caps(26*u),26*u*.32,"left");
+    y+=gs*.86+16*u;x.globalAlpha=A*ph(.3);x.font=WSF.serif(gs);x.fillStyle="#FFFFFF";x.fillText(I.grade,X0+pad-3*u,y);
+    y+=is*1.2;x.globalAlpha=A*ph(.42);x.font=WSF.ital(is);x.fillText(it,X0+pad,y);
+    if(I.name){y+=52*u;x.font=WSF.ital(40*u);x.fillStyle="rgba(255,255,255,.8)";x.fillText(`“${I.name}”`,X0+pad,y);}
+    if(I.date){y+=30*u;x.fillStyle="rgba(255,255,255,.3)";x.fillRect(X0+pad,y,Wp-2*pad,1.5*u);y+=42*u;x.fillStyle="rgba(255,255,255,.78)";capsT(x,I.date.toUpperCase(),X0+pad,y,WSF.caps(24*u),24*u*.3,"left");}
+    if(I.gc){x.beginPath();x.arc(X0+Wp-pad-12*u,y-8*u,12*u,0,Math.PI*2);x.fillStyle=I.gc;x.fill();}
+  }else if(o.intro==="seal"){
+    // the emblem scales in, its ring of text slowly turning
+    const R=Math.min(W,H)*.36,cy=portrait?H*.45:H*.5,glow=I.gc||col,sc=.82+.18*easeBack(t/.6),rot=t*.35;x.globalAlpha=A;
+    const g=x.createRadialGradient(cx,cy,0,cx,cy,R*1.3);g.addColorStop(0,"rgba(0,0,0,.6)");g.addColorStop(.75,"rgba(0,0,0,.4)");g.addColorStop(1,"rgba(0,0,0,0)");x.fillStyle=g;x.fillRect(cx-R*1.4,cy-R*1.4,R*2.8,R*2.8);
+    const g2=x.createRadialGradient(cx,cy,0,cx,cy,R*.85);g2.addColorStop(0,glow+"88");g2.addColorStop(1,glow+"00");x.fillStyle=g2;x.fillRect(cx-R,cy-R,R*2,R*2);
+    x.save();x.translate(cx,cy);x.scale(sc,sc);
+    x.strokeStyle="rgba(255,255,255,.88)";x.lineWidth=2.2*u;x.beginPath();x.arc(0,0,R,0,Math.PI*2);x.stroke();x.lineWidth=1.3*u;x.beginPath();x.arc(0,0,R-72*u,0,Math.PI*2);x.stroke();
+    const ring=([I.gym||"Bouldering",I.date,I.tries].filter(Boolean).join("  ·  ")+"  ·  ").toUpperCase(),rr=R-36*u,circ=2*Math.PI*rr;
+    let rs=30*u,w=capsW(x,ring,WSF.caps(rs),rs*.3);while(w>circ*.98&&rs>14*u){rs-=u;w=capsW(x,ring,WSF.caps(rs),rs*.3);}
+    let txt="";for(let k=0;k<Math.max(1,Math.floor(circ/w));k++)txt+=ring;const tw=capsW(x,txt,WSF.caps(rs),rs*.3),spread=(circ-tw)/[...txt].length;
+    x.font=WSF.caps(rs);x.fillStyle="#FFFFFF";x.textAlign="center";x.textBaseline="middle";let a=-Math.PI/2+rot;
+    for(const ch of txt){const da=(x.measureText(ch).width+rs*.3+spread)/rr;x.save();x.rotate(a+da/2+Math.PI/2);x.translate(0,-rr);x.fillText(ch,0,0);x.restore();a+=da;}
+    x.textBaseline="alphabetic";const gs=fit2(x,I.grade,WSF.serif,R*.72,R*1.3,40*u);x.font=WSF.serif(gs);x.fillStyle="#FFFFFF";x.shadowColor=glow;x.shadowBlur=40*u;x.fillText(I.grade,0,gs*.24);x.shadowBlur=0;
+    x.font=WSF.ital(R*.2);x.fillText(I.word,0,gs*.24+R*.27);x.restore();
+  }else if(o.intro==="chrome"){
+    // polished grade with a light sweeping across it
+    const cy=portrait?H*.45:H*.48;x.globalAlpha=A;
+    const vg=x.createRadialGradient(cx,cy,0,cx,cy,Math.max(W,H)*.6);vg.addColorStop(0,"rgba(0,0,0,.55)");vg.addColorStop(1,"rgba(0,0,0,.28)");x.fillStyle=vg;x.fillRect(0,0,W,H);
+    const gs=fit2(x,I.grade,WSF.serif,(portrait?360:280)*u,W*.84,80*u);x.font=WSF.serif(gs);const gw=x.measureText(I.grade).width;
+    const pw=Math.ceil(gw+80*u),phh=Math.ceil(gs*1.25);let C=drawIntro_._c;if(!C||C.width!==pw||C.height!==phh){C=document.createElement("canvas");C.width=pw;C.height=phh;drawIntro_._c=C;}
+    const c2=C.getContext("2d");c2.clearRect(0,0,pw,phh);c2.font=WSF.serif(gs);c2.textAlign="center";c2.textBaseline="alphabetic";
+    const by=gs*.95,gr=c2.createLinearGradient(0,by-gs*.72,0,by+gs*.04);
+    gr.addColorStop(0,"#FFFFFF");gr.addColorStop(.22,"#DCE1E8");gr.addColorStop(.47,"#F7F9FB");gr.addColorStop(.5,"#4B5058");gr.addColorStop(.62,"#9AA1AB");gr.addColorStop(.85,"#E9ECF0");gr.addColorStop(1,"#B5BBC4");
+    c2.fillStyle=gr;c2.fillText(I.grade,pw/2,by);
+    const sx=(easeOut((t-.25)/1.3)*1.6-.3)*pw;c2.globalCompositeOperation="source-atop";const sw=c2.createLinearGradient(sx-pw*.12,0,sx+pw*.12,0);sw.addColorStop(0,"rgba(255,255,255,0)");sw.addColorStop(.5,"rgba(255,255,255,.95)");sw.addColorStop(1,"rgba(255,255,255,0)");c2.fillStyle=sw;c2.fillRect(0,0,pw,phh);c2.globalCompositeOperation="source-over";
+    const sc=1.08-.08*easeOut(t/.8);x.save();x.translate(cx,cy);x.scale(sc,sc);x.shadowColor=I.gc||"rgba(0,0,0,.6)";x.shadowBlur=(I.gc?50:30)*u;x.drawImage(C,-pw/2,-by);x.restore();
+    x.save();x.globalAlpha=A*ph(.5);x.textAlign="center";x.font=WSF.ital(66*u);const ig=x.createLinearGradient(0,cy+gs*.2,0,cy+gs*.2+64*u);ig.addColorStop(0,"#FFFFFF");ig.addColorStop(.5,"#C9CED6");ig.addColorStop(.52,"#7D838D");ig.addColorStop(1,"#E4E7EB");x.fillStyle=ig;x.fillText(`${I.word}.`,cx,cy+gs*.2+64*u);
+    const caps=[I.gym,I.date].filter(Boolean).join("  ·  ").toUpperCase();if(caps){x.fillStyle="rgba(255,255,255,.8)";capsT(x,caps,cx,cy+gs*.2+132*u,WSF.caps(28*u),28*u*.34,"center");}x.restore();
   }else if(o.intro==="sticker"&&sticker){
     // your share sticker pops in, holds, and shrinks away
     x.globalAlpha=A;
@@ -6199,7 +6268,14 @@ function drawPoseFrame(x,v,tr,t,W,H,o,extra){
   x.drawImage(v,vp[0],vp[1],vp[2],vp[3],0,0,W,H);
   if(o.dim){x.fillStyle="rgba(6,8,12,.42)";x.fillRect(0,0,W,H);}
   const clean=hasIntro&&t<D-.25;// keep the frame clean under the intro card
-  if(!clean){x.save();x.scale(k,H/vp[3]);x.translate(-vp[0],-vp[1]);drawPoseLayer(x,tr,t,tr.w,tr.h,o,k);x.restore();
+  if(!clean){
+    // glow: draw the coloured parts small, then scale up; a soft bloom for a fraction of the cost of canvas shadows
+    const glow=o.skel==="neon"||o.skel==="dots"||o.trail!=="off";
+    if(glow){const gw=Math.max(2,Math.round(W/5)),gh=Math.max(2,Math.round(H/5));let G=drawPoseFrame._g;if(!G||G.width!==gw||G.height!==gh){G=document.createElement("canvas");G.width=gw;G.height=gh;drawPoseFrame._g=G;}
+      const g=G.getContext("2d");g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,gw,gh);const fx=k*gw/W,fy=(H/vp[3])*gh/H;g.setTransform(fx,0,0,fy,-vp[0]*fx,-vp[1]*fy);
+      drawPoseLayer(g,tr,t,tr.w,tr.h,{...o,glowPass:true},0);
+      x.save();x.imageSmoothingEnabled=true;x.imageSmoothingQuality="high";x.globalAlpha=.9;x.drawImage(G,0,0,W,H);x.restore();}
+    x.save();x.scale(k,H/vp[3]);x.translate(-vp[0],-vp[1]);drawPoseLayer(x,tr,t,tr.w,tr.h,o,o.skel==="clean"&&!glow?k:0);x.restore();
     if(o.box&&o.box!=="off")drawTrackBox(x,cam,tr,t,vp,W,H,o,(extra&&extra.label)||"TRACKING");}
   if(hasIntro)drawIntro(x,W,H,t,D,o,extra.I,extra.sticker);
   const portrait=H>W,u=Math.min(W,H)/1080;
@@ -6215,7 +6291,132 @@ function drawPoseFrame(x,v,tr,t,W,H,o,extra){
       x.restore();}
   }
 }
-/* replay at normal speed onto a canvas and record it */
+/* ---------- a small MP4 writer for WebCodecs output ----------
+   H.264 + AAC on iPhone, VP9 + Opus where H.264 encoding isn't available. One chunk per track,
+   moov at the end. Samples arrive in decode order with presentation timestamps in microseconds. */
+function mp4Mux(V,A){
+  const te=new TextEncoder(),u8=(...a)=>Uint8Array.from(a);
+  const u16=n=>u8(n>>8&255,n&255),u32=n=>u8(n>>>24&255,n>>>16&255,n>>>8&255,n&255);
+  const cat=parts=>{let L=0;for(const p of parts)L+=p.length;const o=new Uint8Array(L);let i=0;for(const p of parts){o.set(p,i);i+=p.length;}return o;};
+  const box=(type,...parts)=>{const body=cat(parts);return cat([u32(body.length+8),te.encode(type),body]);};
+  const full=(type,v,f,...parts)=>box(type,u8(v,f>>16&255,f>>8&255,f&255),...parts);
+  const Z=n=>new Uint8Array(n);
+  const desc=(tag,body)=>{const L=body.length;return cat([u8(tag,0x80|(L>>21&127),0x80|(L>>14&127),0x80|(L>>7&127),L&127),body]);};
+  const matrix=cat([u32(0x10000),u32(0),u32(0),u32(0),u32(0x10000),u32(0),u32(0),u32(0),u32(0x40000000)]);
+  const tracks=[V,A].filter(t=>t&&t.samples.length);
+  // timing in each track's timescale
+  for(const t of tracks){
+    const S=t.samples,n=S.length,toT=us=>Math.round(us*t.timescale/1e6);
+    const pts=S.map(s=>toT(s.pts)),dts=[...pts].sort((a,b)=>a-b);
+    const d0=dts[0];t.pts=pts.map(p=>p-d0);t.dts=dts.map(d=>d-d0);
+    const deltas=[];for(let i=0;i<n-1;i++)deltas.push(Math.max(1,t.dts[i+1]-t.dts[i]));
+    const last=S[n-1].dur?Math.max(1,toT(S[n-1].dur)):(deltas.length?deltas[deltas.length-1]:Math.round(t.timescale/30));
+    deltas.push(last);t.deltas=deltas;t.duration=deltas.reduce((a,b)=>a+b,0);
+    t.ctts=t.pts.some((p,i)=>p!==t.dts[i])?t.pts.map((p,i)=>Math.max(0,p-t.dts[i])):null;
+  }
+  const ftyp=box("ftyp",te.encode("isom"),u32(512),te.encode("isom"),te.encode("iso2"),te.encode("avc1"),te.encode("mp41"));
+  // media data: video samples then audio samples
+  let off=ftyp.length+8;const mdParts=[];
+  for(const t of tracks){t.offset=off;for(const s of t.samples){mdParts.push(s.data);off+=s.data.length;}}
+  const mdatHead=cat([u32(off-ftyp.length),te.encode("mdat")]);
+  const runs=arr=>{const out=[];for(const d of arr){if(out.length&&out[out.length-1][1]===d)out[out.length-1][0]++;else out.push([1,d]);}return out;};
+  const sampleEntry=t=>{
+    if(t.kind==="video"){
+      const vis=[Z(6),u16(1),Z(16),u16(t.width),u16(t.height),u32(0x480000),u32(0x480000),u32(0),u16(1),Z(32),u16(0x18),u16(0xffff)];
+      if(t.codec==="avc")return box("avc1",...vis,box("avcC",t.description));
+      return box("vp09",...vis,full("vpcC",1,0,u8(0,31,(8<<4)|(1<<1),1,1,1),u16(0)));
+    }
+    const aud=[Z(6),u16(1),Z(8),u16(t.channels),u16(16),u16(0),u16(0),u32(t.sampleRate*65536)];
+    if(t.codec==="aac"){
+      const asc=t.description&&t.description.length?t.description:(()=>{const fi=[96000,88200,64000,48000,44100,32000,24000,22050,16000,12000,11025,8000].indexOf(t.sampleRate);const f=fi<0?3:fi;return u8((2<<3)|(f>>1),((f&1)<<7)|(t.channels<<3));})();
+      const es=desc(3,cat([u16(1),u8(0),desc(4,cat([u8(0x40,0x15),u8(0,0,0),u32(128000),u32(128000),desc(5,asc)])),desc(6,u8(2))]));
+      return box("mp4a",...aud,full("esds",0,0,es));
+    }
+    let pre=312;if(t.description&&t.description.length>=12)pre=t.description[10]|(t.description[11]<<8);
+    return box("Opus",...aud,box("dOps",u8(0,t.channels),u16(pre),u32(t.sampleRate),u16(0),u8(0)));
+  };
+  const movieDur=t=>Math.round(t.duration*1000/t.timescale);
+  const trak=(t,id)=>{
+    const vid=t.kind==="video",n=t.samples.length;
+    const stts=runs(t.deltas),stbl=[full("stsd",0,0,u32(1),sampleEntry(t)),full("stts",0,0,u32(stts.length),...stts.flatMap(([c,d])=>[u32(c),u32(d)]))];
+    if(t.ctts){const r=runs(t.ctts);stbl.push(full("ctts",0,0,u32(r.length),...r.flatMap(([c,d])=>[u32(c),u32(d)])));}
+    if(vid){const keys=t.samples.map((s,i)=>s.key?i+1:0).filter(Boolean);stbl.push(full("stss",0,0,u32(keys.length),...keys.map(u32)));}
+    stbl.push(full("stsc",0,0,u32(1),u32(1),u32(n),u32(1)),full("stsz",0,0,u32(0),u32(n),...t.samples.map(s=>u32(s.data.length))),full("stco",0,0,u32(1),u32(t.offset)));
+    return box("trak",
+      full("tkhd",0,3,u32(0),u32(0),u32(id),u32(0),u32(movieDur(t)),Z(8),u16(0),u16(vid?0:1),u16(vid?0:0x100),u16(0),matrix,u32(vid?t.width*65536:0),u32(vid?t.height*65536:0)),
+      box("mdia",full("mdhd",0,0,u32(0),u32(0),u32(t.timescale),u32(t.duration),u16(0x55c4),u16(0)),
+        full("hdlr",0,0,u32(0),te.encode(vid?"vide":"soun"),Z(12),te.encode((vid?"VideoHandler":"SoundHandler")+"\0")),
+        box("minf",vid?full("vmhd",0,1,Z(8)):full("smhd",0,0,Z(4)),box("dinf",full("dref",0,0,u32(1),full("url ",0,1))),box("stbl",...stbl))));
+  };
+  const dur=Math.max(...tracks.map(movieDur));
+  const moov=box("moov",full("mvhd",0,0,u32(0),u32(0),u32(1000),u32(dur),u32(0x10000),u16(0x100),Z(10),matrix,Z(24),u32(tracks.length+1)),...tracks.map((t,i)=>trak(t,i+1)));
+  return new Blob([ftyp,mdatHead,...mdParts,moov],{type:"video/mp4"});
+}
+
+/* ---------- frame-accurate export ----------
+   Every source frame is drawn and encoded with its own timestamp (WebCodecs), so the result is smooth
+   however long a frame takes to draw on the phone. Falls back to real-time recording without WebCodecs. */
+const toU8=d=>d instanceof Uint8Array?d:ArrayBuffer.isView(d)?new Uint8Array(d.buffer,d.byteOffset,d.byteLength).slice():new Uint8Array(d);
+async function pickVideoCodec(W,H,fps){
+  const br=Math.max(5e6,Math.min(16e6,Math.round(W*H*fps*.12)));
+  for(const [kind,codec] of [["avc","avc1.640033"],["avc","avc1.4d0033"],["avc","avc1.42e033"],["avc","avc1.640028"],["vp9","vp09.00.41.08"]]){
+    const cfg={codec,width:W,height:H,bitrate:br,framerate:fps,...(kind==="avc"?{avc:{format:"avc"}}:{})};
+    try{const r=await VideoEncoder.isConfigSupported(cfg);if(r&&r.supported)return {kind,cfg};}catch(e){}}
+  return null;
+}
+async function encodeAudio(file,maxDur){
+  if(!window.AudioEncoder||!window.AudioData)return null;
+  const AC=window.AudioContext||window.webkitAudioContext;let ac;try{ac=new AC({sampleRate:48000});}catch(e){ac=new AC();}
+  let ab;try{const buf=await file.arrayBuffer();ab=await new Promise((res,rej)=>{const pr=ac.decodeAudioData(buf,res,rej);if(pr&&pr.then)pr.then(res,rej);});}finally{try{ac.close();}catch(e){}}
+  if(!ab||!ab.length)return null;
+  const ch=Math.min(2,ab.numberOfChannels),sr=ab.sampleRate;let codec=null,kind=null;
+  for(const [k,c] of [["aac","mp4a.40.2"],["opus","opus"]]){try{const r=await AudioEncoder.isConfigSupported({codec:c,sampleRate:sr,numberOfChannels:ch,bitrate:128000});if(r&&r.supported){codec=c;kind=k;break;}}catch(e){}}
+  if(!codec)return null;
+  const samples=[];let desc=null,err=null;
+  const enc=new AudioEncoder({output:(c,m)=>{const d=new Uint8Array(c.byteLength);c.copyTo(d);samples.push({data:d,pts:c.timestamp,dur:c.duration||0,key:true});if(m&&m.decoderConfig&&m.decoderConfig.description)desc=toU8(m.decoderConfig.description);},error:e=>{err=e;}});
+  enc.configure({codec,sampleRate:sr,numberOfChannels:ch,bitrate:128000});
+  const N=Math.min(ab.length,Math.round((maxDur||ab.duration)*sr)),F=1024,planes=[...Array(ch)].map((_,c)=>ab.getChannelData(c));
+  for(let i=0;i<N;i+=F){const n=Math.min(F,N-i),data=new Float32Array(n*ch);for(let c=0;c<ch;c++)data.set(planes[c].subarray(i,i+n),c*n);
+    const ad=new AudioData({format:"f32-planar",sampleRate:sr,numberOfFrames:n,numberOfChannels:ch,timestamp:Math.round(i*1e6/sr),data});enc.encode(ad);ad.close();
+    if(enc.encodeQueueSize>48)await new Promise(r=>setTimeout(r,0));}
+  await enc.flush();enc.close();if(err)throw err;
+  return samples.length?{kind:"audio",codec:kind,channels:ch,sampleRate:sr,timescale:sr,description:desc,samples}:null;
+}
+const canWC=()=>!!(window.VideoEncoder&&window.VideoFrame&&("requestVideoFrameCallback" in HTMLVideoElement.prototype));
+async function exportPoseWC(file,url,tr,o,extra,onProg,cancel){
+  if(!canWC())throw new Error("nowc");
+  const [W,H]=outDims(o,tr,o.cam!=="follow"&&!CAM_SHAPES[o.shape]?Math.min(1920,Math.max(tr.w,tr.h)):1920);
+  const v=hiddenVideo(url,true);
+  try{
+    await vidReady(v);
+    const pk=await pickVideoCodec(W,H,30);if(!pk)throw new Error("nowc");
+    let audio=null,note="";
+    if(o.sound&&file){try{audio=await encodeAudio(file,v.duration);}catch(e){audio=null;}if(!audio)note="This phone couldn't add the original sound to the smooth version.";}
+    v.play().catch(()=>{});await vidFrames(v);v.pause();
+    if(v.currentTime>0)await new Promise(r=>{const to=setTimeout(r,1500);v.addEventListener("seeked",()=>{clearTimeout(to);r();},{once:true});v.currentTime=0;});
+    const cv=document.createElement("canvas");cv.width=W;cv.height=H;const x=cv.getContext("2d");
+    const samples=[];let desc=null,err=null;
+    const enc=new VideoEncoder({output:(c,m)=>{const d=new Uint8Array(c.byteLength);c.copyTo(d);samples.push({data:d,pts:c.timestamp,dur:c.duration||0,key:c.type==="key"});if(m&&m.decoderConfig&&m.decoderConfig.description)desc=toU8(m.decoderConfig.description);},error:e=>{err=e;}});
+    enc.configure(pk.cfg);
+    const dur=v.duration;let lastT=-1,lastKey=-9,lastPF=null,rate=.5;
+    await new Promise((res,rej)=>{let done=false;const fin=()=>{if(!done){done=true;res();}};
+      const step=async(now,md)=>{if(done)return;if(cancel.on||err){v.pause();fin();return;}
+        // frames skipped by the player mean we're too slow at this speed: slow playback down
+        if(lastPF!=null&&md.presentedFrames-lastPF>1&&rate>.12){rate=Math.max(.12,rate*.8);v.playbackRate=rate;}lastPF=md.presentedFrames;
+        const t=md.mediaTime;
+        if(t>lastT+1e-4){lastT=t;drawPoseFrame(x,v,tr,t,W,H,o,extra);const vf=new VideoFrame(cv,{timestamp:Math.round(t*1e6)});const key=t-lastKey>=2;if(key)lastKey=t;enc.encode(vf,{keyFrame:key});vf.close();onProg(Math.min(.99,t/dur));}
+        if(enc.encodeQueueSize>3){v.pause();while(enc.encodeQueueSize>1&&!cancel.on&&!err)await new Promise(r=>setTimeout(r,6));if(!done&&!v.ended)v.play().catch(()=>{});}
+        if(!done)v.requestVideoFrameCallback(step);};
+      v.requestVideoFrameCallback(step);v.addEventListener("ended",()=>setTimeout(fin,200),{once:true});
+      v.playbackRate=rate;v.play().catch(rej);});
+    if(cancel.on){try{enc.close();}catch(e){}return null;}
+    await enc.flush();enc.close();if(err)throw err;
+    if(samples.length<2)throw new Error("noframes");
+    onProg(1);
+    return {blob:mp4Mux({kind:"video",codec:pk.kind,width:W,height:H,timescale:90000,description:desc,samples},audio),note};
+  }finally{v.pause();v.remove();}
+}
+/* fallback: replay at normal speed onto a canvas and record it in real time */
 async function exportPoseVideo(url,tr,o,extra,onProg,cancel){
   const v=hiddenVideo(url,!o.sound);let actx=null;
   if(o.sound){try{const AC=window.AudioContext||window.webkitAudioContext;actx=new AC();actx.resume&&actx.resume();}catch(e){actx=null;}}
@@ -6274,7 +6475,7 @@ function openTracker(link,back){
     const diag=m=>{const el=$("mt-diag");if(!el)return;const L=el.textContent.split("\n").slice(-5);L.push(m);el.textContent=L.join("\n");};
     const take=(inp,why)=>{if(taken)return;const fl=inp.files&&inp.files[0];
       if(!fl){if(why)diag(why);return;}
-      taken=true;diag(`Got ${fl.name||"a video"}, ${(fl.size/1048576).toFixed(1)} MB, ${fl.type||"unknown type"}`);
+      taken=true;st.file=fl;diag(`Got ${fl.name||"a video"}, ${(fl.size/1048576).toFixed(1)} MB, ${fl.type||"unknown type"}`);
       try{if(st.url)URL.revokeObjectURL(st.url);st.url=URL.createObjectURL(fl);st.name=(fl.name||"send").replace(/\.[^.]+$/,"");}catch(e){taken=false;diag("Couldn't read the video: "+(e&&e.message||e));return;}
       setTimeout(()=>analyze().catch(e=>{pick();const er=$("mt-err");if(er)er.textContent="Tracking hit an error: "+(e&&e.message||e);}),30);};
     const watch=inp=>{inp.addEventListener("change",()=>take(inp,"The picker closed without a video."));inp.addEventListener("input",()=>take(inp));
@@ -6329,7 +6530,7 @@ function openTracker(link,back){
       ${seg("Tracers","trail",[["off","None"],["hips","Hips"],["limbs","Hands and feet"],["all","All"]])}
       ${seg("Tracer length","trailLen",[["fade","Fading"],["full","Whole route"]])}
       ${seg("Color","color",cols)}
-      ${link?seg("Intro card","intro",[["off","Off"],["title","Title"],["card","Broadcast"],["hud","Viewfinder"],["sticker","Your sticker"]])+`<div id="mt-ilen"${o.intro==="off"?" hidden":""}>`+seg("Intro length","introLen",[["auto","Until you start"],["3","3 s"],["5","5 s"]])+`</div>`:`<p class="hint" style="margin-top:14px">To open the video with a title card of your send, start from the send instead: open it, tap Share, then Track a send video.</p>`}
+      ${link?`<div class="plabel">Intro card</div><div class="tchips mt-ichips" data-mk="intro">${[["off","Off"],["title","Title"],["tick","Tick"],["kinetic","Kinetic"],["plaque","Plaque"],["seal","Seal"],["chrome","Chrome"],["card","Broadcast"],["hud","Viewfinder"],["sticker","Your sticker"]].map(([v,t])=>`<button class="tchip" data-v="${v}" aria-pressed="${o.intro===v}">${t}</button>`).join("")}</div>`+`<div id="mt-ilen"${o.intro==="off"?" hidden":""}>`+seg("Intro length","introLen",[["auto","Until you start"],["3","3 s"],["5","5 s"]])+`</div>`:`<p class="hint" style="margin-top:14px">To open the video with a title card of your send, start from the send instead: open it, tap Share, then Track a send video.</p>`}
       ${link?seg("Send sticker","sticker",[["off","Off"],["top","At the top"],["all","Whole video"]]):""}
       <div class="plabel">Extras</div><div class="tchips">${[["push","Push in at the top"],["dim","Darken video"],["timer","Climb timer"],["sound","Keep the sound"]].map(([k,t])=>`<button class="tchip" data-mt="${k}" aria-pressed="${!!o[k]}"${k==="push"&&o.cam!=="follow"?" hidden":""}>${t}</button>`).join("")}</div></div>
       <div class="row" style="margin-top:16px"><button class="btn primary" id="mt-save">Save video</button></div>
@@ -6358,15 +6559,17 @@ function openTracker(link,back){
   };
   const render_=async()=>{
     const cancel={on:false},tr=st.tr;stopPreview();o.col=colOf();
-    const job=exportPoseVideo(st.url,tr,{...o},st,p=>{const b=$("mt-bar");if(!b)return;b.style.transform=`scaleX(${p})`;$("mt-pb").setAttribute("aria-valuenow",Math.round(p*100));$("mt-msg").textContent=`Rendering, ${fmtClock(Math.round(p*tr.dur))} of ${fmtClock(Math.round(tr.dur))}`;},cancel);
-    openSheet(`<h3>Making your video</h3><p class="sub" id="mt-msg">Starting…</p><div class="mt-prog" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="mt-pb"><i id="mt-bar"></i></div><p class="hint">It plays through once in real time to record, so keep the app open.</p><div class="row"><button class="btn" id="mt-cancel">Cancel</button></div>`);
+    const prog=p=>{const b=$("mt-bar");if(!b)return;b.style.transform=`scaleX(${p})`;$("mt-pb").setAttribute("aria-valuenow",Math.round(p*100));$("mt-msg").textContent=`Rendering, ${fmtClock(Math.round(p*tr.dur))} of ${fmtClock(Math.round(tr.dur))}`;};
+    const rt=()=>exportPoseVideo(st.url,tr,{...o},st,prog,cancel).then(b=>b&&{blob:b,note:canWC()?"Made in real time, so it may be a little less smooth.":""});
+    const job=canWC()&&!o.realtime?exportPoseWC(st.file,st.url,tr,{...o},st,prog,cancel).catch(e=>{if(cancel.on)return null;console.warn("frame export failed, recording in real time",e);return rt();}):rt();
+    openSheet(`<h3>Making your video</h3><p class="sub" id="mt-msg">Starting…</p><div class="mt-prog" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="mt-pb"><i id="mt-bar"></i></div><p class="hint">${canWC()?"Every frame is drawn and encoded one by one so it plays back smoothly. Keep the app open.":"It plays through once in real time to record, so keep the app open."}</p><div class="row"><button class="btn" id="mt-cancel">Cancel</button></div>`);
     $("mt-cancel").onclick=()=>{cancel.on=true;};
     try{
-      const blob=await job;if(!blob){ready();return;}
+      const res=await job;if(!res||!res.blob){ready();return;}const blob=res.blob;
       const ext=blob.type.includes("mp4")?"mp4":"webm",fname=`${(link?(f.p.gl+"-"+f.result):st.name||"send").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")}-tracked.${ext}`;
       const file=new File([blob],fname,{type:blob.type}),url=URL.createObjectURL(blob);
       openSheet(`<h3>Your video is ready</h3><video class="mt-out" src="${url}" controls playsinline loop muted autoplay></video>
-        <div class="row"><button class="btn primary" id="mt-share">Save or share</button></div><p class="hint" id="mt-hint">${ext==="webm"?"This browser saves WebM video. On iPhone, open the app in Safari for an MP4 that saves to Photos.":"Choose Save Video to put it in Photos, or send it straight to Instagram."}</p>
+        <div class="row"><button class="btn primary" id="mt-share">Save or share</button></div><p class="hint" id="mt-hint">${ext==="webm"?"This browser saves WebM video. On iPhone, open the app in Safari for an MP4 that saves to Photos.":"Choose Save Video to put it in Photos, or send it straight to Instagram."}${res.note?" "+res.note:""}</p>
         <div class="row" style="margin-top:10px"><button class="btn" id="mt-edit">Change the look</button><button class="btn" id="mt-done">${back?"Back":"Done"}</button></div>`);
       $("mt-share").onclick=async()=>{
         let why="";
