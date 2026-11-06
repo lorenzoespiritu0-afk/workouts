@@ -1178,6 +1178,7 @@ const DEF_CIRCUIT=[{name:"White",color:"#F4F4F4"},{name:"Yellow",color:"#F5C518"
 const DEF_CUSTOM=["Easy","Moderate","Hard","Very hard","Elite"];
 const GSYS={v:"V scale",font:"Font",color:"Color circuit",custom:"Custom"};
 const STYLES=["Slab","Vertical","Overhang","Roof","Arête","Corner","Traverse","Comp style"];
+const MOVES=["Dyno","Deadpoint","Coordination","Heel hook","Toe hook","Drop knee","Flag","Mantle","Gaston","Compression","Lock-off","Campus","Cut loose","Smear","Kneebar","Bicycle"];
 const HOLDS=["Jugs","Crimps","Slopers","Pinches","Pockets","Edges","Underclings","Volumes","Jibs"];
 const RESULTS={flash:"Flash",send:"Send",attempt:"Attempt"};
 const tallyMode=()=>{try{return localStorage.getItem("workouts-tally-mode")==="send"?"send":"flash";}catch(e){return "flash";}};
@@ -2251,6 +2252,8 @@ function feedback(s){
     const hc={};s.probs.forEach(p=>(p.holds||[]).forEach(x=>hc[x]=(hc[x]||0)+1));
     const top=Object.entries(hc).sort((a,b)=>b[1]-a[1])[0];
     if(top&&top[1]>=Math.max(3,s.probs.length*0.6))out.push(`Most of today's problems used ${top[0].toLowerCase()}. Mixing in other hold types next time builds more all-round strength.`);
+    const mvs={};s.probs.forEach(p=>(p.moves||[]).forEach(x=>mvs[x]=(mvs[x]||0)+1));const mtop=Object.entries(mvs).sort((a,b)=>b[1]-a[1])[0];
+    if(mtop&&mtop[1]>=2)out.push(`${mtop[1]} problems today had a ${mtop[0].toLowerCase()} in them, your most-used move this session.`);
     const st={};s.probs.forEach(p=>p.style&&(st[p.style]=(st[p.style]||0)+1));
     if(Object.keys(st).length===1&&s.probs.length>=4)out.push(`Everything today was ${Object.keys(st)[0].toLowerCase()}. Try a few problems in a different style to round out your climbing.`);
   }
@@ -2438,7 +2441,7 @@ function searchText(s){
   if(s._st&&s._stv===s.updatedAt)return s._st;
   const bits=[titleOf(s),TYPES[s.type]||"",placeName(s)||"",s.notes||"",fmtDate(s.date,{month:"long",year:"numeric"})];
   for(const e of s.ex||[])bits.push(e.name||"",...(e.mus||[]));
-  for(const q of s.probs||[])bits.push(q.gl||"",q.name||"",q.style||"",...(q.holds||[]));
+  for(const q of s.probs||[])bits.push(q.gl||"",q.name||"",q.style||"",...(q.holds||[]),...(q.moves||[]));
   for(const g of s.hangs||[])bits.push(g.grip||"");
   const t=bits.join(" ").toLowerCase();try{Object.defineProperty(s,"_st",{value:t,writable:true,configurable:true,enumerable:false});Object.defineProperty(s,"_stv",{value:s.updatedAt,writable:true,configurable:true,enumerable:false});}catch(e){}
   return t;
@@ -3619,7 +3622,7 @@ function openForm(existing,preset){
   if(!existing&&!(preset&&preset.placeId&&placeById(preset.placeId)))d.placeId=defaultPlaceFor(d.type);
   if(!existing&&d.type==="climb"&&!(preset&&preset.gs)){const pl=placeById(d.placeId);if(pl&&pl.circuit&&pl.circuit.length)d.gs="color";}
   let placeTouched=!!existing||!!(preset&&preset.placeId),addingPlace=false,makeDefault=!!(settings.defPlace&&d.placeId&&settings.defPlace[d.type]===d.placeId);
-  const newProb=()=>{const last=d.probs[d.probs.length-1];return {g:last?last.g:Math.min(2,gradeList(d.gs,d.placeId).length-1),res:"flash",att:1,style:last?last.style:null,holds:[],name:""};};
+  const newProb=()=>{const last=d.probs[d.probs.length-1];return {g:last?last.g:Math.min(2,gradeList(d.gs,d.placeId).length-1),res:"flash",att:1,style:last?last.style:null,holds:[],moves:[],name:""};};
   const DKEY="workouts-climb-draft";
   const fromDraft=!!(preset&&preset._resume);if(fromDraft){const dr=climbDraft();delete d._resume;if(dr)Object.assign(d,dr.d);}
   const saveDraft=()=>{if(existing||d.type!=="climb")return;try{if(d.probs.length)localStorage.setItem(DKEY,JSON.stringify({t:Date.now(),d:{...d,_photo:null}}));else localStorage.removeItem(DKEY);}catch(e){}};
@@ -3662,15 +3665,16 @@ function openForm(existing,preset){
       body+=`<label>Grade system</label><div class="seg" id="gsys">${Object.entries(GSYS).map(([k,t])=>`<button data-gs="${k}" aria-pressed="${d.gs===k}">${t}</button>`).join("")}</div>
       ${d.gs==="color"?`<p class="hint">${placeById(d.placeId)&&placeById(d.placeId).circuit?`Using ${esc(placeById(d.placeId).name)}'s circuit. Edit it from the Places tab.`:`Using your default circuit. To give ${placeById(d.placeId)?esc(placeById(d.placeId).name):"a gym"} its own colors, edit the place in the Places tab.`}</p>`:d.gs==="custom"?`<p class="hint">Edit your custom grades in Settings, from easiest to hardest.</p>`:""}
       ${tallyHTML(list)}
-      <label>Problems</label><p class="hint" id="csum" style="margin:-2px 0 8px"></p><div id="plist">${d.probs.length?"":`<p class="hint" style="margin:0 0 8px">Tap a grade above each time you send, or add a problem to log attempts, style and holds.</p>`}${d.probs.map((p,i)=>{const L=list[p.g],det=!!(p.name||p.proj||p.style||(p.holds&&p.holds.length))||openProbs.has(i);return `<div class="prob" style="--c:var(--climb)" data-res="${p.res}">
+      <label>Problems</label><p class="hint" id="csum" style="margin:-2px 0 8px"></p><div id="plist">${d.probs.length?"":`<p class="hint" style="margin:0 0 8px">Tap a grade above each time you send, or add a problem to log attempts, style and holds.</p>`}${d.probs.map((p,i)=>{const L=list[p.g],det=!!(p.name||p.proj||p.style||(p.holds&&p.holds.length)||(p.moves&&p.moves.length))||openProbs.has(i);return `<div class="prob" style="--c:var(--climb)" data-res="${p.res}">
         <div class="ph"><span class="pgrade">${L&&L.color?`<i class="pdot">${gm(L.label,L.color)}</i>`:""}<b id="ph${i}">${esc(L?L.label:"?")}</b><span class="pnum">#${i+1}</span></span><div><button class="x xshare" data-pshr="${i}" aria-label="Share this ${p.res==="attempt"?"attempt":"send"}">${icon("share")}</button><button class="x" data-pdup="${i}" aria-label="Duplicate problem">⧉</button><button class="x" data-prm="${i}" aria-label="Remove problem">×</button></div></div>
         <div class="gchips">${list.map((g,gi)=>g.color?`<button class="cdot gmk" data-pg="${i}:${gi}" aria-label="${esc(g.label)}" title="${esc(g.label)}" aria-pressed="${p.g===gi}">${gm(g.label,g.color)}</button>`:`<button class="gchip" data-pg="${i}:${gi}" aria-pressed="${p.g===gi}">${esc(g.label)}</button>`).join("")}</div>
         <div class="pctl"><div class="seg pres">${Object.entries(RESULTS).map(([k,t])=>`<button data-pr="${i}:${k}" aria-pressed="${p.res===k}">${t}</button>`).join("")}</div>
           <div class="stepper" role="group" aria-label="Attempts"><button type="button" data-pa="${i}:-1" aria-label="One less attempt"${(p.att||1)<=1?" disabled":""}>−</button><output id="pa${i}" aria-live="polite"><b>${p.att||1}</b><small>${(p.att||1)===1?"try":"tries"}</small></output><button type="button" data-pa="${i}:1" aria-label="One more attempt">+</button></div></div>
-        <details class="pmore"${det?" open":""} data-pm="${i}"><summary>Name, project, style, holds${p.style||(p.holds&&p.holds.length)?`<span>${esc([p.style,...(p.holds||[])].filter(Boolean).join(", "))}</span>`:""}</summary>
+        <details class="pmore"${det?" open":""} data-pm="${i}"><summary>Name, project, style, moves, holds${p.style||(p.holds&&p.holds.length)||(p.moves&&p.moves.length)?`<span>${esc([p.style,...(p.moves||[]),...(p.holds||[])].filter(Boolean).join(", "))}</span>`:""}</summary>
         <div class="plabel">Name (optional)</div><input class="pname" data-i="${i}" type="text" maxlength="40" value="${esc(p.name||"")}">
         <div class="plabel">Project</div><select class="pproj" data-i="${i}"><option value="">Not a project</option>${projects().filter(x=>!x.archived||x.id===p.proj).map(x=>`<option value="${x.id}"${p.proj===x.id?" selected":""}>${esc(x.name)} (${esc(x.gl)})${projStats(x).sent&&x.id!==p.proj?", sent":""}</option>`).join("")}<option value="__new">+ Save this as a new project</option></select>
         <div class="plabel">Style</div><div class="tchips">${STYLES.map(x=>`<button class="tchip" data-ps="${i}:${x}" aria-pressed="${p.style===x}">${x}</button>`).join("")}</div>
+        <div class="plabel">Moves</div><div class="tchips">${MOVES.map(x=>`<button class="tchip" data-pmv="${i}:${x}" aria-pressed="${(p.moves||[]).includes(x)}">${x}</button>`).join("")}</div>
         <div class="plabel">Holds</div><div class="tchips">${HOLDS.map(x=>`<button class="tchip" data-ph="${i}:${x}" aria-pressed="${(p.holds||[]).includes(x)}">${x}</button>`).join("")}</div></details>
       </div>`;}).join("")}</div><button class="addex" id="addprob">+ Add problem</button>`;
       if(!existing)body+=meta;
@@ -3857,6 +3861,7 @@ function openForm(existing,preset){
       if($("tallyall"))$("tallyall").onclick=()=>{read();tallyAll=!tallyAll;draw();};
       sh.querySelectorAll("[data-tmode]").forEach(b=>b.onclick=()=>{try{localStorage.setItem("workouts-tally-mode",b.dataset.tmode);}catch(e){}sh.querySelectorAll("[data-tmode]").forEach(z=>z.setAttribute("aria-pressed",z===b));haptic("light");});
       sh.querySelectorAll("[data-ps]").forEach(b=>b.onclick=()=>{const k=b.dataset.ps.indexOf(":"),i=+b.dataset.ps.slice(0,k),x=b.dataset.ps.slice(k+1);const p=d.probs[i];p.style=p.style===x?null:x;sh.querySelectorAll(`[data-ps^="${i}:"]`).forEach(z=>z.setAttribute("aria-pressed",z.dataset.ps===i+":"+p.style));});
+      sh.querySelectorAll("[data-pmv]").forEach(b=>b.onclick=()=>{const k=b.dataset.pmv.indexOf(":"),i=+b.dataset.pmv.slice(0,k),x=b.dataset.pmv.slice(k+1);const p=d.probs[i];p.moves=p.moves||[];const j=p.moves.indexOf(x);if(j>=0)p.moves.splice(j,1);else p.moves.push(x);press(null,b,j<0);});
       sh.querySelectorAll("[data-ph]").forEach(b=>b.onclick=()=>{const k=b.dataset.ph.indexOf(":"),i=+b.dataset.ph.slice(0,k),x=b.dataset.ph.slice(k+1);const p=d.probs[i];p.holds=p.holds||[];const j=p.holds.indexOf(x);if(j>=0)p.holds.splice(j,1);else p.holds.push(x);press(null,b,j<0);});
       sh.querySelectorAll("[data-prm]").forEach(b=>b.onclick=()=>{read();d.probs.splice(+b.dataset.prm,1);openProbs.clear();draw();});
       sh.querySelectorAll("[data-pdup]").forEach(b=>b.onclick=()=>{read();const p=d.probs[+b.dataset.pdup];d.probs.splice(+b.dataset.pdup+1,0,{...JSON.parse(JSON.stringify(p)),name:""});draw();});
@@ -4155,7 +4160,7 @@ function openDetail(s){
   if(segRows.length)html+=`<h4>Segments</h4><div class="tlist">${segRows.map(x=>`<button class="trow" data-seg2="${x.g.id}">${x.rank<=3?`<span class="mdot m${x.rank}">${x.rank}</span>`:`<span class="mdot" style="background:var(--chip);color:var(--muted)">${x.rank}</span>`}<div class="tx"><b>${esc(x.g.name)}</b><span>Ranked ${x.rank} of ${x.n} all-time</span></div><span class="tv">${fmtClock(x.t)}</span></button>`).join("")}</div>`;
   if(s.type==="lift"&&s.ex&&s.ex.length){const mv=musLoad(s),mt=musTop(mv,6);if(mt.length)html+=`<h4>Muscles worked</h4><div class="musbox">${muscleSVG(mv)}<div class="muslist">${mt.map(([m,n])=>`<div><b>${esc(m)}</b><span>${Math.round(n)} set${Math.round(n)===1?"":"s"}</span></div>`).join("")}</div></div>`;}
   if(s.type==="lift"&&s.ex&&s.ex.length)html+=`<h4>Exercises</h4><table><thead><tr><th>Exercise</th><th>Sets × reps</th><th>Weight</th><th>Est. 1RM</th></tr></thead><tbody>${s.ex.map(e=>`<tr><td>${esc(e.name||"Exercise")}${e.mus&&e.mus.length?`<br><small style="color:var(--muted)">${esc(e.mus.join(", "))}</small>`:""}</td><td>${e.sets||"–"} × ${e.reps||"–"}${isHoldEx(e)&&e.reps?" s":""}</td><td>${wsLabel(e)}${isPairDB(e)&&e.w?`<br><small style="color:var(--muted)">each</small>`:""}</td><td>${!isBW(e)&&e1rm(e)?fmtWt(e1rm(e)):"–"}</td></tr>`).join("")}</tbody></table>`;
-  if(s.type==="climb"&&s.probs&&s.probs.length)html+=`<h4>Problems${s.probs.length>24?` <span class="hint" style="font-weight:500">${s.probs.length}</span>`:""}</h4><p class="hint" style="margin:-4px 0 8px">Tap a problem to share it as a sticker for your send video.</p><div class="tlist${s.probs.length>24?" probs-long":""}">${s.probs.map((p,i)=>`<button class="trow sendrow${i>=24?" pmore":""}" data-ss="${i}" aria-label="Share ${esc(p.gl)}, ${RESULTS[p.res]}">${p.gc?`<span class="mdot gmd">${gm(p.gl,p.gc)}</span>`:`<span class="mdot" style="background:var(--climb);font-size:.8rem;width:auto;min-width:28px;padding:0 6px;border-radius:8px">${esc(p.gl)}</span>`}<div class="tx"><b>${p.proj?"🎯 ":""}${esc(p.name||(p.gc?p.gl+" problem":"Problem "+(i+1)))}</b>${[p.style,(p.holds||[]).join(", ")].filter(Boolean).length?`<span>${[p.style,(p.holds||[]).join(", ")].filter(Boolean).map(esc).join(". ")}</span>`:""}</div><span class="tv" style="font-size:1rem;text-align:right">${RESULTS[p.res]}<br><small style="color:var(--muted);font-family:var(--font);font-weight:500;font-size:.75rem">${p.att||1} ${(p.att||1)===1?"try":"tries"}</small></span></button>`).join("")}</div>${s.probs.length>24?`<button class="btn" id="pmore" style="width:100%;margin-top:10px">Show all ${s.probs.length} problems</button>`:""}`;
+  if(s.type==="climb"&&s.probs&&s.probs.length)html+=`<h4>Problems${s.probs.length>24?` <span class="hint" style="font-weight:500">${s.probs.length}</span>`:""}</h4><p class="hint" style="margin:-4px 0 8px">Tap a problem to share it as a sticker for your send video.</p><div class="tlist${s.probs.length>24?" probs-long":""}">${s.probs.map((p,i)=>`<button class="trow sendrow${i>=24?" pmore":""}" data-ss="${i}" aria-label="Share ${esc(p.gl)}, ${RESULTS[p.res]}">${p.gc?`<span class="mdot gmd">${gm(p.gl,p.gc)}</span>`:`<span class="mdot" style="background:var(--climb);font-size:.8rem;width:auto;min-width:28px;padding:0 6px;border-radius:8px">${esc(p.gl)}</span>`}<div class="tx"><b>${p.proj?"🎯 ":""}${esc(p.name||(p.gc?p.gl+" problem":"Problem "+(i+1)))}</b>${[p.style,(p.moves||[]).join(", "),(p.holds||[]).join(", ")].filter(Boolean).length?`<span>${[p.style,(p.moves||[]).join(", "),(p.holds||[]).join(", ")].filter(Boolean).map(esc).join(". ")}</span>`:""}</div><span class="tv" style="font-size:1rem;text-align:right">${RESULTS[p.res]}<br><small style="color:var(--muted);font-family:var(--font);font-weight:500;font-size:.75rem">${p.att||1} ${(p.att||1)===1?"try":"tries"}</small></span></button>`).join("")}</div>${s.probs.length>24?`<button class="btn" id="pmore" style="width:100%;margin-top:10px">Show all ${s.probs.length} problems</button>`:""}`;
   if(s.notes)html+=`<div class="notes">${esc(s.notes)}</div>`;
   html+=`<h4>Feedback</h4><div class="fb">${feedback(s).map(t=>`<p>${esc(t)}</p>`).join("")}</div>`;
   html+=dykHTML(s);
@@ -5430,7 +5435,7 @@ function sendFacts(s,i){
     for(const o of live().filter(o=>o.type==="climb"&&(o.gs||"v")===gs&&chrono(o,s)<0&&(gs!=="color"||o.placeId===s.placeId)))for(const q of o.probs||[])if(q.res!=="attempt"){any=true;if(q.g>best)best=q.g;}
     if(any)for(let k=0;k<i;k++){const q=s.probs[k];if(q.res!=="attempt"&&q.g>best)best=q.g;}
     high=any&&p.g>best;}
-  return {p,pr,result,tries,high,name:p.name||(pr&&pr.name)||"",style:[p.style,(p.holds||[]).join(", ")].filter(Boolean).join(" · "),gym:placeName(s)||"",date:fmtDate(s.date,{month:"short",day:"numeric",year:"numeric"})};
+  return {p,pr,result,tries,high,name:p.name||(pr&&pr.name)||"",style:[p.style,(p.moves||[]).join(", "),(p.holds||[]).join(", ")].filter(Boolean).join(" · "),moves:p.moves||[],gym:placeName(s)||"",date:fmtDate(s.date,{month:"short",day:"numeric",year:"numeric"})};
 }
 function ordinal(n){const v=n%100;return n+(v>=11&&v<=13?"th":({1:"st",2:"nd",3:"rd"}[n%10]||"th"));}
 /* ---------- send stickers, second set: Tick, Circle, Underline, Tally, Top-out ----------
@@ -6121,7 +6126,7 @@ function introInfo(f){
   return {grade:p.gl||"",gc:p.gc||null,sent,att,res:p.res,
     word:f.result==="Project sent"?"Project sent":p.res==="flash"?"Flash":sent?"Sent":"Working on it",
     tries:f.result==="Project sent"?f.tries:p.res==="flash"?"First attempt":sent?(att<=10?`${ORD_W[att]} attempt`:`Attempt ${att}`):`${att} ${att===1?"attempt":"attempts"} so far`,
-    name:f.name||"",gym:f.gym||"",date:f.date||"",high:!!f.high};
+    name:f.name||"",gym:f.gym||"",date:f.date||"",high:!!f.high,moves:(f.moves||[]).slice(0,4)};
 }
 function drawIntro(x,W,H,t,D,o,I,sticker){
   if(t>D+.05)return;
@@ -6220,7 +6225,7 @@ function drawIntro_(x,W,H,t,D,o,I,sticker){
     // gallery placard rising from the lower left
     const Wp=Math.min(W*.82,740*u),pad=48*u,rise=(1-inA)*60*u+(1-outA)*30*u,it=`${I.word}${I.tries?", "+I.tries.toLowerCase():""}.`;
     const gs=fit2(x,I.grade,WSF.serif,170*u,Wp-2*pad,60*u),is=fit2(x,it,WSF.ital,50*u,Wp-2*pad,26*u);
-    const Hp=pad*2+30*u+gs*.9+20*u+is*1.2+(I.name?52*u:0)+(I.date?76*u:0),X0=64*u,Y0=(portrait?H*.8:H*.9)-Hp+rise;
+    const Hp=pad*2+30*u+gs*.9+20*u+is*1.2+(I.name?52*u:0)+(I.moves&&I.moves.length?48*u:0)+(I.date?76*u:0),X0=64*u,Y0=(portrait?H*.8:H*.9)-Hp+rise;
     x.globalAlpha=A;x.fillStyle="rgba(14,14,16,.85)";x.fillRect(X0,Y0,Wp,Hp);
     if(I.gc){const g=x.createRadialGradient(X0+Wp*.85,Y0+Hp*.15,0,X0+Wp*.85,Y0+Hp*.15,Wp*.7);g.addColorStop(0,I.gc+"55");g.addColorStop(1,I.gc+"00");x.fillStyle=g;x.fillRect(X0,Y0,Wp,Hp);}
     x.strokeStyle="rgba(255,255,255,.4)";x.lineWidth=1.5*u;x.strokeRect(X0+16*u,Y0+16*u,Wp-32*u,Hp-32*u);
@@ -6228,6 +6233,7 @@ function drawIntro_(x,W,H,t,D,o,I,sticker){
     y+=gs*.86+16*u;x.globalAlpha=A*ph(.3);x.font=WSF.serif(gs);x.fillStyle="#FFFFFF";x.fillText(I.grade,X0+pad-3*u,y);
     y+=is*1.2;x.globalAlpha=A*ph(.42);x.font=WSF.ital(is);x.fillText(it,X0+pad,y);
     if(I.name){y+=52*u;x.font=WSF.ital(40*u);x.fillStyle="rgba(255,255,255,.8)";x.fillText(`“${I.name}”`,X0+pad,y);}
+    if(I.moves&&I.moves.length){y+=48*u;x.fillStyle="rgba(255,255,255,.7)";const mt=I.moves.join("  ·  ").toUpperCase();let fs=22*u;while(capsW(x,mt,WSF.caps(fs),fs*.3)>Wp-2*pad&&fs>14*u)fs-=u;capsT(x,mt,X0+pad,y,WSF.caps(fs),fs*.3,"left");}
     if(I.date){y+=30*u;x.fillStyle="rgba(255,255,255,.3)";x.fillRect(X0+pad,y,Wp-2*pad,1.5*u);y+=42*u;x.fillStyle="rgba(255,255,255,.78)";capsT(x,I.date.toUpperCase(),X0+pad,y,WSF.caps(24*u),24*u*.3,"left");}
     if(I.gc){x.beginPath();x.arc(X0+Wp-pad-12*u,y-8*u,12*u,0,Math.PI*2);x.fillStyle=I.gc;x.fill();}
   }else if(o.intro==="seal"){
@@ -6244,23 +6250,25 @@ function drawIntro_(x,W,H,t,D,o,I,sticker){
     for(const ch of txt){const da=(x.measureText(ch).width+rs*.3+spread)/rr;x.save();x.rotate(a+da/2+Math.PI/2);x.translate(0,-rr);x.fillText(ch,0,0);x.restore();a+=da;}
     x.textBaseline="alphabetic";const gs=fit2(x,I.grade,WSF.serif,R*.72,R*1.3,40*u);x.font=WSF.serif(gs);x.fillStyle="#FFFFFF";x.shadowColor=glow;x.shadowBlur=40*u;x.fillText(I.grade,0,gs*.24);x.shadowBlur=0;
     x.font=WSF.ital(R*.2);x.fillText(I.word,0,gs*.24+R*.27);x.restore();
-  }else if(o.intro==="stamp"){
-    // an ink stamp thumps down at an angle
-    x.fillStyle=`rgba(6,8,12,${.4*A})`;x.fillRect(0,0,W,H);
-    const ink=I.gc&&lum(I.gc)>.25?I.gc:col,cy=portrait?H*.45:H*.5,bw=Math.min(W*.74,720*u),pad=44*u;
-    const gs=fit2(x,I.grade,SXF.anton,230*u,bw-2*pad,70*u),bh=pad*2+40*u+gs*.95+80*u+(I.date?56*u:0);
-    const q=easeOut(t/.32),sc=1+.7*(1-q);x.globalAlpha=A*Math.min(1,t/.18);
-    const shake=t>.3&&t<.5?Math.sin((t-.3)*90)*(1-(t-.3)/.2)*5*u:0;
-    x.save();x.translate(cx+shake,cy);x.rotate(-.12+.05*(1-q));x.scale(sc,sc);
-    const rr=(X,Y,w,h,r)=>{x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+w,Y,X+w,Y+h,r);x.arcTo(X+w,Y+h,X,Y+h,r);x.arcTo(X,Y+h,X,Y,r);x.arcTo(X,Y,X+w,Y,r);x.closePath();};
-    x.fillStyle="rgba(10,10,12,.55)";rr(-bw/2,-bh/2,bw,bh,28*u);x.fill();
-    x.strokeStyle=ink;x.lineWidth=9*u;rr(-bw/2,-bh/2,bw,bh,28*u);x.stroke();x.lineWidth=2.5*u;rr(-bw/2+18*u,-bh/2+18*u,bw-36*u,bh-36*u,16*u);x.stroke();
-    x.fillStyle=ink;x.textAlign="center";let y=-bh/2+pad+40*u;
-    capsT(x,(I.gym||"Bouldering").toUpperCase(),0,y,WSF.caps(28*u),28*u*.34,"center");
-    y+=gs*.92+6*u;x.font=SXF.anton(gs);x.fillText(I.grade,0,y);
-    const wl=([I.word,I.tries].filter(Boolean).join(" · ")).toUpperCase(),ws=fit2(x,wl,SXF.wide,52*u,bw-2*pad,22*u);y+=Math.max(48*u,ws+20*u);x.font=SXF.wide(ws);x.fillText(wl,0,y);
-    if(I.date){y+=54*u;x.font=`700 ${Math.round(28*u)}px "WkMono",monospace`;x.fillText(I.date.toUpperCase(),0,y);}
-    x.restore();
+  }else if(o.intro==="minimal"){
+    // lower-left type block: an accent rule draws down, then each line rises out of its own mask
+    const sh=x.createLinearGradient(0,H*.4,0,H);sh.addColorStop(0,"rgba(0,0,0,0)");sh.addColorStop(1,`rgba(0,0,0,${.62*A})`);x.fillStyle=sh;x.fillRect(0,H*.4,W,H*.6);
+    const M=64*u,acc=I.gc||col,X=M+34*u,maxW=W-X-M;
+    const meta=[I.gym,I.date].filter(Boolean).join("   ·   ").toUpperCase(),gs=fit2(x,I.grade,SXF.wide,(portrait?200:160)*u,maxW,60*u);
+    const ln=`${I.word}${I.tries?"  ·  "+I.tries.toLowerCase():""}`,ls=fit2(x,ln,WSF.caps,48*u,maxW,24*u),mv=I.moves||[];
+    const rows=[];if(meta)rows.push(["meta",34*u]);rows.push(["grade",gs*.76]);rows.push(["line",ls*1.05]);if(I.name)rows.push(["name",44*u]);if(mv.length)rows.push(["moves",54*u]);
+    const gap=26*u,total=rows.reduce((a,r)=>a+r[1],0)+gap*(rows.length-1),bottom=portrait?H*.85:H*.88,top=bottom-total;
+    x.globalAlpha=A;x.fillStyle=acc;x.fillRect(M,top,5*u,total*easeOut(t/.55));
+    let y=top;rows.forEach(([k,h],i)=>{const q=easeOut((t-.12-.09*i)/.6);
+      x.save();x.beginPath();x.rect(X-6*u,y-10*u,W,h+22*u);x.clip();x.translate(0,(1-q)*(h+20*u));x.globalAlpha=A*Math.min(1,q*1.6);x.textAlign="left";x.shadowColor="rgba(0,0,0,.35)";x.shadowBlur=12*u;
+      if(k==="meta"){x.fillStyle="rgba(255,255,255,.82)";capsT(x,meta,X,y+h*.78,WSF.caps(26*u),26*u*.34,"left");}
+      else if(k==="grade"){x.font=SXF.wide(gs);x.fillStyle="#FFFFFF";x.fillText(I.grade,X-gs*.03,y+h);if(I.gc){const gw=x.measureText(I.grade).width;x.shadowBlur=0;drawGM(x,I.grade,I.gc,X+gw+44*u,y+h*.5,30*u);}}
+      else if(k==="line"){x.font=WSF.caps(ls);x.fillStyle="#FFFFFF";x.fillText(ln,X,y+h*.82);}
+      else if(k==="name"){x.font=WSF.ital(42*u);x.fillStyle="rgba(255,255,255,.85)";x.fillText(`“${I.name}”`,X,y+h*.8);}
+      else{x.shadowBlur=0;let px=X;const fs=22*u,em=fs*.3;for(const m0 of mv){const tx=m0.toUpperCase(),tw=capsW(x,tx,WSF.caps(fs),em)+36*u;if(px+tw>X+maxW)break;
+        x.strokeStyle="rgba(255,255,255,.65)";x.lineWidth=1.6*u;const r=h/2-4*u;x.beginPath();x.moveTo(px+r,y+4*u);x.arcTo(px+tw,y+4*u,px+tw,y+h-4*u,r);x.arcTo(px+tw,y+h-4*u,px,y+h-4*u,r);x.arcTo(px,y+h-4*u,px,y+4*u,r);x.arcTo(px,y+4*u,px+tw,y+4*u,r);x.closePath();x.stroke();
+        x.fillStyle="#FFFFFF";capsT(x,tx,px+18*u,y+h/2+fs*.36,WSF.caps(fs),em,"left");px+=tw+12*u;}}
+      x.restore();y+=h+gap;});
   }else if(o.intro==="sticker"&&sticker){
     // your share sticker pops in, holds, and shrinks away
     x.globalAlpha=A;
@@ -6462,7 +6470,7 @@ function openTracker(link,back){
   const st={url:null,A:null,tr:null,stats:null,sticker:null,cam:null,label:"TRACKING"};
   const f=link?sendFacts(link.s,link.i):null,gc=f&&f.p.gc;
   const o={skel:"neon",trail:"hips",trailLen:"fade",color:gc?"grade":"#CDF54A",dim:false,timer:false,sound:true,sticker:link?"top":"off",intro:link?"title":"off",introLen:"auto",q:"full",cam:"follow",zoom:"medium",shape:"9:16",box:"off",push:false};
-  try{const sv=JSON.parse(localStorage.getItem("workouts-motion-v1")||"{}");for(const k of ["skel","trail","trailLen","color","dim","timer","sound","q","cam","zoom","shape","box","push","introLen","intro"])if(sv[k]!=null)o[k]=sv[k];if(o.color==="grade"&&!gc)o.color="#CDF54A";if(o.intro==="chrome"||o.intro==="hud")o.intro="title";if(!link)o.intro="off";else if(o.intro==="off"&&!localStorage.getItem("workouts-motion-intro"))o.intro="title";}catch(e){}
+  try{const sv=JSON.parse(localStorage.getItem("workouts-motion-v1")||"{}");for(const k of ["skel","trail","trailLen","color","dim","timer","sound","q","cam","zoom","shape","box","push","introLen","intro"])if(sv[k]!=null)o[k]=sv[k];if(o.color==="grade"&&!gc)o.color="#CDF54A";if(o.intro==="chrome"||o.intro==="hud")o.intro="title";if(o.intro==="stamp")o.intro="minimal";if(!link)o.intro="off";else if(o.intro==="off"&&!localStorage.getItem("workouts-motion-intro"))o.intro="title";}catch(e){}
   const saveO=()=>{try{const sv={};for(const k of ["skel","trail","trailLen","color","dim","timer","sound","q","cam","zoom","shape","box","push","introLen","intro"])sv[k]=o[k];localStorage.setItem("workouts-motion-v1",JSON.stringify(sv));}catch(e){}};
   const colOf=()=>o.color==="grade"?(gc||"#CDF54A"):o.color;
   let loop=0,pv=null;
@@ -6541,7 +6549,7 @@ function openTracker(link,back){
       ${seg("Tracers","trail",[["off","None"],["hips","Hips"],["limbs","Hands and feet"],["all","All"]])}
       ${seg("Tracer length","trailLen",[["fade","Fading"],["full","Whole route"]])}
       ${seg("Color","color",cols)}
-      ${link?`<div class="plabel">Intro card</div><div class="tchips mt-ichips" data-mk="intro">${[["off","Off"],["title","Title"],["tick","Tick"],["kinetic","Kinetic"],["plaque","Plaque"],["seal","Seal"],["stamp","Stamp"],["flap","Split-flap"],["card","Broadcast"],["sticker","Your sticker"]].map(([v,t])=>`<button class="tchip" data-v="${v}" aria-pressed="${o.intro===v}">${t}</button>`).join("")}</div>`+`<div id="mt-ilen"${o.intro==="off"?" hidden":""}>`+seg("Intro length","introLen",[["auto","Until you start"],["3","3 s"],["5","5 s"]])+`</div>`:`<p class="hint" style="margin-top:14px">To open the video with a title card of your send, start from the send instead: open it, tap Share, then Track a send video.</p>`}
+      ${link?`<div class="plabel">Intro card</div><div class="tchips mt-ichips" data-mk="intro">${[["off","Off"],["title","Title"],["tick","Tick"],["kinetic","Kinetic"],["plaque","Plaque"],["seal","Seal"],["minimal","Minimal"],["flap","Split-flap"],["card","Broadcast"],["sticker","Your sticker"]].map(([v,t])=>`<button class="tchip" data-v="${v}" aria-pressed="${o.intro===v}">${t}</button>`).join("")}</div>`+`<div id="mt-ilen"${o.intro==="off"?" hidden":""}>`+seg("Intro length","introLen",[["auto","Until you start"],["3","3 s"],["5","5 s"]])+`</div>`:`<p class="hint" style="margin-top:14px">To open the video with a title card of your send, start from the send instead: open it, tap Share, then Track a send video.</p>`}
       ${link?seg("Send sticker","sticker",[["off","Off"],["top","At the top"],["all","Whole video"]]):""}
       <div class="plabel">Extras</div><div class="tchips">${[["push","Push in at the top"],["dim","Darken video"],["timer","Climb timer"],["sound","Keep the sound"]].map(([k,t])=>`<button class="tchip" data-mt="${k}" aria-pressed="${!!o[k]}"${k==="push"&&o.cam!=="follow"?" hidden":""}>${t}</button>`).join("")}</div></div>
       <div class="row" style="margin-top:16px"><button class="btn primary" id="mt-save">Save video</button></div>
