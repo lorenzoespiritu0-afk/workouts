@@ -2009,13 +2009,49 @@ function compute(){
 }
 
 /* ================= weekly league: you against 29 simulated rivals =================
-   Rivals are named after historical figures. Each week's line-up is seeded from the week and your division,
-   and sized off your own usual week, so it stays a race whatever your volume. They train on some days and
+   Rivals are athletes, warriors and famously fit figures from history and legend. Each division draws from those
+   nearest its level, and within a league the most able train hardest. Rivals who finish mid-table stay; the ones
+   promoted or dropped alongside you move with you. Weekly output is sized off your own usual week. They train on some days and
    not others, at their own times of day, so the order shuffles all week. Top 5 go up a division, bottom 5 go down. */
 const LG_DIVS=[["Bronze","#C8834B",.6],["Silver","#AEB6C2",.78],["Gold","#F4B63F",.95],["Platinum","#5FD3C6",1.12],["Diamond","#7AA7FF",1.3],["Legend","#C77DFF",1.55]];
 // label, weekly XP range as a multiple of your usual week, chance of training on a given day, how many
 const LG_TIERS=[["Couch potato",.12,.3,.22,4],["Weekend warrior",.3,.6,.35,5],["Casual",.55,.9,.45,5],["Regular",.85,1.2,.58,6],["Committed",1.15,1.55,.68,4],["Athlete",1.5,2.1,.78,3],["Elite",2.1,3,.9,2]];
-const LG_NAMES=["Leonardo da Vinci","Cleopatra","Julius Caesar","Joan of Arc","Isaac Newton","Marie Curie","Albert Einstein","Wolfgang Amadeus Mozart","Ludwig van Beethoven","William Shakespeare","Frida Kahlo","Ada Lovelace","Nikola Tesla","Charles Darwin","Abraham Lincoln","Theodore Roosevelt","Winston Churchill","Queen Victoria","Catherine the Great","Alexander the Great","Spartacus","Miyamoto Musashi","Bruce Lee","Muhammad Ali","Jesse Owens","Jim Thorpe","Babe Didrikson Zaharias","Edmund Hillary","Tenzing Norgay","George Mallory","Amelia Earhart","Harry Houdini","Sun Tzu","Socrates","Aristotle","Archimedes","Galileo Galilei","Hypatia","Leonidas","Hannibal Barca","Charlemagne","Richard the Lionheart","Marco Polo","Ferdinand Magellan","José Rizal","Andrés Bonifacio","Lapu-Lapu","Gabriela Silang","Apolinario Mabini","Melchora Aquino","Oda Nobunaga","Tokugawa Ieyasu","Sacagawea","Harriet Tubman","Frederick Douglass","Florence Nightingale","Benjamin Franklin","Thomas Edison","Vincent van Gogh","Pablo Picasso","Ernest Hemingway","Mark Twain","Jane Austen","Johann Sebastian Bach","Frédéric Chopin","Michelangelo","Ramses II","Nefertiti","Boudica","Wu Zetian","Mahatma Gandhi","Nelson Mandela","Martin Luther King Jr.","Rosa Parks","Napoleon Bonaparte","Elizabeth I","Nicolaus Copernicus","Johannes Kepler","Rosalind Franklin","Louis Pasteur","Leo Tolstoy","Edgar Allan Poe","Claude Monet","Salvador Dalí","Ibn Battuta","Zheng He","Roald Amundsen","Ernest Shackleton","Wilma Rudolph","Jackie Robinson","Babe Ruth","Pelé","Paavo Nurmi","Emil Zátopek","Abebe Bikila","Duke Kahanamoku","Wolfgang Güllich","Walter Bonatti","Hermann Buhl","Royal Robbins"];
+// name, ability 0–100, what they're known for. All athletes, warriors, or famously fit; historical or legendary.
+const LG_FIG=[
+ ["Hercules",99,"Mythic strongman"],["Achilles",98,"Hero of the Trojan War"],["Lü Bu",97,"Peerless warlord"],["Milo of Croton",96,"Six-time Olympic wrestler"],["Jim Thorpe",96,"Olympic decathlon champion"],["Muhammad Ali",96,"Three-time heavyweight champ"],
+ ["Guan Yu",95,"Shu general"],["Bruce Lee",95,"Martial artist"],["Raiden Tameemon",95,"Sumo's greatest"],["Miyamoto Musashi",94,"Undefeated in 61 duels"],["Jesse Owens",94,"Four golds in 1936"],["Pelé",94,"Three World Cups"],["Xiang Yu",94,"Lifted a bronze cauldron"],["Florence Griffith Joyner",94,"Sprint world records"],["Rocky Marciano",94,"Retired 49–0"],
+ ["Zhao Yun",93,"Shu general"],["Theagenes of Thasos",93,"1,300 victories"],["Emil Zátopek",93,"Distance triple gold"],["Paavo Nurmi",93,"Nine Olympic golds"],["Wolfgang Güllich",93,"First 9a climber"],["Joe Louis",93,"Heavyweight champion"],["Louis Cyr",93,"Strongest man of his era"],
+ ["Zhang Fei",92,"Shu general"],["Leonidas",92,"Spartan king"],["Leonidas of Rhodes",92,"12 Olympic running titles"],["Abebe Bikila",92,"Barefoot marathon gold"],["Ueli Steck",92,"Speed alpinist"],["Mas Oyama",92,"Kyokushin founder"],["Babe Didrikson Zaharias",92,"Olympic and golf champion"],
+ ["Taihō",91,"32 sumo championships"],["Johnny Weissmuller",91,"Five Olympic swim golds"],["Diego Maradona",91,"World Cup winner"],["Pheidippides",90,"The first marathon"],["Spartacus",90,"Gladiator"],["Dian Wei",90,"Bodyguard of Cao Cao"],["Sasaki Kojirō",90,"Master swordsman"],["Eugen Sandow",90,"Father of bodybuilding"],["Eddie Aikau",90,"Big-wave surfer and lifeguard"],["Chiyonofuji",90,"Sumo grand champion"],
+ ["Ma Chao",89,"Western Liang cavalryman"],["Sugar Ray Robinson",89,"Pound-for-pound great"],["Benkei",89,"Warrior monk"],["Joe Frazier",89,"Heavyweight champion"],["Zhang Liao",88,"Wei general"],["Xu Chu",88,"The Tiger Fool"],["Yue Fei",88,"Song general"],["Jack Dempsey",88,"Heavyweight champion"],["Jack Johnson",88,"First Black heavyweight champ"],["Wilma Rudolph",88,"Triple sprint gold"],["Futabayama",88,"69 straight sumo wins"],["Patrick Edlinger",88,"Sport-climbing pioneer"],["Arrhichion",88,"Pankration champion"],["Flash Elorde",88,"Super featherweight champion"],["Helio Gracie",88,"Jiu-jitsu pioneer"],
+ ["Honda Tadakatsu",87,"Unscathed in 55 battles"],["Duke Kahanamoku",87,"Swimmer and surfer"],["Walter Bonatti",87,"Alpinist"],["Tenzing Norgay",87,"First on Everest"],["Jerzy Kukuczka",87,"All fourteen 8,000ers"],["Diagoras of Rhodes",87,"Olympic boxer"],
+ ["Hua Mulan",86,"Legendary warrior"],["Hermann Buhl",86,"First up Nanga Parbat"],["Jack LaLanne",86,"Fitness pioneer"],["Steve Prefontaine",86,"Distance runner"],["Eric Liddell",86,"Olympic 400 m gold"],["Gene Tunney",86,"Beat Dempsey twice"],["Flamma",86,"Gladiator"],["Rikidōzan",86,"Pro wrestler"],["Dean Potter",86,"Free soloist and highliner"],["Pancho Villa (boxer)",86,"First Filipino world champ"],
+ ["Lapu-Lapu",85,"Mactan chieftain"],["Shaka",85,"Zulu king"],["Crazy Horse",85,"Lakota warrior"],["Tomaž Humar",85,"Solo alpinist"],["Huang Zhong",85,"Veteran archer"],["Taishi Ci",85,"Wu general"],["Minamoto no Yoshitsune",85,"Samurai commander"],["Ip Man",85,"Wing Chun grandmaster"],["Edmund Hillary",85,"First on Everest"],["Roberto Clemente",85,"3,000 hits"],["Jackie Robinson",85,"MLB pioneer"],["Lydia de Vega",85,"Asia's fastest woman"],["Andy Irons",85,"World surfing champion"],["Wilt Chamberlain",85,"100-point game"],
+ ["Tomoe Gozen",84,"Onna-musha"],["Xiahou Dun",84,"Wei general"],["Sun Ce",84,"The Little Conqueror"],["Alexander the Great",84,"Never lost a battle"],["Geronimo",84,"Apache warrior"],["Wong Fei-hung",84,"Kung fu master"],["Babe Ruth",84,"Home run king"],["Lou Gehrig",84,"The Iron Horse"],["Sonny Liston",84,"Heavyweight champion"],["Bill Russell",84,"11 NBA titles"],["Wanda Rutkiewicz",84,"Mountaineer"],["Shane McConkey",84,"Freeskier"],["Karl Gotch",84,"Catch wrestler"],
+ ["Gan Ning",83,"Wu general"],["Yasuke",83,"African samurai"],["Tecumseh",83,"Shawnee warrior"],["Jigoro Kano",83,"Founder of judo"],["Dražen Petrović",83,"Basketball great"],
+ ["Hannibal Barca",82,"Crossed the Alps"],["Harold Abrahams",82,"Olympic 100 m gold"],["Arthur Ashe",82,"Wimbledon champion"],["Teófilo Yldefonso",82,"Olympic swim medalist"],["André the Giant",82,"Wrestler"],["Boudica",81,"Warrior queen"],
+ ["Caloy Loyzaga",80,"Basketball great"],["Primo Carnera",80,"Heavyweight champion"],["Fausto Coppi",79,"Tour de France champion"],["Fanny Blankers-Koen",79,"Four golds in 1948"],["Walter Payton",79,"Running back"],["Junko Tabei",79,"First woman on Everest"],["Jim Brown",79,"NFL great"],
+ ["William Wallace",78,"Scottish warrior"],["Roald Amundsen",78,"First to the South Pole"],["Royal Robbins",78,"Big-wall pioneer"],["Gino Bartali",78,"Tour de France champion"],["Gertrude Ederle",78,"Swam the English Channel"],["Sonja Henie",78,"Three skating golds"],
+ ["George Mallory",77,"Everest pioneer"],["Red Grange",77,"The Galloping Ghost"],["Matthew Webb",77,"First Channel swim"],["Richard the Lionheart",76,"Crusader king"],["El Cid",76,"Castilian knight"],["Ernest Shackleton",76,"Antarctic explorer"],["Joe DiMaggio",76,"56-game hit streak"],["Dick Fosbury",76,"Invented the Fosbury Flop"],
+ ["Todd Skinner",75,"Free-climbed Trango Tower"],["Genghis Khan",75,"Horseman"],["Theodore Roosevelt",74,"Boxer, rancher, explorer"],["Robert the Bruce",74,"Scottish king"],["Gregorio del Pilar",74,"The boy general"],["Bill Tilden",74,"Tennis champion"],["Ty Cobb",74,"Batting champion"],["Seve Ballesteros",74,"Golf champion"],["Attila",74,"Horseman"],
+ ["Saladin",73,"Sultan and horseman"],["Andrés Bonifacio",73,"Katipunan leader"],["Harry Houdini",72,"Escape artist and swimmer"],["Joan of Arc",72,"Soldier"],["Gabriela Silang",72,"Revolutionary leader"],["Sitting Bull",72,"Lakota leader"],
+ ["Antonio Luna",71,"General and fencer"],["Fridtjof Nansen",70,"Skied across Greenland"],["José Rizal",70,"Fencer, arnis, marksman"],["Annie Oakley",70,"Sharpshooter"],["Bobby Jones",70,"Golf grand slam"],["Julius Caesar",70,"Roman general"],["Cynisca",70,"First woman Olympic victor"],
+ ["Amelia Earhart",69,"Aviator"],["Ernest Hemingway",68,"Boxer and big-game angler"],["Annie Londonderry",68,"Cycled around the world"],["Robert Falcon Scott",66,"Antarctic explorer"],["Peter the Great",63,"Stood 6 ft 8, built ships"],["Sacagawea",63,"Expedition guide"],["Harriet Tubman",65,"Led escapes on foot"],
+ ["Plato",62,"Wrestled at the Isthmian Games"],["Abraham Lincoln",62,"Champion wrestler"],["Meriwether Lewis",62,"Explorer"],["Gerald Ford",60,"College football star"],["Charlemagne",60,"Swimmer and horseman"],["Jack London",60,"Sailor and boxer"],["Charles Atlas",60,"Bodybuilder"],["Alfred Wegener",60,"Greenland explorer"],
+ ["Ibn Battuta",59,"Traveled 75,000 miles"],["Socrates",58,"Wrestler and hoplite"],["Marcus Aurelius",58,"Wrestled as a youth"],["Marco Polo",58,"Crossed the Silk Road"],["Dwight Eisenhower",58,"West Point footballer"],["Pythagoras",57,"Olympic boxer, reportedly"],["Arthur Conan Doyle",57,"Boxer, footballer, skier"],["Zheng He",57,"Admiral"],["Ferdinand Magellan",57,"Navigator"],
+ ["George Washington",56,"Horseman and surveyor"],["Henry VIII",56,"Jouster in his youth"],["Leonardo da Vinci",55,"Strong, by every account"],["Gandhi",54,"Walked the 240-mile Salt March"],["Edward Payson Weston",54,"Pedestrianism champion"],["Annie Smith Peck",54,"Climbed at 58"],["Anna Pavlova",54,"Ballerina"],["Vaslav Nijinsky",54,"Ballet's famous leaper"],
+ ["Captain Barclay",53,"1,000 miles in 1,000 hours"],["Gene Kelly",53,"Dancer and gymnast"],["Buster Keaton",53,"Did his own stunts"],["Joseph Pilates",52,"Gymnast and boxer"],["Lord Byron",52,"Swam the Hellespont"],["John Muir",52,"Mountaineer"],["John F. Kennedy",52,"Swam his crew to safety"],
+ ["Ada Anderson",51,"1,500 miles in 1,000 hours"],["Nellie Bly",50,"Around the world in 72 days"],["Benjamin Franklin",50,"Swimming Hall of Famer"],["Isadora Duncan",50,"Dancer"],["Fred Astaire",50,"Dancer"],["Isabella Bird",49,"Rode across the Rockies"],
+ ["Ronald Reagan",48,"Lifeguard, 77 rescues"],["Errol Flynn",48,"Boxer and swashbuckler"],["Bernarr Macfadden",48,"Physical culture pioneer"],["Charles Dickens",46,"Walked 20 miles a night"],["Henry David Thoreau",46,"Walked four hours a day"],["Leo Tolstoy",46,"Cycled at 67"],
+ ["Samuel Beckett",45,"First-class cricketer"],["Albert Camus",44,"Goalkeeper"],["Jack Kerouac",44,"College football player"],["Harold Lloyd",44,"Stunt comic"],["Friedrich Nietzsche",44,"Hiked eight hours a day"],["Vladimir Nabokov",43,"Tennis coach and goalie"],
+ ["Friedrich Jahn",42,"Father of gymnastics"],["Charlie Chaplin",42,"Acrobatic clown"],["William Wordsworth",41,"Walked 180,000 miles"],["Per Henrik Ling",40,"Swedish gymnastics founder"],["Winston Churchill",39,"School fencing champion"],["Walter Camp",39,"Father of American football"],
+ ["James Naismith",38,"Invented basketball"],["Paul Revere",38,"Midnight rider"],["Thomas Jefferson",37,"Rode two hours a day"],["Edgar Allan Poe",36,"Swam six miles upriver"],["Goethe",36,"Skater and hiker"],["Pierre de Coubertin",35,"Rower, founded the modern Olympics"],
+ ["Agatha Christie",34,"Early stand-up surfer"],["William Webb Ellis",33,"Picked up the ball"],["Jean-Jacques Rousseau",33,"Long-distance walker"],["Charles Darwin",32,"Walked the Sandwalk daily"],["Jane Austen",31,"Long country walks"],["Søren Kierkegaard",30,"Walked Copenhagen daily"],["Ludwig van Beethoven",30,"Long afternoon walks"],["Immanuel Kant",28,"The same walk every day"]
+].map(([name,ab,desc])=>({name,ab,desc}));
+const LG_FIGMAP=Object.fromEntries(LG_FIG.map(f=>[f.name,f]));
+const LG_CENTER=[36,49,62,75,86,94];
+// each division draws from the 45 figures whose ability is closest to its level
+const LG_POOL=LG_CENTER.map(c=>[...LG_FIG].sort((a,b)=>Math.abs(a.ab-c)-Math.abs(b.ab-c)||b.ab-a.ab).slice(0,45).map(f=>f.name));
 const LG_N=30,LG_UP=5,LG_DOWN=5;
 const lgWeekBonus=r=>r===1?250:r===2?175:r===3?125:r<=5?90:r<=10?50:r<=20?20:0;
 const lgDayBonus=r=>r===1?40:r<=3?25:r<=10?10:0;
@@ -2025,23 +2061,26 @@ function lgBase(wk,weekXP){
   const v=[1,2,3,4,5,6].map(i=>weekXP[keyOf(addDays(parseDate(wk),-7*i))]||0).sort((a,b)=>b-a).slice(0,4);
   return Math.max(150,Math.round(v.reduce((a,b)=>a+b,0)/4));
 }
-function lgRivals(wk,div,base){
-  const rnd=seeded("league|"+wk+"|"+div),names=[...LG_NAMES];
-  for(let i=names.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[names[i],names[j]]=[names[j],names[i]];}
-  const out=[],f=LG_DIVS[div][2];let n=0;
-  for(const [tier,lo,hi,p,cnt] of LG_TIERS)for(let k=0;k<cnt;k++){
+function lgFill(carry,div,wk){
+  const rnd=seeded("lgfill|"+wk+"|"+div),pool=LG_POOL[div].filter(n=>!carry.includes(n));
+  for(let i=pool.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+  return [...carry,...pool].slice(0,LG_N-1);
+}
+function lgRivals(wk,div,base,roster){
+  const rnd=seeded("league|"+wk+"|"+div),f=LG_DIVS[div][2],slots=LG_TIERS.flatMap(t=>Array(t[4]).fill(t));
+  // the most able get the strongest weeks, with a little week-to-week luck
+  const ppl=roster.map(n=>LG_FIGMAP[n]||{name:n,ab:50,desc:""}).map(x=>({...x,k:x.ab+rnd()*9})).sort((a,b)=>a.k-b.k);
+  return ppl.map((x,i)=>{const [tier,lo,hi,p]=slots[Math.min(i,slots.length-1)];
     const T=base*f*(lo+(hi-lo)*rnd()),sty=rnd(),days=[];
     for(let d=0;d<7;d++){let w=rnd()<p?(.55+rnd()*.9)*(rnd()<.15?1.9:1):0;if(sty<.25)w*=d<3?1.6:.6;else if(sty>.75)w*=d>=4?1.8:.7;days.push({w,h:6+rnd()*15});}
-    if(!days.some(x=>x.w>0))days[Math.floor(rnd()*7)].w=1;
-    const sw=days.reduce((a,x)=>a+x.w,0);days.forEach(x=>{x.g=Math.round(T*x.w/sw);});
-    out.push({name:names[n++],tier,days,style:sty<.25?"Fast starter":sty>.75?"Strong finisher":"Steady"});
-  }
-  return out;
+    if(!days.some(y=>y.w>0))days[Math.floor(rnd()*7)].w=1;
+    const sw=days.reduce((a,y)=>a+y.w,0);days.forEach(y=>{y.g=Math.round(T*y.w/sw);});
+    return {name:x.name,desc:x.desc,ab:x.ab,tier,days,style:sty<.25?"Fast starter":sty>.75?"Strong finisher":"Steady"};});
 }
 // a rival's XP so far, di = day of the week (0 Monday, 7 = week over), hr = hour of that day
 const lgAt=(r,di,hr)=>r.days.reduce((a,x,i)=>a+(i<di?x.g:i===di?Math.round(x.g*Math.min(1,Math.max(0,(hr-x.h)/.75))):0),0);
 function lgBoard(e,di,hr,me){
-  const b=[...e.rv.map(r=>({name:r.name,tier:r.tier,style:r.style,xp:lgAt(r,di,hr)})),{me:true,name:"You",xp:me}];
+  const b=[...e.rv.map(r=>({name:r.name,desc:r.desc,tier:r.tier,style:r.style,xp:lgAt(r,di,hr)})),{me:true,name:"You",xp:me}];
   b.sort((a,c)=>c.xp-a.xp||(a.me?-1:c.me?1:a.name<c.name?-1:1));
   b.forEach((x,i)=>x.rank=i+1);return b;
 }
@@ -2050,16 +2089,20 @@ function leagueRun(by,list,now){
   const dayXP={},weekXP={};
   for(const s of list){const x=(by[s.id]&&by[s.id].xp)||0;if(!x)continue;dayXP[s.date]=(dayXP[s.date]||0)+x;const w=weekKey(s.date);weekXP[w]=(weekXP[w]||0)+x;}
   const today=keyOf(now),curWk=weekKey(today),hr=now.getHours()+now.getMinutes()/60;
-  let div=0,wk=weekKey(st),xp=0,cur=null;const hist=[];
+  let div=0,wk=weekKey(st),xp=0,cur=null,roster=null;const hist=[];
   for(let g=0;g<520&&wk<=curWk;g++){
-    const base=lgBase(wk,weekXP),rv=lgRivals(wk,div,base),days=[...Array(7)].map((_,i)=>keyOf(addDays(parseDate(wk),i))),done=wk<curWk;
+    if(!roster)roster=lgFill([],div,wk);
+    const base=lgBase(wk,weekXP),rv=lgRivals(wk,div,base,roster),days=[...Array(7)].map((_,i)=>keyOf(addDays(parseDate(wk),i))),done=wk<curWk;
     // the daily race: on each finished day, how your XP that day ranks against what each rival did that day
     const dayRes=days.map((d,i)=>{if(d>=today)return null;const u=dayXP[d]||0;if(!u)return {d,u:0,rank:null,bonus:0};const rank=1+rv.filter(r=>r.days[i].g>u).length;return {d,u,rank,bonus:lgDayBonus(rank)};});
     const dB=dayRes.reduce((a,x)=>a+(x?x.bonus:0),0);
     const e={wk,div,base,rv,days,dayRes,dB,done,dayXP,me:weekXP[wk]||0};
     const di=done?7:days.indexOf(today);e.di=di;e.hr=hr;
     e.board=lgBoard(e,di,hr,e.me);e.rank=e.board.find(x=>x.me).rank;
-    if(done){e.wB=lgWeekBonus(e.rank);e.next=e.rank<=LG_UP?Math.min(LG_DIVS.length-1,div+1):e.rank>LG_N-LG_DOWN?Math.max(0,div-1):div;xp+=dB+e.wB;hist.push(e);div=e.next;}
+    if(done){e.wB=lgWeekBonus(e.rank);e.next=e.rank<=LG_UP?Math.min(LG_DIVS.length-1,div+1):e.rank>LG_N-LG_DOWN?Math.max(0,div-1):div;xp+=dB+e.wB;hist.push(e);
+      // who comes with you: fellow promoted or dropped rivals, or everyone mid-table if you stay
+      const R=e.board.filter(x=>!x.me),carry=(e.next>div?R.filter(x=>x.rank<=LG_UP):e.next<div?R.filter(x=>x.rank>LG_N-LG_DOWN):R.filter(x=>x.rank>LG_UP&&x.rank<=LG_N-LG_DOWN)).map(x=>x.name);
+      roster=lgFill(carry,e.next,keyOf(addDays(parseDate(wk),7)));e.carried=carry.length;div=e.next;}
     else{e.wB=0;xp+=dB;cur=e;}
     wk=keyOf(addDays(parseDate(wk),7));
   }
@@ -2069,7 +2112,7 @@ function leagueRun(by,list,now){
 function lgStanding(){const c=getC();return c.lg&&c.lg.cur?c.lg.cur:null;}
 function lgRowHTML(x,prev){
   const mv=prev?prev-x.rank:0;
-  return `<div class="lgrow${x.me?" me":""}"><span class="lgr">${x.rank}</span><div class="lgn"><b>${esc(x.name)}</b>${x.me?"":`<span>${esc(x.tier)} · ${esc(x.style.toLowerCase())}</span>`}</div><span class="lgmv ${mv>0?"up":mv<0?"dn":""}">${mv>0?"▲"+mv:mv<0?"▼"+(-mv):""}</span><b class="lgx">${x.xp.toLocaleString()}<small> XP</small></b></div>`;
+  return `<div class="lgrow${x.me?" me":""}"><span class="lgr">${x.rank}</span><div class="lgn"><b>${esc(x.name)}</b>${x.me?"":`<span>${esc(x.desc||x.tier)} · ${esc(x.style.toLowerCase())}</span>`}</div><span class="lgmv ${mv>0?"up":mv<0?"dn":""}">${mv>0?"▲"+mv:mv<0?"▼"+(-mv):""}</span><b class="lgx">${x.xp.toLocaleString()}<small> XP</small></b></div>`;
 }
 function leagueStrip(){
   const e=lgStanding();if(!e)return "";const D=LG_DIVS[e.div],left=6-e.di,ahead=e.board[e.rank-2];
@@ -2113,7 +2156,7 @@ function checkLeague(){
   openSheet(`<div class="celeb"><div class="lgdot big" style="--lg:${N[1]};margin:6px auto 10px"></div><div class="big" style="color:${D[1]}">${ordN(h.rank)}</div>
     <h3 style="margin:6px 0 4px">${up?`Promoted to ${N[0]}`:dn?`Dropped to ${N[0]}`:`You stay in ${N[0]}`}</h3>
     <p class="sub">You finished ${ordN(h.rank)} of ${LG_N} in the ${D[0]} league last week with ${h.me.toLocaleString()} XP, ahead of ${(LG_N-h.rank).toLocaleString()} rivals.${h.wB+h.dB?` Bonus: +${(h.wB+h.dB).toLocaleString()} XP.`:""}</p>
-    <p class="hint">${up?"The new field is stronger. Same rules: top 5 go up.":dn?"Finish in the top 5 this week to climb back.":"Top 5 this week to move up."}</p>
+    <p class="hint">${up?`${h.carried?`${h.carried} of last week's leaders came up with you. `:""}The new field is stronger. Same rules: top 5 go up.`:dn?`Finish in the top 5 this week to climb back.`:`The top 5 and bottom 5 moved on and new rivals have arrived. Top 5 this week to move up.`}</p>
     <div class="row"><button class="btn" id="lg-x">Close</button><button class="btn go" id="lg-see">See this week</button></div></div>`);
   $("lg-x").onclick=closeSheet;$("lg-see").onclick=()=>{closeSheet();setTimeout(openLeague,250);};
   return true;
