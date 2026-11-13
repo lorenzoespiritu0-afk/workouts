@@ -1823,7 +1823,36 @@ const ACC=[
   {id:"st26",icon:"⚡",name:"Half-year streak",desc:"Work out 26 weeks in a row",xp:350,prog:c=>[c.bestStreak,26]},
   {id:"st52",icon:"🌟",name:"Year-long streak",desc:"Work out 52 weeks in a row",xp:600,prog:c=>[c.bestStreak,52]},
   {id:"g10",icon:"🥇",name:"Gold rush",desc:"Earn 25 gold medals",prog:c=>[c.gold,25]},
-  {id:"g50",icon:"💎",name:"Trophy hunter",desc:"Earn 100 gold medals",xp:250,prog:c=>[c.gold,100]}
+  {id:"g50",icon:"💎",name:"Trophy hunter",desc:"Earn 100 gold medals",xp:250,prog:c=>[c.gold,100]},
+  // boards
+  {id:"bkilter",icon:"🧩",name:"Light it up",desc:"Log a session on the Kilter Board",xp:75,test:s=>!!(s.board&&s.board.id==="kilter")},
+  {id:"bmoon",icon:"🌙",name:"Moonwalker",desc:"Log a session on the MoonBoard 2024",xp:75,test:s=>!!(s.board&&s.board.id==="moon24")},
+  {id:"bgrass",icon:"🦗",name:"Grasshopper",desc:"Log a session on the Grasshopper Board",xp:75,test:s=>!!(s.board&&s.board.id==="grass")},
+  {id:"ball",icon:"🎛️",name:"Board certified",desc:"Climb on all three boards: Kilter, MoonBoard 2024 and Grasshopper",xp:250,test:s=>!!s.board&&new Set(live().filter(x=>x.board&&chrono(x,s)<=0).map(x=>x.board.id)).size>=3},
+  {id:"bsteep",icon:"📐",name:"Steep and deep",desc:"Send a board problem at 50° or steeper",xp:150,test:s=>!!(s.board&&s.board.angle>=50&&sends(s).length)},
+  {id:"bbench",icon:"📏",name:"Benchmark hunter",desc:"Send 10 benchmark problems",xp:200,test:s=>!!s.board&&live().filter(x=>chrono(x,s)<=0).reduce((a,x)=>a+sends(x).filter(p=>p.bench).length,0)>=10},
+  // guided sessions
+  {id:"glimit",icon:"🧠",name:"At the limit",desc:"Finish a limit bouldering session",xp:100,test:s=>s.mode==="limit"},
+  {id:"gx4",icon:"🔁",name:"Four by four",desc:"Top every problem in a 4x4s session",xp:200,test:s=>s.mode==="x4"&&(s.probs||[]).length>=16&&s.probs.every(p=>p.res!=="attempt")},
+  {id:"gpyr",icon:"🔺",name:"Pyramid scheme",desc:"Flash every step of a flash pyramid",xp:250,test:s=>s.mode==="pyr"&&(s.probs||[]).length>=10&&s.probs.every(p=>p.res==="flash")},
+  // moves and grades
+  {id:"mdyno",icon:"🐒",name:"Dyno-mite",desc:"Send 10 problems with a dyno",xp:150,test:s=>s.type==="climb"&&live().filter(x=>chrono(x,s)<=0).reduce((a,x)=>a+sends(x).filter(p=>(p.moves||[]).includes("Dyno")).length,0)>=10},
+  {id:"mheel",icon:"🦶",name:"Heel hook hero",desc:"Send 25 problems with a heel hook",xp:200,test:s=>s.type==="climb"&&live().filter(x=>chrono(x,s)<=0).reduce((a,x)=>a+sends(x).filter(p=>(p.moves||[]).includes("Heel hook")).length,0)>=25},
+  {id:"mtool",icon:"🧰",name:"Full toolbox",desc:"Use 8 different moves in one session",xp:150,test:s=>new Set((s.probs||[]).flatMap(p=>p.moves||[])).size>=8},
+  {id:"mrainbow",icon:"🌈",name:"Taste the rainbow",desc:"Send 6 different colours in one session at a colour-circuit gym",xp:150,test:s=>s.type==="climb"&&s.gs==="color"&&new Set(sends(s).map(p=>p.g)).size>=6},
+  {id:"mjoker",icon:"🃏",name:"Why so serious?",desc:"Send a wild card or joker problem",xp:100,test:s=>s.type==="climb"&&s.gs==="color"&&sends(s).some(p=>{const it=gradeList(s.gs,s.placeId)[p.g];return !!it&&(gradeKind(it.label,it.color).wild||/wild|joker/i.test(it.label));})},
+  {id:"mtourist",icon:"🗺️",name:"Grade tourist",desc:"Send problems at 5 different gyms or boards",xp:200,test:s=>s.type==="climb"&&new Set(live().filter(x=>x.type==="climb"&&chrono(x,s)<=0&&sends(x).length).map(sysKey)).size>=5},
+  {id:"mflood",icon:"🌊",name:"Flash flood",desc:"Flash 8 problems in one session",xp:200,test:s=>s.type==="climb"&&flashes(s).length>=8},
+  {id:"msiege",icon:"🏰",name:"Siege engine",desc:"Put 30 attempts into one session",xp:100,test:s=>s.type==="climb"&&(s.probs||[]).reduce((a,p)=>a+(p.att||1),0)>=30},
+  // pace
+  {id:"rsub4",icon:"🐆",name:"Sub-4 club",desc:"Run 3 km or more under 4:00 per km",xp:250,test:s=>s.type==="run"&&s.dist>=3&&s.dur/60/s.dist<4},
+  {id:"r10k50",icon:"🎯",name:"Sub-50 10K",desc:"Run 10 km in under 50 minutes",xp:200,test:s=>s.type==="run"&&s.dist>=10&&s.dur/s.dist*10<3000},
+  {id:"rhour",icon:"⏱️",name:"Hour of power",desc:"Run 12 km or more in under an hour",xp:300,test:s=>s.type==="run"&&s.dist>=12&&s.dur<3600},
+  {id:"rhalf",icon:"🥈",name:"Half-marathon",desc:"Run 21.1 km in one go",xp:300,test:s=>s.type==="run"&&s.dist>=21.1},
+  {id:"rkipchoge",icon:"🇰🇪",name:"Kipchoge pace, briefly",desc:"Run 400 m or more at 2:50 per km or faster",xp:300,test:s=>s.type==="run"&&s.dist>=.4&&s.dur/60/s.dist<=2.84},
+  // lifting
+  {id:"luni",icon:"⚖️",name:"Balanced",desc:"Do 3 one-side exercises in one lifting session",xp:100,test:s=>s.type==="lift"&&(s.ex||[]).filter(isUni).length>=3},
+  {id:"lsplit",icon:"🦵",name:"Bulgarian bargain",desc:"Log Bulgarian split squats 5 times",xp:100,test:s=>s.type==="lift"&&live().filter(x=>chrono(x,s)<=0&&(x.ex||[]).some(e=>/bulgarian/i.test(e.name||""))).length>=5}
 ];
 
 function cats(s){
@@ -2916,7 +2945,7 @@ const BMODES={
   x4:{name:"4x4s",rest:240,glabel:"Grade for the circuit",desc:"Four problems back to back with no rest, four rounds, a long rest between rounds. Pick problems 2 or 3 grades below your max."},
   pyr:{name:"Flash pyramid",rest:120,glabel:"Top of the pyramid",desc:"Four problems three grades below your top, three at two below, two at one below, then one at the top. Up to three goes each."}};
 function openBoulderMode(mode,d0){
-  const M=BMODES[mode],d=JSON.parse(JSON.stringify(d0)),L=gradeList(d.gs,d.placeId),lo=Math.max(0,L.findIndex(x=>!gradeKind(x.label).wild));
+  const M=BMODES[mode],d=JSON.parse(JSON.stringify(d0)),L=gradeList(d.gs,d.placeId),lo=Math.max(0,L.findIndex(x=>!gradeKind(x.label,x.color).wild));
   const hd=hardestIn(d.gs,d.placeId),g0=mode==="x4"?Math.max(lo,(hd>=0?hd:4)-2):Math.max(lo,Math.min(L.length-1,hd>=0?hd:3));
   const st={ph:"setup",g:g0,rest:M.rest,count:mode==="limit"?3:4,rounds:4,t0:0,restEnd:0,log:[],burns:[],att:0,pdone:0,round:1,idx:1,steps:[],warn:"",timer:null,beeped:{}};
   const gm2=(g,cls)=>{const it=L[g]||{label:"?"};return `${it.color?gm(it.label,it.color,cls||""):""}<b>${esc(it.label)}</b>`;};
@@ -3108,8 +3137,8 @@ function nomV(s,g){
   const gs=s.gs||"v",L=gradeList(gs,s.placeId),it=L[g];if(!it)return null;
   if(gs==="v")return g-1;
   if(gs==="font")return FONT_V[it.label]??null;
-  if(gs==="color"){const k=gradeKind(it.label);if(k.wild)return null;if(k.k==="bar"||k.k==="tag"||k.k==="pie")return k.n-1;
-    const real=L.filter(x=>!gradeKind(x.label).wild),i=real.indexOf(it),n=real.length;return n>1?Math.round(i*6/(n-1)*10)/10:null;}
+  if(gs==="color"){const k=gradeKind(it.label,it.color);if(k.wild)return null;if(k.v!=null)return k.v;if(k.k==="bar"||k.k==="tag"||k.k==="pie")return k.n-1;
+    const real=L.filter(x=>!gradeKind(x.label,x.color).wild),i=real.indexOf(it),n=real.length;return n>1?Math.round(i*6/(n-1)*10)/10:null;}
   return null;
 }
 // a flash is full marks, each extra try costs a bit, an unsent problem scores nothing
@@ -8691,9 +8720,19 @@ const RAMP6=["#5BD27E","#C7D93F","#F5B93A","#F57F31","#E5453B","#B32A62"];
 const BW_BAR=["#B9BCC4","#E64FC4","#8A4DEB","#A3D435","#F2832B","#F4F4F6","#E3342F","#F4D21F","#2FA7E6"];
 const BW_WILD=["#8A4DEB","#E64FC4","#E3342F","#F4D21F","#F4F4F6","#A3D435","#F2832B","#2FA7E6"];
 const BW_CIRCUIT=[{name:"Wild Card",color:"#2EC4B6"},...BW_BAR.map((c,i)=>({name:`${i} Bar`,color:c}))];
+/* B-Hive: slanted bars, green (very easy) to white (mission impossible), with the orange joker spanning V1–V7 */
+const HIVE_CIRCUIT=[{name:"Joker",color:"#F7931E",mk:"slant",wild:true},...[["Green","#22A04B",-1.5],["Yellow","#F2D23C",-.5],["Red","#E1251B",.5],["Black","#16161A",1.5],["Blue","#1F3E9C",3],["Pink","#E8358A",5],["White","#F4F4F4",7.5]].map(([name,color,v])=>({name,color,mk:"slant",v}))];
+/* Good Climbs: round tags with a hole, one colour per V grade */
+const GC_CIRCUIT=[["V0","#F6F4EE"],["V1","#5DA54A"],["V2","#3F78C8"],["V3","#6E4CA5"],["V4","#E58AA8"],["V5","#D92D2D"],["V6","#F07F22"],["V7","#F2C230"],["V8+","#111114"]].map(([name,color],i)=>({name,color,mk:"vtag",v:i}));
+/* Boulder Space: a colour star for each band of V grades */
+const BS_CIRCUIT=[["VB–V1","#F7C531",-.5],["V2–V3","#E3263A",2.5],["V4–V6","#2E9BE6",5],["V7–V8","#6A3BE0",7.5],["V9–V10","#159A86",9.5]].map(([name,color,v])=>({name,color,mk:"star",v}));
+const MARK_REG={};for(const c of [...HIVE_CIRCUIT,...GC_CIRCUIT,...BS_CIRCUIT])MARK_REG[c.name+"|"+c.color.toLowerCase()]=c;
+const markOf=(label,color)=>color?MARK_REG[label+"|"+String(color).toLowerCase()]||null:null;
 const GYM_SEED=[
- {name:"Bouldering Hive Circuit",circuit:["Green","Red","Black","Blue","Pink","Teal","Purple"].map(n=>({name:n,color:HOLD[n.toLowerCase()]}))},
- {name:"Bouldering Hive Greenhills",circuit:["Green","Red","Black","Blue","Pink","Teal","Purple"].map(n=>({name:n,color:HOLD[n.toLowerCase()]}))},
+ {name:"Bouldering Hive Circuit",circuit:HIVE_CIRCUIT},
+ {name:"Bouldering Hive Greenhills",circuit:HIVE_CIRCUIT},
+ {name:"Good Climbs",circuit:GC_CIRCUIT},
+ {name:"Boulder Space",circuit:BS_CIRCUIT},
  {name:"Boulder24",circuit:["Yellow","Orange","Green","Blue","Purple","Black"].map(n=>({name:n,color:HOLD[n.toLowerCase()]}))},
  {name:"Boulder World",circuit:BW_CIRCUIT},
  {name:"Flowstate",circuit:["Red","Orange","Yellow","Green","Blue","Indigo"].map(n=>({name:`${n} chip`,color:HOLD[n.toLowerCase()]}))},
@@ -8708,6 +8747,16 @@ function seedGyms(){
   if(!(settings.homeSeeded>=1)){if(!ps.some(p=>p.name.trim().toLowerCase()==="home base"))ps.push({id:uid(),name:"Home Base",kind:"home",terrain:"steep",circuit:null});ch=true;}
   // Boulder World moved from a 1–8 colour ramp to the gym's own chart (0–8 plus a wild card). Old logs store the
   // grade as a position in the list, so shift them to the same grade name in the new list.
+  if(!(settings.gymMarks>=1)){
+    const OLD_HIVE=["Green","Red","Black","Blue","Pink","Teal","Purple"],MAPN={Teal:"White",Purple:"White"};
+    for(const pl of ps){if(!/^bouldering hive/i.test(pl.name.trim())||!pl.circuit||pl.circuit.map(c=>c.name).join()!==OLD_HIVE.join())continue;
+      const idx=n=>HIVE_CIRCUIT.findIndex(c=>c.name===(MAPN[n]||n)),mapG=g=>OLD_HIVE[g]!=null&&idx(OLD_HIVE[g])>=0?idx(OLD_HIVE[g]):g;
+      for(const x of Object.values(sessions)){if(x.placeId!==pl.id||x.gs!=="color"||!x.probs||!x.probs.length)continue;
+        x.probs=x.probs.map(q=>{const g=mapG(q.g),c=HIVE_CIRCUIT[g];return c?{...q,g,gl:c.name,gc:c.color}:q;});x.updatedAt=Date.now();try{pushSession(x);}catch(e){}}
+      for(const pr of (settings.projects||[]))if(pr.placeId===pl.id&&pr.gs==="color"&&pr.g!=null)pr.g=mapG(pr.g);
+      pl.circuit=JSON.parse(JSON.stringify(HIVE_CIRCUIT));invalidate();}
+    for(const pl of ps)if(/^(good climbs|boulder space)$/i.test(pl.name.trim())&&(!pl.circuit||!pl.circuit.length)){pl.circuit=JSON.parse(JSON.stringify(/good/i.test(pl.name)?GC_CIRCUIT:BS_CIRCUIT));pl.kind=pl.kind||"climbgym";}
+    settings.gymMarks=1;ch=true;}
   if(!(settings.bwBars>=1)){const bw=ps.find(p=>p.name.trim().toLowerCase()==="boulder world");
     if(bw&&bw.circuit&&bw.circuit.length&&bw.circuit.every(c=>/^[1-8] Bar$/.test(c.name))){
       const old=bw.circuit.map(c=>c.name),idx=n=>BW_CIRCUIT.findIndex(c=>c.name===n),mapG=g=>old[g]!=null&&idx(old[g])>=0?idx(old[g]):g;
@@ -8720,7 +8769,8 @@ function seedGyms(){
   return ch;
 }
 /* the mark itself: one drawing per grading style, used everywhere a grade is shown */
-function gradeKind(label){const l=String(label||"");let m;
+function gradeKind(label,color){const l=String(label||"");let m;
+  const mo=markOf(l,color);if(mo)return {k:mo.mk,wild:!!mo.wild,v:mo.v,txt:l};
   if((m=l.match(/^(\d+)\s*bars?$/i)))return {k:"bar",n:+m[1]};
   if(/^wild card$/i.test(l))return {k:"bar",wild:true};
   if((m=l.match(/^(\d+)\s*pies?$/i)))return {k:"pie",n:+m[1],of:6};
@@ -8734,10 +8784,16 @@ const GTAG="M2 1.6H14.2A7.8 7.8 0 0 1 22 9.4V14.6A7.8 7.8 0 0 1 14.2 22.4H9.8A7.
 function barSegs(){const out=[],R=8.6,g=.2;for(let i=0;i<8;i++){const a0=i/8*Math.PI*2+g,a1=(i+1)/8*Math.PI*2-g,P=a=>[12+R*Math.sin(a),12-R*Math.cos(a)];
   const [x0,y0]=P(a0),[x1,y1]=P(a1);out.push(`M${x0.toFixed(2)} ${y0.toFixed(2)}A${R} ${R} 0 0 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`);}return out;}
 const BAR_SEGS=barSegs();
+const STAR4="M12 .6Q14.6 9.4 23.4 12Q14.6 14.6 12 23.4Q9.4 14.6 .6 12Q9.4 9.4 12 .6Z";
+const STAR8=(()=>{let d="";for(let i=0;i<16;i++){const a=i/16*Math.PI*2,r=i%4===0?7.8:i%2===0?3.9:1.6,x=12+r*Math.sin(a),y=12-r*Math.cos(a);d+=(i?"L":"M")+x.toFixed(2)+" "+y.toFixed(2);}return d+"Z";})();
 const barCols=(g,c)=>g.wild?BW_WILD:BAR_SEGS.map((_,i)=>i<Math.min(8,g.n)?c:null);
 function gm(label,color,cls){
-  const c=color||"#8E8E93",g=gradeKind(label),dark=/^#(1|2)/.test(c)&&c.length===7&&parseInt(c.slice(1,3),16)<0x40;
+  const c=color||"#8E8E93",g=gradeKind(label,color),dark=/^#(1|2)/.test(c)&&c.length===7&&parseInt(c.slice(1,3),16)<0x40;
   const o=`<svg class="gm${cls?" "+cls:""}" viewBox="0 0 24 24" aria-hidden="true">`;
+  if(g.k==="vtag"){const light=c.toLowerCase()==="#f6f4ee",fs=g.txt.length>2?6:7.6;
+    return o+`<circle cx="12" cy="12" r="11" fill="${c}"${light?` stroke="#8A8780" stroke-width=".7"`:""}/><circle cx="12" cy="4" r="1.25" fill="${c==="#111114"?"none":"#151517"}"${c==="#111114"?` stroke="#F6EAD3" stroke-width=".5"`:""}/><text x="12" y="${15.4-(7.6-fs)*.3}" text-anchor="middle" font-family="WkWide,Arial Black,sans-serif" font-weight="800" font-size="${fs}" fill="#F6EAD3" stroke="#2A2620" stroke-width=".8" paint-order="stroke">${esc(g.txt)}</text></svg>`;}
+  if(g.k==="star")return o+`<path d="${STAR4}" fill="${c}"/><path d="${STAR8}" fill="#0C0C0E"/></svg>`;
+  if(g.k==="slant"){const white=c.toLowerCase()==="#f4f4f4",blk=c.toLowerCase()==="#16161a";return o+`<path d="${g.wild?"M7 1.5L17 5.5V22.5L7 18.5Z":"M7 3L17 7V21L7 17Z"}" fill="${c}"${white||blk?` stroke="${white?"#6B6B70":"#55555B"}" stroke-width=".8"`:""}/></svg>`;}
   if(g.k==="bar")return o+`<circle cx="12" cy="12" r="11.6" fill="#0E0E10" stroke="#3A3A3E" stroke-width=".5"/>${barCols(g,c).map((k,i)=>k?`<path d="${BAR_SEGS[i]}" fill="none" stroke="${k}" stroke-width="2.4"/>`:"").join("")}<circle cx="12" cy="12" r="2" fill="#F4F4F6"/></svg>`;
   if(g.k==="pie"){const of=g.of||6,n=Math.min(of,g.n),a=n/of*Math.PI*2,x=12+9*Math.sin(a),y=12-9*Math.cos(a);
     const wedge=n>=of?`<circle cx="12" cy="12" r="9" fill="${c}"/>`:`<path d="M12 12L12 3A9 9 0 ${a>Math.PI?1:0} 1 ${x.toFixed(2)} ${y.toFixed(2)}Z" fill="${c}"/>`;
@@ -8751,9 +8807,14 @@ function gm(label,color,cls){
 }
 /* the same marks on canvas, for share images */
 function drawGM(x,label,color,cx,cy,r){
-  const c=color||"#8E8E93",g=gradeKind(label),s=r/12;x.save();x.translate(cx-12*s,cy-12*s);x.scale(s,s);
+  const c=color||"#8E8E93",g=gradeKind(label,color),s=r/12;x.save();x.translate(cx-12*s,cy-12*s);x.scale(s,s);
   const rr=(X,Y,W,H,R)=>{x.beginPath();x.moveTo(X+R,Y);x.arcTo(X+W,Y,X+W,Y+H,R);x.arcTo(X+W,Y+H,X,Y+H,R);x.arcTo(X,Y+H,X,Y,R);x.arcTo(X,Y,X+W,Y,R);x.closePath();};
-  if(g.k==="bar"){x.beginPath();x.arc(12,12,11.6,0,Math.PI*2);x.fillStyle="#0E0E10";x.fill();x.lineWidth=2.4;x.lineCap="butt";barCols(g,c).forEach((k,i)=>{if(!k)return;x.strokeStyle=k;x.stroke(new Path2D(BAR_SEGS[i]));});x.beginPath();x.arc(12,12,2,0,Math.PI*2);x.fillStyle="#F4F4F6";x.fill();}
+  if(g.k==="vtag"){const light=c.toLowerCase()==="#f6f4ee";x.beginPath();x.arc(12,12,11,0,Math.PI*2);x.fillStyle=c;x.fill();if(light){x.strokeStyle="#8A8780";x.lineWidth=.7;x.stroke();}
+    x.beginPath();x.arc(12,4,1.25,0,Math.PI*2);if(c==="#111114"){x.strokeStyle="#F6EAD3";x.lineWidth=.5;x.stroke();}else{x.fillStyle="#151517";x.fill();}
+    const fs=g.txt.length>2?6:7.6,ty=15.4-(7.6-fs)*.3;x.font=SXF.wide(fs);x.textAlign="center";x.textBaseline="alphabetic";x.shadowColor="transparent";x.lineJoin="round";x.lineWidth=1.6;x.strokeStyle="#2A2620";x.strokeText(g.txt,12,ty);x.fillStyle="#F6EAD3";x.fillText(g.txt,12,ty);}
+  else if(g.k==="star"){x.fillStyle=c;x.fill(new Path2D(STAR4));x.fillStyle="#0C0C0E";x.fill(new Path2D(STAR8));}
+  else if(g.k==="slant"){const P=new Path2D(g.wild?"M7 1.5L17 5.5V22.5L7 18.5Z":"M7 3L17 7V21L7 17Z"),lc=c.toLowerCase();x.fillStyle=c;x.fill(P);if(lc==="#f4f4f4"||lc==="#16161a"){x.strokeStyle=lc==="#f4f4f4"?"#6B6B70":"#55555B";x.lineWidth=.8;x.stroke(P);}}
+  else if(g.k==="bar"){x.beginPath();x.arc(12,12,11.6,0,Math.PI*2);x.fillStyle="#0E0E10";x.fill();x.lineWidth=2.4;x.lineCap="butt";barCols(g,c).forEach((k,i)=>{if(!k)return;x.strokeStyle=k;x.stroke(new Path2D(BAR_SEGS[i]));});x.beginPath();x.arc(12,12,2,0,Math.PI*2);x.fillStyle="#F4F4F6";x.fill();}
   else if(g.k==="pie"){const of=g.of||6,n=Math.min(of,g.n);x.beginPath();x.arc(12,12,10.6,0,Math.PI*2);x.fillStyle="#1C1C1E";x.fill();x.beginPath();x.moveTo(12,12);x.arc(12,12,9,-Math.PI/2,-Math.PI/2+n/of*Math.PI*2);x.closePath();x.fillStyle=c;x.fill();x.strokeStyle="#1C1C1E";x.lineWidth=.9;for(let i=0;i<of;i++){const t=i/of*Math.PI*2;x.beginPath();x.moveTo(12,12);x.lineTo(12+9*Math.sin(t),12-9*Math.cos(t));x.stroke();}x.beginPath();x.arc(12,12,9,0,Math.PI*2);x.strokeStyle=c;x.globalAlpha=.4;x.lineWidth=1.2;x.stroke();x.globalAlpha=1;}
   else if(g.k==="tag"){const P=new Path2D(GTAG);x.fillStyle=c;x.fill(P,"evenodd");
     if(g.wild){x.strokeStyle="#3A1418";x.lineWidth=.7;x.stroke(P);const tri=(pts,col)=>{x.beginPath();x.moveTo(pts[0],pts[1]);x.lineTo(pts[2],pts[3]);x.lineTo(pts[4],pts[5]);x.closePath();x.fillStyle=col;x.fill();};
