@@ -64,6 +64,11 @@
 .bm-warn{background:rgba(255,159,10,.14);color:#FFB340;border-radius:12px;padding:10px 12px;font-size:.88rem;margin-bottom:10px}
 .bm-rest{display:flex;flex-direction:column;align-items:center;margin:4px 0 12px}.bm-ring{--p:1;width:210px;height:210px;border-radius:50%;background:conic-gradient(var(--climb) calc(var(--p)*360deg),rgba(255,255,255,.08) 0);display:grid;place-items:center}
 .bm-ring>div{width:184px;height:184px;border-radius:50%;background:var(--bg,#000);display:flex;flex-direction:column;align-items:center;justify-content:center}.bm-ring span{color:var(--muted);font-size:.85rem}.bm-ring b{font-family:var(--num);font-size:3.2rem}
+.lgc{background:var(--surface2,rgba(255,255,255,.05));border-radius:14px;padding:12px 14px;margin:6px 0 12px}.lgc.sm{margin:10px 0 4px}
+.lgc-h{display:flex;justify-content:space-between;gap:8px;align-items:baseline;margin-bottom:6px}.lgc-h b{font-size:.95rem}.lgc-h span{font-size:.75rem;color:var(--muted);text-align:right}
+.lgc-i{display:grid;grid-template-columns:22px 1fr auto;gap:10px;align-items:center;padding:7px 0}.lgc-i b{display:block;font-size:.88rem;font-weight:600}.lgc-i i{display:block;height:4px;border-radius:2px;margin-top:6px;background:linear-gradient(90deg,var(--climb) calc(var(--p)*100%),rgba(255,255,255,.1) 0)}
+.lgc-i small{font-family:var(--num);color:var(--muted);font-size:.8rem}.lgc-c{width:22px;height:22px;border-radius:50%;border:1.5px solid rgba(255,255,255,.25);display:grid;place-items:center;font-size:.75rem;font-weight:800}
+.lgc-i.done .lgc-c{background:#34C759;border-color:#34C759;color:#00170D}.lgc-i.done b{color:var(--muted);text-decoration:line-through;text-decoration-color:rgba(255,255,255,.3)}
 .calcard{padding:16px}.calcard .l{font-size:.82rem;color:var(--muted)}.calv{font-family:var(--num);font-size:2.2rem;font-weight:800;margin-top:2px}.calv span{font-family:var(--sans,inherit);font-size:.8rem;font-weight:600;color:var(--muted);margin-left:10px}
 .caleq{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-weight:700}.caleq small{color:var(--muted);font-weight:500;font-size:.75rem}.caleq i{font-style:normal;color:var(--muted)}
 .calrow{align-items:center}.calg{display:flex;align-items:center;gap:6px;min-width:84px}.calf{font-family:var(--num);font-size:1.05rem;white-space:nowrap}
@@ -1885,8 +1890,13 @@ function compute(){
     const r={xp:0,parts:[],medals:[],ymedals:[],acc:[],goals:[],projects:[],chal:[],perfect:[],targets:[]};
     const add=(n,label)=>{n=Math.round(n);if(n>0){r.xp+=n;r.parts.push([label,n]);}};
     add(20,"Workout logged");
-    if(s.dur)add(Math.min(s.dur/60,180),"Time");
+    // time counts for more when it was hard, less when it was easy (your effort rating, 1–10)
+    if(s.dur){const f=s.rpe?Math.min(1.2,Math.max(.7,.55+s.rpe*.065)):1;add(Math.min(s.dur/60,180)*f,s.rpe?`Time, effort ${s.rpe}/10`:"Time");}
     if(s.type!=="lift"&&s.type!=="climb"&&s.dist)add(s.dist*({run:10,walk:6,hike:8,ride:3,other:4}[s.type]||4),"Distance");
+    // speed pays: every km run faster than 7:30 /km earns more, and quick runs of 3 km or more get a tier bonus
+    if(s.type==="run"&&s.dist>=1&&s.dur){const pace=s.dur/60/s.dist;if(pace>2.5&&pace<7.5){add(s.dist*(7.5-pace)*6,`Pace, ${fmtPace(pace*60)}`);
+      const tier=[[3.5,90,"Sub-3:30"],[4,60,"Sub-4:00"],[4.5,40,"Sub-4:30"],[5,25,"Sub-5:00"],[6,10,"Sub-6:00"]].find(t=>pace<t[0]);if(tier&&s.dist>=3)add(tier[1],`${tier[2]} run`);}}
+    if(s.type==="ride"&&s.dist>=5&&s.dur){const sp=s.dist/(s.dur/3600);if(sp>18&&sp<60)add(s.dist*(sp-18)*.2,`Speed, ${sp.toFixed(1)} km/h`);}
     if(s.type==="lift"){const v=volume(s);if(v)add(Math.min(v/200,150),"Volume");}
     if(s.type!=="lift"&&s.type!=="climb"&&s.elev)add(s.elev/10,"Elevation");
     if(s.type==="hike"&&s.summit)add(25,"Summit");
@@ -2112,11 +2122,13 @@ function leagueRun(by,list,now){
   let div=0,wk=weekKey(st),xp=0,cur=null,roster=null;const hist=[];
   for(let g=0;g<520&&wk<=curWk;g++){
     if(!roster)roster=lgFill([],div,wk);
+    const ch=lgChallenges(wk,list);let cX=0;
+    if(ch){for(const it of ch.items)if(it.done){dayXP[it.done]=(dayXP[it.done]||0)+LGC_XP;cX+=LGC_XP;}if(ch.allDone){dayXP[ch.allDone]=(dayXP[ch.allDone]||0)+LGC_ALL;cX+=LGC_ALL;}weekXP[wk]=(weekXP[wk]||0)+cX;}
     const base=lgBase(wk,weekXP),rv=lgRivals(wk,div,base,roster),days=[...Array(7)].map((_,i)=>keyOf(addDays(parseDate(wk),i))),done=wk<curWk;
     // the daily race: on each finished day, how your XP that day ranks against what each rival did that day
     const dayRes=days.map((d,i)=>{if(d>=today)return null;const u=dayXP[d]||0;if(!u)return {d,u:0,rank:null,bonus:0};const rank=1+rv.filter(r=>r.days[i].g>u).length;return {d,u,rank,bonus:lgDayBonus(rank)};});
     const dB=dayRes.reduce((a,x)=>a+(x?x.bonus:0),0);
-    const e={wk,div,base,rv,days,dayRes,dB,done,dayXP,me:weekXP[wk]||0};
+    const e={wk,div,base,rv,days,dayRes,dB,done,dayXP,me:weekXP[wk]||0,ch,cX};xp+=cX;
     const di=done?7:days.indexOf(today);e.di=di;e.hr=hr;
     e.board=lgBoard(e,di,hr,e.me);e.rank=e.board.find(x=>x.me).rank;
     if(done){e.wB=lgWeekBonus(e.rank);e.next=e.rank<=LG_UP?Math.min(LG_DIVS.length-1,div+1):e.rank>LG_N-LG_DOWN?Math.max(0,div-1):div;xp+=dB+e.wB;hist.push(e);
@@ -2129,6 +2141,43 @@ function leagueRun(by,list,now){
   hist.forEach((e,i)=>{if(i<hist.length-1){delete e.rv;delete e.board;}});
   return {xp,hist,cur};
 }
+/* weekly league challenges: three climbing side quests a week, pitched at your calibrated level going into the week.
+   Each pays 75 XP the day you finish it (it counts toward your league week too), and all three pay 75 more. */
+const LGC_XP=75,LGC_ALL=75;
+const tV=x=>fmtV(Math.ceil(x-.25));// thresholds as whole grades: "V5 or harder"
+const LGC=[
+  {id:"flash-lv",need:3,t:lv=>`Flash 3 problems at ${tV(lv)} or harder`,p:(s,q,v,lv)=>q.res==="flash"&&v>=lv-.25?1:0},
+  {id:"above",need:1,t:lv=>`Send a problem at ${tV(lv+1)} or harder`,p:(s,q,v,lv)=>q.res!=="attempt"&&v>=lv+.75?1:0},
+  {id:"volume",need:12,t:lv=>`Send 12 problems at ${tV(lv-1)} or harder`,p:(s,q,v,lv)=>q.res!=="attempt"&&v>=lv-1.25?1:0},
+  {id:"flash10",need:10,t:()=>"Flash 10 problems, any grade",p:(s,q)=>q.res==="flash"?1:0},
+  {id:"siege",need:10,t:lv=>`Put 10 goes into problems at ${tV(lv+1)} or harder`,p:(s,q,v,lv)=>v>=lv+.75?(q.att||1):0},
+  {id:"board",need:3,board:true,t:lv=>`Send 3 board problems at ${tV(lv-1)} or harder`,p:(s,q,v,lv)=>boardOf(s)&&q.res!=="attempt"&&v>=lv-1.25?1:0},
+  {id:"guided",need:1,t:()=>"Finish a guided session: limit, 4x4s or pyramid",ps:s=>s.mode?1:0},
+  {id:"spread",need:4,t:lv=>`Send 4 different grades at ${tV(lv-2)} or harder in one session`,ps:(s,lv)=>{const g=new Set();for(const q of s.probs||[]){const v=nomV(s,q.g);if(v!=null&&q.res!=="attempt"&&v>=lv-2.25)g.add(v);}return g.size>=4?4:0;},max:true}
+];
+const lgcCache=new Map();
+function lgChallenges(wk,list){
+  const climbs=list.filter(s=>s.type==="climb"&&s.probs&&s.probs.length);if(!climbs.length)return null;
+  const key=wk+"|"+climbs.length+"|"+climbs.reduce((a,s)=>Math.max(a,s.updatedAt||0),0);if(lgcCache.has(key))return lgcCache.get(key);
+  // your level going into the week; without enough history, the typical grade of your recent sends
+  const before=climbs.filter(s=>s.date<wk),cal=gradeCal(before);
+  let lv=cal?cal.m:null;if(lv==null){const vs=[];for(const s of before.slice(-12))for(const q of s.probs)if(q.res!=="attempt"){const v=nomV(s,q.g);if(v!=null)vs.push(v);}vs.sort((a,b)=>a-b);lv=vs.length?vs[Math.floor(vs.length*.7)]:2;}
+  lv=Math.round(lv*2)/2;
+  const rnd=seeded("lgc|"+wk),hasBoard=climbs.some(boardOf),pool=LGC.filter(c=>!c.board||hasBoard);
+  for(let i=pool.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+  const end=keyOf(addDays(parseDate(wk),7)),wkS=climbs.filter(s=>s.date>=wk&&s.date<end).sort(chrono);
+  const items=pool.slice(0,3).map(c=>{let prog=0,done=null;
+    for(const s of wkS){if(c.ps){const n=c.ps(s,lv);prog=c.max?Math.max(prog,n):prog+n;}else for(const q of s.probs){const v=nomV(s,q.g);if(v==null)continue;prog+=c.p(s,q,v,lv);}
+      if(!done&&prog>=c.need)done=s.date;}
+    return {id:c.id,title:c.t(lv),need:c.need,prog:Math.min(prog,c.need),done};});
+  const allDone=items.every(x=>x.done)?items.map(x=>x.done).sort().pop():null;
+  const out={lv,items,allDone};lgcCache.set(key,out);return out;
+}
+function lgcHTML(ch,compact){
+  if(!ch)return "";const n=ch.items.filter(x=>x.done).length;
+  return `<div class="lgc${compact?" sm":""}"><div class="lgc-h"><b>This week's challenges</b><span>${n}/3 · +${LGC_XP} each${ch.allDone?", all done +"+LGC_ALL:`, +${LGC_ALL} for all three`}</span></div>
+    ${ch.items.map(x=>`<div class="lgc-i${x.done?" done":""}"><span class="lgc-c">${x.done?"✓":""}</span><div><b>${esc(x.title)}</b><i style="--p:${x.prog/x.need}"></i></div><small>${x.prog}/${x.need}</small></div>`).join("")}</div>`;
+}
 function lgStanding(){const c=getC();return c.lg&&c.lg.cur?c.lg.cur:null;}
 function lgRowHTML(x,prev){
   const mv=prev?prev-x.rank:0;
@@ -2137,12 +2186,13 @@ function lgRowHTML(x,prev){
 function leagueStrip(){
   const e=lgStanding();if(!e)return "";const D=LG_DIVS[e.div],left=6-e.di,ahead=e.board[e.rank-2];
   const gap=ahead?ahead.xp-e.me+1:0;
-  return `<button class="lgstrip" data-act="league" style="--lg:${D[1]}"><span class="lgdot"></span><span class="lgt"><b>${D[0]} league · ${ordN(e.rank)} of ${LG_N}</b><span>${e.rank===1?"You're in front. Hold it.":`${gap.toLocaleString()} XP to pass ${esc(ahead.name)}`} · ${left?`${left} day${left===1?"":"s"} left`:"ends tonight"}</span></span><span class="lgchev">${icon("arrowR")}</span></button>`;
+  return `<button class="lgstrip" data-act="league" style="--lg:${D[1]}"><span class="lgdot"></span><span class="lgt"><b>${D[0]} league · ${ordN(e.rank)} of ${LG_N}</b><span>${e.rank===1?"You're in front. Hold it.":`${gap.toLocaleString()} XP to pass ${esc(ahead.name)}`}${e.ch?` · ${e.ch.items.filter(x=>x.done).length}/3 challenges`:""} · ${left?`${left} day${left===1?"":"s"} left`:"ends tonight"}</span></span><span class="lgchev">${icon("arrowR")}</span></button>`;
 }
 function leagueCard(){
   const e=lgStanding();if(!e)return "";const D=LG_DIVS[e.div];
   const top=e.board.slice(0,3),me=e.board.find(x=>x.me),near=e.rank>3?e.board.slice(Math.max(3,e.rank-2),Math.min(LG_N,e.rank+1)):[];
   return `<div class="ins lgcard" style="--lg:${D[1]}"><div class="row2"><div><h3>${D[0]} league</h3><div class="xpinfo">${ordN(me.rank)} of ${LG_N} this week. Top ${LG_UP} move up, bottom ${LG_DOWN} drop.</div></div><button class="chip" data-act="league">See all</button></div>
+    ${e.ch?lgcHTML(e.ch,true):""}
     <div class="lgmini">${top.map(x=>lgRowHTML(x)).join("")}${near.length&&near[0].rank>4?`<div class="lggap">···</div>`:""}${near.map(x=>lgRowHTML(x)).join("")}</div></div>`;
 }
 function openLeague(){
@@ -2154,12 +2204,14 @@ function openLeague(){
   const dayDone=e.dayRes.filter(Boolean);
   openSheet(`<div class="lghead" style="--lg:${D[1]}"><span class="lgdot big"></span><div><h3 style="margin:0">${D[0]} league</h3><p class="sub" style="margin:2px 0 0">Week of ${fmtDate(e.wk,{month:"short",day:"numeric"})}. ${left?`${left} day${left===1?"":"s"} left, ends Sunday at midnight.`:"Ends tonight at midnight."}</p></div></div>
     <div class="lgstats"><div><span>Your rank</span><b>${ordN(e.rank)}</b></div><div><span>This week</span><b>${e.me.toLocaleString()}<small> XP</small></b></div><div><span>Today</span><b>${todayMe?ordN(todayRank):"–"}</b></div></div>
+    ${lgcHTML(e.ch)}
     <p class="hint">Movement arrows compare with the start of today. Rivals log their sessions at their own times of day, so the order keeps changing.</p>
     <div class="lglist">${rows}</div>
     <h4>Bonuses</h4>
     <div class="tlist" style="padding:12px 16px;font-size:.9rem;line-height:1.65;color:var(--muted)">
       <b style="color:var(--ink)">End of the week:</b> 1st +250 XP, 2nd +175, 3rd +125, top ${LG_UP} +90, top 10 +50, top 20 +20.<br>
       <b style="color:var(--ink)">Every day:</b> your XP that day against each rival's. Win the day +40, top 3 +25, top 10 +10.<br>
+      <b style="color:var(--ink)">Challenges:</b> three climbing goals a week, pitched at your calibrated level. +${LGC_XP} XP each the day you finish it, +${LGC_ALL} for all three, and it all counts toward your league week.<br>
       Finish in the top ${LG_UP} to move up a division, where the field is stronger. Finish in the bottom ${LG_DOWN} and you drop one.
       ${dayDone.length?`<br><br><b style="color:var(--ink)">This week so far:</b> ${dayDone.map(x=>`${fmtDate(x.d,{weekday:"short"})} ${x.rank?`${ordN(x.rank)} (+${x.bonus})`:"rest"}`).join(", ")}.`:""}
     </div>
@@ -2833,7 +2885,7 @@ function renderTrophies(){
   ${trophyFilter==="next"?`<p class="hint">The 12 accolades you're closest to unlocking.</p>`:""}
   <h2 class="sec">How XP works</h2>
   <div class="tlist" style="padding:12px 16px;font-size:.9rem;line-height:1.6;color:var(--muted)">
-  Every workout earns 20 XP, plus 1 XP per minute (up to 180), 10 XP per ${dU()==="mi"?"km run (about 16 per mile)":"km run"}, 6 per km walked, 3 per km ridden, 1 per 200 kg lifted, and 1 per 10 m climbed. Medals add 25, 10, or 5 XP. Three workouts in a week adds a 30 XP bonus, and accolades add 50 to 600 XP. Every workout can also earn repeatable bonuses: a daily quest (20–45), day streaks (up to 50 a day), 5 workouts in a week (50), rating your effort (5), hard efforts (15), beating your recent average (25), following a plan (20), planned event sessions (25), new places (20), segment efforts (10 each), logging details (5), and morning check-ins (10). Rank-ups pay out too. Weekly challenges add 60 XP each (75 more for all three), monthly challenges 150 each (200 more for all three), weekly goals 40, and long-term goals 500. Trophy colors show their worth: Common, Uncommon, Rare, Epic, and Legendary. The weekly league pays out too: up to 250 XP for where you finish, and up to 40 XP a day for out-training the field. Each level takes 100 XP more than the last.</div>`;
+  Every workout earns 20 XP, plus 1 XP per minute (up to 180, weighted by how hard you rated it: 0.7× for easy, up to 1.2× for all-out), 10 XP per ${dU()==="mi"?"km run (about 16 per mile)":"km run"}, 6 per km walked, 3 per km ridden, 1 per 200 kg lifted, and 1 per 10 m climbed. Speed counts: each km run under 7:30 /km earns 6 XP for every minute faster, and runs of 3 km or more get a tier bonus (sub-6:00 +10, sub-5:00 +25, sub-4:30 +40, sub-4:00 +60, sub-3:30 +90). Rides over 18 km/h earn extra per km too. Medals add 25, 10, or 5 XP. Three workouts in a week adds a 30 XP bonus, and accolades add 50 to 600 XP. Every workout can also earn repeatable bonuses: a daily quest (20–45), day streaks (up to 50 a day), 5 workouts in a week (50), rating your effort (5), hard efforts (15), beating your recent average (25), following a plan (20), planned event sessions (25), new places (20), segment efforts (10 each), logging details (5), and morning check-ins (10). Rank-ups pay out too. Weekly challenges add 60 XP each (75 more for all three), monthly challenges 150 each (200 more for all three), weekly goals 40, and long-term goals 500. Trophy colors show their worth: Common, Uncommon, Rare, Epic, and Legendary. The weekly league pays out too: up to 250 XP for where you finish, and up to 40 XP a day for out-training the field. Each level takes 100 XP more than the last.</div>`;
   return html;
 }
 function segEfforts(g){
@@ -2873,7 +2925,7 @@ function openBoulderMode(mode,d0){
   const curG=()=>mode==="pyr"?st.steps[st.idx-1]:st.g;
   const task=()=>mode==="limit"?`Problem ${st.pdone+1} of ${st.count} · go ${st.att+1}`:mode==="x4"?`Round ${st.round} of ${st.rounds} · problem ${st.idx} of 4`:`Step ${st.idx} of ${st.steps.length} · go ${st.att+1} of 3`;
   const finish=()=>{clearInterval(st.timer);wake(false);const add=st.log;d.probs=[...d.probs,...add];if(st.t0&&!d.dur)d.dur=Math.round((Date.now()-st.t0)/1000);
-    if(add.length)d.notes=(d.notes?d.notes.trim()+"\n":"")+`${M.name}.`;saveDr();try{localStorage.setItem("workouts-climb-draft",JSON.stringify({t:Date.now(),d:{...d,_photo:null}}));}catch(e){}closeSheet();setTimeout(()=>openForm(null,{...d}),220);};
+    if(add.length){d.notes=(d.notes?d.notes.trim()+"\n":"")+`${M.name}.`;d.mode=mode;}saveDr();try{localStorage.setItem("workouts-climb-draft",JSON.stringify({t:Date.now(),d:{...d,_photo:null}}));}catch(e){}closeSheet();setTimeout(()=>openForm(null,{...d}),220);};
   const checkWarn=()=>{
     if(mode==="x4"){const per=r=>st.log.filter(p=>p._r===r&&p.res!=="attempt").length;if(st.round>2&&per(st.round-1)<=per(1)-2)st.warn=`You topped ${per(st.round-1)} of 4 last round against ${per(1)} in the first. Your power is fading: make the next round the last.`;return;}
     const b=st.burns;if(b.length<6)return;const last=b.slice(-4),first=b.slice(0,b.length-4);
