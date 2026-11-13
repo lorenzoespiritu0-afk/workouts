@@ -8805,8 +8805,12 @@ const barCols=(g,c)=>g.wild?BW_WILD:BAR_SEGS.map((_,i)=>i<Math.min(8,g.n)?c:null
 function gm(label,color,cls){
   const c=color||"#8E8E93",g=gradeKind(label,color),dark=/^#(1|2)/.test(c)&&c.length===7&&parseInt(c.slice(1,3),16)<0x40;
   const o=`<svg class="gm${cls?" "+cls:""}" viewBox="0 0 24 24" aria-hidden="true">`;
-  if(g.k==="fs"){const fig=g.wild?"#FFFFFF":c,bands=["#E4002B","#FF7A00","#FFE100","#35A81E","#3757B0","#6B2160"];
-    return o+`<defs><clipPath id="fsc"><circle cx="12" cy="12" r="10.6"/></clipPath></defs><circle cx="12" cy="12" r="11" fill="#F6EEDA"/><g clip-path="url(#fsc)">${g.wild?`<g transform="rotate(-35 12 12)">${bands.map((b,i)=>`<rect x="-6" y="${-4+i*5.4}" width="36" height="5.5" fill="${b}"/>`).join("")}</g>`:""}<path d="${FS_ARM}" fill="none" stroke="${fig}" stroke-width="3.8" stroke-linecap="round"/><path d="M12.4 13.4L15.8 24" stroke="${fig}" stroke-width="3.6" stroke-linecap="round"/><circle cx="12.4" cy="12" r="2.6" fill="${fig}"/><path d="${FS_HAND}" fill="${fig}"/></g><circle cx="12" cy="12" r="11" fill="none" stroke="#6B2160" stroke-width=".9"/></svg>`;}
+  if(g.k==="fs"){// clear acrylic: see-through disc, figure outlined in purple, a punched hole; the rainbow tag has stripes behind a clear figure
+    const fig=g.wild?"rgba(255,255,255,.28)":c,OL="#4B1F8C",bands=["#E4002B","#FF7A00","#FFE100","#35A81E","#3757B0","#6B2160"];
+    return o+`<defs><clipPath id="fsc"><circle cx="12" cy="12" r="10.6"/></clipPath>${g.wild?`<mask id="fsm"><rect width="24" height="24" fill="#fff"/><path d="${FS_ARM}" fill="none" stroke="#000" stroke-width="3.6" stroke-linecap="round"/><path d="M12.4 13.4L15.8 24" stroke="#000" stroke-width="3.4" stroke-linecap="round"/><circle cx="12.4" cy="12" r="2.6" fill="#000"/><path d="${FS_HAND}" fill="#000"/></mask>`:""}</defs><circle cx="12" cy="12" r="11" fill="rgba(255,255,255,.09)"/><g clip-path="url(#fsc)"${g.wild?` mask="url(#fsm)"`:""}>${g.wild?bands.map((b,i)=>`<rect x="${1+i*3.7}" y="0" width="3.8" height="24" fill="${b}"/>`).join(""):""}
+      <path d="${FS_ARM}" fill="none" stroke="${OL}" stroke-width="4.6" stroke-linecap="round"/><path d="M12.4 13.4L15.8 24" stroke="${OL}" stroke-width="4.4" stroke-linecap="round"/><circle cx="12.4" cy="12" r="3.1" fill="${OL}"/><path d="${FS_HAND}" fill="${OL}" stroke="${OL}" stroke-width="1"/>
+      <path d="${FS_ARM}" fill="none" stroke="${fig}" stroke-width="3.6" stroke-linecap="round"/><path d="M12.4 13.4L15.8 24" stroke="${fig}" stroke-width="3.4" stroke-linecap="round"/><circle cx="12.4" cy="12" r="2.6" fill="${fig}"/><path d="${FS_HAND}" fill="${fig}"/></g>
+      <circle cx="12" cy="12" r="11" fill="none" stroke="rgba(255,255,255,.55)" stroke-width=".8"/><circle cx="12.2" cy="8.6" r="1.35" fill="rgba(0,0,0,.35)" stroke="rgba(255,255,255,.75)" stroke-width=".6"/></svg>`;}
   if(g.k==="vtag"){const light=c.toLowerCase()==="#f6f4ee",fs=g.txt.length>2?6:7.6;
     return o+`<circle cx="12" cy="12" r="11" fill="${c}"${light?` stroke="#8A8780" stroke-width=".7"`:""}/><circle cx="12" cy="4" r="1.25" fill="${c==="#111114"?"none":"#151517"}"${c==="#111114"?` stroke="#F6EAD3" stroke-width=".5"`:""}/><text x="12" y="${15.4-(7.6-fs)*.3}" text-anchor="middle" font-family="WkWide,Arial Black,sans-serif" font-weight="800" font-size="${fs}" fill="#F6EAD3" stroke="#2A2620" stroke-width=".8" paint-order="stroke">${esc(g.txt)}</text></svg>`;}
   if(g.k==="star")return o+`<path d="${STAR4}" fill="${c}"/><path d="${STAR8}" fill="#0C0C0E"/></svg>`;
@@ -8826,10 +8830,14 @@ function gm(label,color,cls){
 function drawGM(x,label,color,cx,cy,r){
   const c=color||"#8E8E93",g=gradeKind(label,color),s=r/12;x.save();x.translate(cx-12*s,cy-12*s);x.scale(s,s);
   const rr=(X,Y,W,H,R)=>{x.beginPath();x.moveTo(X+R,Y);x.arcTo(X+W,Y,X+W,Y+H,R);x.arcTo(X+W,Y+H,X,Y+H,R);x.arcTo(X,Y+H,X,Y,R);x.arcTo(X,Y,X+W,Y,R);x.closePath();};
-  if(g.k==="fs"){const fig=g.wild?"#FFFFFF":c;x.beginPath();x.arc(12,12,11,0,Math.PI*2);x.fillStyle="#F6EEDA";x.fill();x.save();x.beginPath();x.arc(12,12,10.6,0,Math.PI*2);x.clip();
-    if(g.wild){x.save();x.translate(12,12);x.rotate(-35*Math.PI/180);x.translate(-12,-12);["#E4002B","#FF7A00","#FFE100","#35A81E","#3757B0","#6B2160"].forEach((b,i)=>{x.fillStyle=b;x.fillRect(-6,-4+i*5.4,36,5.5);});x.restore();}
-    x.strokeStyle=fig;x.lineWidth=3.8;x.lineCap="round";x.stroke(new Path2D(FS_ARM));x.lineWidth=3.6;x.beginPath();x.moveTo(12.4,13.4);x.lineTo(15.8,24);x.stroke();x.beginPath();x.arc(12.4,12,2.6,0,Math.PI*2);x.fillStyle=fig;x.fill();x.fill(new Path2D(FS_HAND));x.restore();
-    x.beginPath();x.arc(12,12,11,0,Math.PI*2);x.strokeStyle="#6B2160";x.lineWidth=.9;x.stroke();}
+  if(g.k==="fs"){const fig=g.wild?"rgba(255,255,255,.28)":c,OL="#4B1F8C";x.beginPath();x.arc(12,12,11,0,Math.PI*2);x.fillStyle="rgba(255,255,255,.09)";x.fill();x.save();x.beginPath();x.arc(12,12,10.6,0,Math.PI*2);x.clip();
+    if(g.wild)["#E4002B","#FF7A00","#FFE100","#35A81E","#3757B0","#6B2160"].forEach((b,i)=>{x.fillStyle=b;x.fillRect(1+i*3.7,0,3.8,24);});
+    x.lineCap="round";const body=(col,w)=>{x.strokeStyle=col;x.lineWidth=w;x.stroke(new Path2D(FS_ARM));x.lineWidth=w-.2;x.beginPath();x.moveTo(12.4,13.4);x.lineTo(15.8,24);x.stroke();};
+    body(OL,4.6);x.beginPath();x.arc(12.4,12,3.1,0,Math.PI*2);x.fillStyle=OL;x.fill();const H=new Path2D(FS_HAND);x.lineWidth=1;x.strokeStyle=OL;x.stroke(H);x.fill(H);
+    if(g.wild){x.globalCompositeOperation="destination-out";body("#000",3.6);x.beginPath();x.arc(12.4,12,2.6,0,Math.PI*2);x.fill();x.fill(H);x.globalCompositeOperation="source-over";}
+    body(fig,3.6);x.beginPath();x.arc(12.4,12,2.6,0,Math.PI*2);x.fillStyle=fig;x.fill();x.fill(H);x.restore();
+    x.beginPath();x.arc(12,12,11,0,Math.PI*2);x.strokeStyle="rgba(255,255,255,.55)";x.lineWidth=.8;x.stroke();
+    x.beginPath();x.arc(12.2,8.6,1.35,0,Math.PI*2);x.fillStyle="rgba(0,0,0,.35)";x.fill();x.strokeStyle="rgba(255,255,255,.75)";x.lineWidth=.6;x.stroke();}
   else if(g.k==="vtag"){const light=c.toLowerCase()==="#f6f4ee";x.beginPath();x.arc(12,12,11,0,Math.PI*2);x.fillStyle=c;x.fill();if(light){x.strokeStyle="#8A8780";x.lineWidth=.7;x.stroke();}
     x.beginPath();x.arc(12,4,1.25,0,Math.PI*2);if(c==="#111114"){x.strokeStyle="#F6EAD3";x.lineWidth=.5;x.stroke();}else{x.fillStyle="#151517";x.fill();}
     const fs=g.txt.length>2?6:7.6,ty=15.4-(7.6-fs)*.3;x.font=SXF.wide(fs);x.textAlign="center";x.textBaseline="alphabetic";x.shadowColor="transparent";x.lineJoin="round";x.lineWidth=1.6;x.strokeStyle="#2A2620";x.strokeText(g.txt,12,ty);x.fillStyle="#F6EAD3";x.fillText(g.txt,12,ty);}
