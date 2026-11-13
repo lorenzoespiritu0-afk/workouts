@@ -4078,7 +4078,7 @@ function openForm(existing,preset){
     <label>${noRoute?"Duration":"Moving time"}</label><div class="grid3">
       <div><input id="f-h" type="number" inputmode="numeric" min="0" placeholder="0" value="${h||""}" aria-label="Hours"><p class="hint">Hours</p></div>
       <div><input id="f-m" type="number" inputmode="numeric" min="0" max="59" placeholder="0" value="${m||""}" aria-label="Minutes"><p class="hint">Minutes</p></div>
-      <div><input id="f-s" type="number" inputmode="numeric" min="0" max="59" placeholder="0" value="${s||""}" aria-label="Seconds"><p class="hint">Seconds</p></div></div>${sinceMin&&!d.dur?`<button class="tchip untilnow" id="f-now" type="button">Use time since start: ${fmtDur(sinceMin*60)}</button>`:""}`;
+      <div><input id="f-s" type="number" inputmode="numeric" min="0" max="59" placeholder="0" value="${s||""}" aria-label="Seconds"><p class="hint">Seconds</p></div></div>${sinceMin&&!d.dur?`<button class="tchip untilnow" id="f-now" type="button" data-min="${sinceMin}">Use time since start: ${fmtDur(sinceMin*60)}</button>`:""}`;
     if(!(isClimb&&!existing))body+=meta;
     if(isClimb){
       const list=gradeList(d.gs,d.placeId);
@@ -4243,7 +4243,7 @@ function openForm(existing,preset){
       $("stest").textContent=e.floors?`${fl?"":"≈ "}${Math.round(e.floors)} floors, about ${fmtElev(e.floors*STAIR_FLOOR_M)} climbed${e.from?`, estimated from ${e.from}`:""}${g("f-lvl")?`. Level ${g("f-lvl")} is about ${stairSpm(g("f-lvl"))} steps a minute.`:"."}`:"";};
       ["f-sd","f-fl","f-lvl","f-steps","f-h","f-m","f-s"].forEach(id=>{if($(id))$(id).addEventListener("input",upd);});upd();}
     $("sheet").querySelectorAll("[data-type]").forEach(b=>b.onclick=()=>{read();d.type=b.dataset.type;if(!placeTouched){d.placeId=defaultPlaceFor(d.type);}if(!gearTouched)d.gearId=defaultGearFor(d.type);if(d.type==="lift"&&!d.ex.length)d.ex=[{name:"",sets:null,reps:null,w:null}];if(d.type==="climb"&&!d.probs.length)d.probs=[newProb()];draw();});
-    if($("f-now"))$("f-now").onclick=()=>{read();d.dur=sinceMin*60;draw();};
+    if($("f-now"))$("f-now").onclick=e=>{read();d.dur=(+e.currentTarget.dataset.min||0)*60;draw();};
     ["f-h","f-m","f-s","f-dist"].forEach(id=>{const el=$(id);if(el)el.oninput=updPace;});updPace();
     const rpeUpd=()=>{const r=+$("f-rpe").value;$("rpev").textContent=r?r+"/10":"—";$("rpew").textContent=r?RPE_WORDS[r]:"Slide to rate your effort";};
     $("f-rpe").oninput=rpeUpd;rpeUpd();
@@ -8721,7 +8721,7 @@ const BW_BAR=["#B9BCC4","#E64FC4","#8A4DEB","#A3D435","#F2832B","#F4F4F6","#E334
 const BW_WILD=["#8A4DEB","#E64FC4","#E3342F","#F4D21F","#F4F4F6","#A3D435","#F2832B","#2FA7E6"];
 const BW_CIRCUIT=[{name:"Wild Card",color:"#2EC4B6"},...BW_BAR.map((c,i)=>({name:`${i} Bar`,color:c}))];
 /* B-Hive: slanted bars, green (very easy) to white (mission impossible), with the orange joker spanning V1–V7 */
-const HIVE_CIRCUIT=[{name:"Joker",color:"#F7931E",mk:"slant",wild:true},...[["Green","#22A04B",-1.5],["Yellow","#F2D23C",-.5],["Red","#E1251B",.5],["Black","#16161A",1.5],["Blue","#1F3E9C",3],["Pink","#E8358A",5],["White","#F4F4F4",7.5]].map(([name,color,v])=>({name,color,mk:"slant",v}))];
+const HIVE_CIRCUIT=[{name:"Joker",color:"#F7931E",mk:"slant",wild:true},...[["Green","#22A04B",-1.5],["Yellow","#F2D23C",-.5],["Red","#E1251B",.5],["Black","#16161A",1.5],["Blue","#1F3E9C",3],["Pink","#E8358A",5],["Purple","#7A3DB8",7.5]].map(([name,color,v])=>({name,color,mk:"slant",v}))];
 /* Good Climbs: round tags with a hole, one colour per V grade */
 const GC_CIRCUIT=[["V0","#F6F4EE"],["V1","#5DA54A"],["V2","#3F78C8"],["V3","#6E4CA5"],["V4","#E58AA8"],["V5","#D92D2D"],["V6","#F07F22"],["V7","#F2C230"],["V8+","#111114"]].map(([name,color],i)=>({name,color,mk:"vtag",v:i}));
 /* Boulder Space: a colour star for each band of V grades */
@@ -8760,8 +8760,12 @@ function seedGyms(){
       if(/^boulder space$/i.test(pl.name.trim())&&nm.some(n=>/–/.test(n)))remapC(pl,BS_CIRCUIT,n=>n.split("–")[0]);
       if(/^flowstate$/i.test(pl.name.trim())&&nm.every(n=>/ chip$/.test(n)))remapC(pl,FS_CIRCUIT,n=>{const b=n.replace(/ chip$/,"");return b==="Indigo"?"Violet":b;});}
     settings.gymMarks=2;ch=true;}
+  // B-Hive retired its white tag for purple
+  if(!(settings.gymMarks>=3)&&settings.gymMarks>=1){
+    for(const pl of ps)if(/^bouldering hive/i.test(pl.name.trim())&&pl.circuit&&pl.circuit.some(c=>c.name==="White"&&c.mk==="slant"))remapC(pl,HIVE_CIRCUIT,n=>n==="White"?"Purple":n);
+    settings.gymMarks=3;ch=true;}
   if(!(settings.gymMarks>=1)){
-    const OLD_HIVE=["Green","Red","Black","Blue","Pink","Teal","Purple"],MAPN={Teal:"White",Purple:"White"};
+    const OLD_HIVE=["Green","Red","Black","Blue","Pink","Teal","Purple"],MAPN={Teal:"Purple"};
     for(const pl of ps){if(!/^bouldering hive/i.test(pl.name.trim())||!pl.circuit||pl.circuit.map(c=>c.name).join()!==OLD_HIVE.join())continue;
       const idx=n=>HIVE_CIRCUIT.findIndex(c=>c.name===(MAPN[n]||n)),mapG=g=>OLD_HIVE[g]!=null&&idx(OLD_HIVE[g])>=0?idx(OLD_HIVE[g]):g;
       for(const x of Object.values(sessions)){if(x.placeId!==pl.id||x.gs!=="color"||!x.probs||!x.probs.length)continue;
@@ -8770,7 +8774,7 @@ function seedGyms(){
       pl.circuit=JSON.parse(JSON.stringify(HIVE_CIRCUIT));invalidate();}
     for(const pl of ps)if(/^(good climbs|boulder space)$/i.test(pl.name.trim())&&(!pl.circuit||!pl.circuit.length)){pl.circuit=JSON.parse(JSON.stringify(/good/i.test(pl.name)?GC_CIRCUIT:BS_CIRCUIT));pl.kind=pl.kind||"climbgym";}
     for(const pl of ps)if(/^flowstate$/i.test(pl.name.trim())&&pl.circuit&&pl.circuit.every(c=>/ chip$/.test(c.name)))remapC(pl,FS_CIRCUIT,n=>{const b=n.replace(/ chip$/,"");return b==="Indigo"?"Violet":b;});
-    settings.gymMarks=2;ch=true;}
+    settings.gymMarks=3;ch=true;}
   if(!(settings.bwBars>=1)){const bw=ps.find(p=>p.name.trim().toLowerCase()==="boulder world");
     if(bw&&bw.circuit&&bw.circuit.length&&bw.circuit.every(c=>/^[1-8] Bar$/.test(c.name))){
       const old=bw.circuit.map(c=>c.name),idx=n=>BW_CIRCUIT.findIndex(c=>c.name===n),mapG=g=>old[g]!=null&&idx(old[g])>=0?idx(old[g]):g;
