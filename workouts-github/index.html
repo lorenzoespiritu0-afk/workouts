@@ -8725,8 +8725,11 @@ const HIVE_CIRCUIT=[{name:"Joker",color:"#F7931E",mk:"slant",wild:true},...[["Gr
 /* Good Climbs: round tags with a hole, one colour per V grade */
 const GC_CIRCUIT=[["V0","#F6F4EE"],["V1","#5DA54A"],["V2","#3F78C8"],["V3","#6E4CA5"],["V4","#E58AA8"],["V5","#D92D2D"],["V6","#F07F22"],["V7","#F2C230"],["V8+","#111114"]].map(([name,color],i)=>({name,color,mk:"vtag",v:i}));
 /* Boulder Space: a colour star for each band of V grades */
-const BS_CIRCUIT=[["VB–V1","#F7C531",-.5],["V2–V3","#E3263A",2.5],["V4–V6","#2E9BE6",5],["V7–V8","#6A3BE0",7.5],["V9–V10","#159A86",9.5]].map(([name,color,v])=>({name,color,mk:"star",v}));
-const MARK_REG={};for(const c of [...HIVE_CIRCUIT,...GC_CIRCUIT,...BS_CIRCUIT])MARK_REG[c.name+"|"+c.color.toLowerCase()]=c;
+const BS_BAND={VB:"#F7C531",V1:"#F7C531",V2:"#E3263A",V3:"#E3263A",V4:"#2E9BE6",V5:"#2E9BE6",V6:"#2E9BE6",V7:"#6A3BE0",V8:"#6A3BE0",V9:"#159A86",V10:"#159A86"};
+const BS_CIRCUIT=Object.entries(BS_BAND).map(([name,color],i)=>({name,color,mk:"star",v:i-1}));
+/* Flowstate: a climber in a circle, red to violet; the rainbow is the wild card */
+const FS_CIRCUIT=[{name:"Rainbow",color:"#E8E2D0",mk:"fs",wild:true},...[["Red","#E4002B"],["Orange","#FF7A00"],["Yellow","#FFE100"],["Green","#35A81E"],["Blue","#3757B0"],["Violet","#6B2160"]].map(([name,color])=>({name,color,mk:"fs"}))];
+const MARK_REG={};for(const c of [...HIVE_CIRCUIT,...GC_CIRCUIT,...BS_CIRCUIT,...FS_CIRCUIT])MARK_REG[c.name+"|"+c.color.toLowerCase()]=c;
 const markOf=(label,color)=>color?MARK_REG[label+"|"+String(color).toLowerCase()]||null:null;
 const GYM_SEED=[
  {name:"Bouldering Hive Circuit",circuit:HIVE_CIRCUIT},
@@ -8735,7 +8738,7 @@ const GYM_SEED=[
  {name:"Boulder Space",circuit:BS_CIRCUIT},
  {name:"Boulder24",circuit:["Yellow","Orange","Green","Blue","Purple","Black"].map(n=>({name:n,color:HOLD[n.toLowerCase()]}))},
  {name:"Boulder World",circuit:BW_CIRCUIT},
- {name:"Flowstate",circuit:["Red","Orange","Yellow","Green","Blue","Indigo"].map(n=>({name:`${n} chip`,color:HOLD[n.toLowerCase()]}))},
+ {name:"Flowstate",circuit:FS_CIRCUIT},
  {name:"Climb Central Manila",circuit:RAMP6.map((c,i)=>({name:`${i+1} Pie`,color:c}))},
  {name:"Grava",circuit:[{name:"Wildcard",color:"#EDE3D1"},...[1,2,3,4,5,6,7,8,9].map(n=>({name:`g${n}`,color:GRAVA[Math.floor((n-1)/3)]}))]}
 ];
@@ -8747,6 +8750,16 @@ function seedGyms(){
   if(!(settings.homeSeeded>=1)){if(!ps.some(p=>p.name.trim().toLowerCase()==="home base"))ps.push({id:uid(),name:"Home Base",kind:"home",terrain:"steep",circuit:null});ch=true;}
   // Boulder World moved from a 1–8 colour ramp to the gym's own chart (0–8 plus a wild card). Old logs store the
   // grade as a position in the list, so shift them to the same grade name in the new list.
+  const remapC=(pl,NEW,nameOf)=>{const old=pl.circuit.map(c=>c.name),idx=n=>NEW.findIndex(c=>c.name===nameOf(n)),mapG=g=>old[g]!=null&&idx(old[g])>=0?idx(old[g]):g;
+    for(const x of Object.values(sessions)){if(x.placeId!==pl.id||x.gs!=="color"||!x.probs||!x.probs.length)continue;
+      x.probs=x.probs.map(q=>{const g=mapG(q.g),c=NEW[g];return c?{...q,g,gl:c.name,gc:c.color}:q;});x.updatedAt=Date.now();try{pushSession(x);}catch(e){}}
+    for(const pr of (settings.projects||[]))if(pr.placeId===pl.id&&pr.gs==="color"&&pr.g!=null)pr.g=mapG(pr.g);
+    pl.circuit=JSON.parse(JSON.stringify(NEW));invalidate();};
+  if(!(settings.gymMarks>=2)&&settings.gymMarks>=1){
+    for(const pl of ps){if(!pl.circuit)continue;const nm=pl.circuit.map(c=>c.name);
+      if(/^boulder space$/i.test(pl.name.trim())&&nm.some(n=>/–/.test(n)))remapC(pl,BS_CIRCUIT,n=>n.split("–")[0]);
+      if(/^flowstate$/i.test(pl.name.trim())&&nm.every(n=>/ chip$/.test(n)))remapC(pl,FS_CIRCUIT,n=>{const b=n.replace(/ chip$/,"");return b==="Indigo"?"Violet":b;});}
+    settings.gymMarks=2;ch=true;}
   if(!(settings.gymMarks>=1)){
     const OLD_HIVE=["Green","Red","Black","Blue","Pink","Teal","Purple"],MAPN={Teal:"White",Purple:"White"};
     for(const pl of ps){if(!/^bouldering hive/i.test(pl.name.trim())||!pl.circuit||pl.circuit.map(c=>c.name).join()!==OLD_HIVE.join())continue;
@@ -8756,7 +8769,8 @@ function seedGyms(){
       for(const pr of (settings.projects||[]))if(pr.placeId===pl.id&&pr.gs==="color"&&pr.g!=null)pr.g=mapG(pr.g);
       pl.circuit=JSON.parse(JSON.stringify(HIVE_CIRCUIT));invalidate();}
     for(const pl of ps)if(/^(good climbs|boulder space)$/i.test(pl.name.trim())&&(!pl.circuit||!pl.circuit.length)){pl.circuit=JSON.parse(JSON.stringify(/good/i.test(pl.name)?GC_CIRCUIT:BS_CIRCUIT));pl.kind=pl.kind||"climbgym";}
-    settings.gymMarks=1;ch=true;}
+    for(const pl of ps)if(/^flowstate$/i.test(pl.name.trim())&&pl.circuit&&pl.circuit.every(c=>/ chip$/.test(c.name)))remapC(pl,FS_CIRCUIT,n=>{const b=n.replace(/ chip$/,"");return b==="Indigo"?"Violet":b;});
+    settings.gymMarks=2;ch=true;}
   if(!(settings.bwBars>=1)){const bw=ps.find(p=>p.name.trim().toLowerCase()==="boulder world");
     if(bw&&bw.circuit&&bw.circuit.length&&bw.circuit.every(c=>/^[1-8] Bar$/.test(c.name))){
       const old=bw.circuit.map(c=>c.name),idx=n=>BW_CIRCUIT.findIndex(c=>c.name===n),mapG=g=>old[g]!=null&&idx(old[g])>=0?idx(old[g]):g;
@@ -8784,12 +8798,15 @@ const GTAG="M2 1.6H14.2A7.8 7.8 0 0 1 22 9.4V14.6A7.8 7.8 0 0 1 14.2 22.4H9.8A7.
 function barSegs(){const out=[],R=8.6,g=.2;for(let i=0;i<8;i++){const a0=i/8*Math.PI*2+g,a1=(i+1)/8*Math.PI*2-g,P=a=>[12+R*Math.sin(a),12-R*Math.cos(a)];
   const [x0,y0]=P(a0),[x1,y1]=P(a1);out.push(`M${x0.toFixed(2)} ${y0.toFixed(2)}A${R} ${R} 0 0 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`);}return out;}
 const BAR_SEGS=barSegs();
+const FS_ARM="M5.5 2.8Q18.6 1.2 19.2 8.6Q19.4 14.6 14.8 24",FS_HAND="M4.8 24L6.2 15.2Q7.4 14 8.6 15.2L9.6 24Z";
 const STAR4="M12 .6Q14.6 9.4 23.4 12Q14.6 14.6 12 23.4Q9.4 14.6 .6 12Q9.4 9.4 12 .6Z";
 const STAR8=(()=>{let d="";for(let i=0;i<16;i++){const a=i/16*Math.PI*2,r=i%4===0?7.8:i%2===0?3.9:1.6,x=12+r*Math.sin(a),y=12-r*Math.cos(a);d+=(i?"L":"M")+x.toFixed(2)+" "+y.toFixed(2);}return d+"Z";})();
 const barCols=(g,c)=>g.wild?BW_WILD:BAR_SEGS.map((_,i)=>i<Math.min(8,g.n)?c:null);
 function gm(label,color,cls){
   const c=color||"#8E8E93",g=gradeKind(label,color),dark=/^#(1|2)/.test(c)&&c.length===7&&parseInt(c.slice(1,3),16)<0x40;
   const o=`<svg class="gm${cls?" "+cls:""}" viewBox="0 0 24 24" aria-hidden="true">`;
+  if(g.k==="fs"){const fig=g.wild?"#FFFFFF":c,bands=["#E4002B","#FF7A00","#FFE100","#35A81E","#3757B0","#6B2160"];
+    return o+`<defs><clipPath id="fsc"><circle cx="12" cy="12" r="10.6"/></clipPath></defs><circle cx="12" cy="12" r="11" fill="#F6EEDA"/><g clip-path="url(#fsc)">${g.wild?`<g transform="rotate(-35 12 12)">${bands.map((b,i)=>`<rect x="-6" y="${-4+i*5.4}" width="36" height="5.5" fill="${b}"/>`).join("")}</g>`:""}<path d="${FS_ARM}" fill="none" stroke="${fig}" stroke-width="3.8" stroke-linecap="round"/><path d="M12.4 13.4L15.8 24" stroke="${fig}" stroke-width="3.6" stroke-linecap="round"/><circle cx="12.4" cy="12" r="2.6" fill="${fig}"/><path d="${FS_HAND}" fill="${fig}"/></g><circle cx="12" cy="12" r="11" fill="none" stroke="#6B2160" stroke-width=".9"/></svg>`;}
   if(g.k==="vtag"){const light=c.toLowerCase()==="#f6f4ee",fs=g.txt.length>2?6:7.6;
     return o+`<circle cx="12" cy="12" r="11" fill="${c}"${light?` stroke="#8A8780" stroke-width=".7"`:""}/><circle cx="12" cy="4" r="1.25" fill="${c==="#111114"?"none":"#151517"}"${c==="#111114"?` stroke="#F6EAD3" stroke-width=".5"`:""}/><text x="12" y="${15.4-(7.6-fs)*.3}" text-anchor="middle" font-family="WkWide,Arial Black,sans-serif" font-weight="800" font-size="${fs}" fill="#F6EAD3" stroke="#2A2620" stroke-width=".8" paint-order="stroke">${esc(g.txt)}</text></svg>`;}
   if(g.k==="star")return o+`<path d="${STAR4}" fill="${c}"/><path d="${STAR8}" fill="#0C0C0E"/></svg>`;
@@ -8809,7 +8826,11 @@ function gm(label,color,cls){
 function drawGM(x,label,color,cx,cy,r){
   const c=color||"#8E8E93",g=gradeKind(label,color),s=r/12;x.save();x.translate(cx-12*s,cy-12*s);x.scale(s,s);
   const rr=(X,Y,W,H,R)=>{x.beginPath();x.moveTo(X+R,Y);x.arcTo(X+W,Y,X+W,Y+H,R);x.arcTo(X+W,Y+H,X,Y+H,R);x.arcTo(X,Y+H,X,Y,R);x.arcTo(X,Y,X+W,Y,R);x.closePath();};
-  if(g.k==="vtag"){const light=c.toLowerCase()==="#f6f4ee";x.beginPath();x.arc(12,12,11,0,Math.PI*2);x.fillStyle=c;x.fill();if(light){x.strokeStyle="#8A8780";x.lineWidth=.7;x.stroke();}
+  if(g.k==="fs"){const fig=g.wild?"#FFFFFF":c;x.beginPath();x.arc(12,12,11,0,Math.PI*2);x.fillStyle="#F6EEDA";x.fill();x.save();x.beginPath();x.arc(12,12,10.6,0,Math.PI*2);x.clip();
+    if(g.wild){x.save();x.translate(12,12);x.rotate(-35*Math.PI/180);x.translate(-12,-12);["#E4002B","#FF7A00","#FFE100","#35A81E","#3757B0","#6B2160"].forEach((b,i)=>{x.fillStyle=b;x.fillRect(-6,-4+i*5.4,36,5.5);});x.restore();}
+    x.strokeStyle=fig;x.lineWidth=3.8;x.lineCap="round";x.stroke(new Path2D(FS_ARM));x.lineWidth=3.6;x.beginPath();x.moveTo(12.4,13.4);x.lineTo(15.8,24);x.stroke();x.beginPath();x.arc(12.4,12,2.6,0,Math.PI*2);x.fillStyle=fig;x.fill();x.fill(new Path2D(FS_HAND));x.restore();
+    x.beginPath();x.arc(12,12,11,0,Math.PI*2);x.strokeStyle="#6B2160";x.lineWidth=.9;x.stroke();}
+  else if(g.k==="vtag"){const light=c.toLowerCase()==="#f6f4ee";x.beginPath();x.arc(12,12,11,0,Math.PI*2);x.fillStyle=c;x.fill();if(light){x.strokeStyle="#8A8780";x.lineWidth=.7;x.stroke();}
     x.beginPath();x.arc(12,4,1.25,0,Math.PI*2);if(c==="#111114"){x.strokeStyle="#F6EAD3";x.lineWidth=.5;x.stroke();}else{x.fillStyle="#151517";x.fill();}
     const fs=g.txt.length>2?6:7.6,ty=15.4-(7.6-fs)*.3;x.font=SXF.wide(fs);x.textAlign="center";x.textBaseline="alphabetic";x.shadowColor="transparent";x.lineJoin="round";x.lineWidth=1.6;x.strokeStyle="#2A2620";x.strokeText(g.txt,12,ty);x.fillStyle="#F6EAD3";x.fillText(g.txt,12,ty);}
   else if(g.k==="star"){x.fillStyle=c;x.fill(new Path2D(STAR4));x.fillStyle="#0C0C0E";x.fill(new Path2D(STAR8));}
