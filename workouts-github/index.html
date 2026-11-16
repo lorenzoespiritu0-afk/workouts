@@ -2600,7 +2600,7 @@ async function applySharing(){
     writeDoc("prof",remote.db.collection("profile").doc("main"),()=>null);
   }
 }
-function upsert(s){s.updatedAt=Date.now();if(!s.created)s.created=s.updatedAt;sessions[s.id]=s;invalidate();saveLocal();render();pushSession(s);setTimeout(()=>{checkRanks();if(!$("scrim").classList.contains("open"))checkLongGoals();else pendingGoalCheck=true;},50);}
+function upsert(s){try{refreshEfforts(s);}catch(e){}s.updatedAt=Date.now();if(!s.created)s.created=s.updatedAt;sessions[s.id]=s;invalidate();saveLocal();render();pushSession(s);setTimeout(()=>{checkRanks();if(!$("scrim").classList.contains("open"))checkLongGoals();else pendingGoalCheck=true;},50);}
 let pendingGoalCheck=false;
 function upsertSeg(g){g.updatedAt=Date.now();segments[g.id]=g;invalidate();saveLocal();render();pushSegment(g);}
 async function enterViewer(db){
@@ -8585,21 +8585,28 @@ function backupBanner(){
 let trophyFilter="next",logLimit=30;
 
 /* ---------- backfill new best-effort distances from saved routes ---------- */
-function effortsFromTrack(tr){
+/* Fastest stretch of each distance, from the track's timestamps. GPS wobble makes a track measure a bit long, so
+   when the session has its own distance (from the watch, or as you corrected it) the track is scaled to match:
+   a 5K run in 19:22 by the watch can't produce a 19:07 "5K" from a track that measured 5.08 km. */
+function effortsFromTrack(tr,distKm){
   const n=tr.length,cum=[0];for(let i=1;i<n;i++)cum.push(cum[i-1]+hav(tr[i-1][0],tr[i-1][1],tr[i][0],tr[i][1]));
+  if(distKm>0&&cum[n-1]>0){const k=distKm*1000/cum[n-1];if(k>.8&&k<1.2&&Math.abs(k-1)>.001)for(let i=0;i<n;i++)cum[i]*=k;}
   const t=tr.map(p=>p[3]),out={};
   for(const [D] of EFFORTS.run){if(cum[n-1]<D)continue;let best=null,j=0;
     for(let i=0;i<n;i++){if(j<i)j=i;while(j<n&&cum[j]-cum[i]<D)j++;if(j>=n)break;const seg=cum[j]-cum[j-1],need=D-(cum[j-1]-cum[i]);const tt=t[j-1]+(seg>0?need/seg:0)*(t[j]-t[j-1])-t[i];if(tt>0&&(best==null||tt<best))best=tt;}
     if(best)out[String(D)]=Math.round(best);}
   return out;
 }
+function refreshEfforts(s){
+  if(s.type!=="run"||!hasTimes(s))return false;const e=effortsFromTrack(s.track,s.dist),old=s.efforts||{};
+  const nx={...old};for(const [D] of EFFORTS.run){const k=String(D);if(e[k])nx[k]=e[k];else if(old[k]&&s.dist*1000<D*.99)delete nx[k];}
+  const ch=JSON.stringify(nx)!==JSON.stringify(old);if(ch)s.efforts=nx;return ch;
+}
 function backfillEfforts(){
-  if(viewer||(settings.effortsV||0)>=2)return;
+  if(viewer||(settings.effortsV||0)>=3)return;
   let n=0;
-  for(const s of live()){if(s.type!=="run"||!hasTimes(s))continue;const e=effortsFromTrack(s.track);let ch=false;s.efforts=s.efforts||{};
-    for(const k of ["800","16093.4"])if(e[k]&&!s.efforts[k]){s.efforts[k]=e[k];ch=true;}
-    if(ch){s.updatedAt=Date.now();pushSession(s);n++;}}
-  settings.effortsV=2;invalidate();saveLocal();if(n)render();
+  for(const s of live())if(refreshEfforts(s)){s.updatedAt=Date.now();pushSession(s);n++;}
+  settings.effortsV=3;settings.updatedAt=Date.now();invalidate();saveLocal();try{pushSettings();}catch(e){}if(n)render();
 }
 
 /* ================= workout targets ================= */
