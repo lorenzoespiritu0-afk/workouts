@@ -6778,7 +6778,10 @@ function speedMap(tr,cam,o,ex,dur){
   for(let i=0;i<N;i++){let a=0,ww=0;for(let j=-Rr;j<=Rr;j++){const q=Math.max(0,Math.min(N-1,i+j));a+=lr[q]*K[j+Rr];ww+=K[j+Rr];}rate[i]=Math.exp(a/ww);}
   for(let i=1;i<N;i++)out[i]=out[i-1]+(1/fps)/((rate[i-1]+rate[i])/2);
   const at=(A,t)=>{const f=Math.max(0,Math.min(N-1,t*fps)),i0=Math.floor(f),i1=Math.min(N-1,i0+1);return A[i0]+(A[i1]-A[i0])*(f-i0);};
-  const m={runs,out:out[N-1],rate,R:R*k,outAt:t=>at(out,t),rateAt:t=>at(rate,t)};
+  // the player can't follow a smooth ramp (Safari stalls every time the speed changes), so live playback uses
+  // just three speeds: normal, the base speed-up, and the fast-forward; exports use the smooth curve
+  const stepAt=t=>{const r=at(rate,t);return r<1.05?1:r>(k+R*k)/2?R*k:k;};
+  const m={runs,out:out[N-1],rate,R:R*k,outAt:t=>at(out,t),rateAt:t=>at(rate,t),stepAt};
   if(ex){ex._spdK=key;ex._spd=m;}return m;
 }
 function drawSpeedBadge(x,r,W,H,u){
@@ -6813,7 +6816,7 @@ function drawPoseFrame(x,v,tr,t,W,H,o,extra){
   if(o.bars)drawBars(x,W,H,1);
   if(o.meter&&!clean)drawMeter(x,cam,t,ts,W,H,o.col,u,Math.min(1,ts!=null?(t-ts)/.5:1));
   if(o.endStats&&extra)drawEndStats(x,extra,t,dur0,W,H,o.col,u);
-  if(o.speed&&o.speed!=="off"&&o.speedBadge!==false){const m=speedMap(tr,cam,o,extra,dur0);if(m&&m.rate)drawSpeedBadge(x,m.rateAt(t),W,H,u);}
+  if(o.speed&&o.speed!=="off"&&o.speedBadge!==false){const m=speedMap(tr,cam,o,extra,dur0);if(m&&m.rate)drawSpeedBadge(x,m.rateAt(t)>1.4?m.stepAt(t):m.rateAt(t),W,H,u);}
   if(hasIntro)drawIntro(x,W,H,t,D,o,extra.I,extra.sticker);
   if(o.timer&&!(hasIntro&&t<D)){const t0=extra&&extra.climbT!=null?extra.climbT:tr.T[0],tt=Math.max(0,Math.min(t,tr.T[tr.n-1])-t0),m=Math.floor(tt/60),s=tt%60;
     x.save();x.font=`700 ${Math.round(46*u)}px "WkMono",monospace`;x.fillStyle="#FFFFFF";x.shadowColor="rgba(0,0,0,.6)";x.shadowBlur=14*u;x.textBaseline="alphabetic";
@@ -6942,7 +6945,7 @@ async function exportPoseWC(file,url,tr,o,extra,onProg,cancel){
         if(lastPF!=null&&md.presentedFrames-lastPF>1&&rate>.12){rate=Math.max(.12,rate*.8);v.playbackRate=rate;}lastPF=md.presentedFrames;
         const t=md.mediaTime;
         const ot=sped?spd.outAt(t):t;
-        if(t>lastT+1e-4&&ot>lastOT+1/45){lastT=t;lastOT=ot;drawPoseFrame(x,v,tr,t,W,H,o,extra);const vf=new VideoFrame(cv,{timestamp:Math.round(ot*1e6)});const key=ot-lastKey>=2;if(key)lastKey=ot;enc.encode(vf,{keyFrame:key});vf.close();onProg(Math.min(.99,t/dur));}
+        if(t>lastT+1e-4&&ot>=lastOT+1/31){lastT=t;lastOT=ot;drawPoseFrame(x,v,tr,t,W,H,o,extra);const vf=new VideoFrame(cv,{timestamp:Math.round(ot*1e6)});const key=ot-lastKey>=2;if(key)lastKey=ot;enc.encode(vf,{keyFrame:key});vf.close();onProg(Math.min(.99,t/dur));}
         if(enc.encodeQueueSize>3){v.pause();while(enc.encodeQueueSize>1&&!cancel.on&&!err)await new Promise(r=>setTimeout(r,6));if(!done&&!v.ended)v.play().catch(()=>{});}
         if(!done)v.requestVideoFrameCallback(step);};
       v.requestVideoFrameCallback(step);v.addEventListener("ended",()=>setTimeout(fin,200),{once:true});
@@ -6976,7 +6979,7 @@ async function exportPoseVideo(url,tr,o,extra,onProg,cancel){
     const stopped=new Promise(r=>rec.onstop=r);
     drawPoseFrame(x,v,tr,0,W,H,o,extra);rec.start(250);
     await new Promise((res,rej)=>{let done=false;const fin=()=>{if(!done){done=true;res();}};
-      const paint=()=>{if(done)return;if(cancel.on){v.pause();fin();return;}const sm=o.speed&&o.speed!=="off"?speedMap(tr,extra&&extra.cam,o,extra,v.duration):null;if(sm&&sm.rate){const r=sm.rateAt(v.currentTime);if(Math.abs(v.playbackRate-r)>.05)v.playbackRate=r;}drawPoseFrame(x,v,tr,v.currentTime,W,H,o,extra);onProg(v.currentTime/(v.duration||1));
+      const paint=()=>{if(done)return;if(cancel.on){v.pause();fin();return;}const sm=o.speed&&o.speed!=="off"?speedMap(tr,extra&&extra.cam,o,extra,v.duration):null;if(sm&&sm.rate){const r=sm.stepAt(v.currentTime);if(Math.abs(v.playbackRate-r)>.01)v.playbackRate=r;}drawPoseFrame(x,v,tr,v.currentTime,W,H,o,extra);onProg(v.currentTime/(v.duration||1));
         if("requestVideoFrameCallback" in v)v.requestVideoFrameCallback(paint);else requestAnimationFrame(paint);};
       v.addEventListener("ended",()=>{drawPoseFrame(x,v,tr,v.duration,W,H,o,extra);setTimeout(fin,180);},{once:true});
       v.play().catch(()=>{v.muted=true;return v.play();}).then(paint).catch(rej);});
@@ -7089,7 +7092,8 @@ function openTracker(link,back){
       el.textContent=o.speed==="off"?"Plays at normal speed. Turn this on to fast-forward the stretches where you hang still.":!m?"":!m.runs?"No still stretches long enough to speed up in this clip.":!m.rate?`Already under a minute (${fmtS(d)}), so nothing needs speeding up.`:`Fast-forwards ${m.runs} still stretch${m.runs===1?"":"es"}${o.speed==="fit"?` at up to ${Math.round(m.R*10)/10}×`:""}: ${fmtS(d)} becomes ${fmtS(m.out)}.${m.out>60?" Still over a minute.":""} Sound is left off when sped up.`;};
     setTimeout(spdHint,0);
     const frame=()=>{if(!document.body.contains(cv)){stopPreview();return;}o.col=colOf();
-      {const m=o.speed!=="off"?speedMap(tr,st.cam,o,st,tr.dur||pv.duration||0):null,r=m&&m.rate?m.rateAt(pv.currentTime):1;if(Math.abs(pv.playbackRate-r)>.05)try{pv.playbackRate=r;}catch(e){}}if(pv.readyState>=2)drawPoseFrame(x,pv,tr,pv.currentTime,cv.width,cv.height,o,st);const sk=$("mt-seek");if(sk&&!sk.matches(":active")&&pv.duration)sk.value=Math.round(pv.currentTime/pv.duration*1000);loop=requestAnimationFrame(frame);};
+      {const m=o.speed!=="off"?speedMap(tr,st.cam,o,st,tr.dur||pv.duration||0):null,r=m&&m.rate?m.stepAt(pv.currentTime):1,now=performance.now();
+        if(Math.abs(pv.playbackRate-r)>.01&&(!st._rateT||now-st._rateT>500||r===1)){st._rateT=now;try{pv.playbackRate=r;}catch(e){}}}if(pv.readyState>=2)drawPoseFrame(x,pv,tr,pv.currentTime,cv.width,cv.height,o,st);const sk=$("mt-seek");if(sk&&!sk.matches(":active")&&pv.duration)sk.value=Math.round(pv.currentTime/pv.duration*1000);loop=requestAnimationFrame(frame);};
     vidReady(pv).then(()=>{pv.play().catch(()=>{});frame();});
     const setPlay=()=>{const b=$("mt-play");if(!b)return;const pl=!pv.paused;b.innerHTML=icon(pl?"pause":"play");b.setAttribute("aria-label",pl?"Pause":"Play");b.classList.toggle("off",!pl);};
     pv.addEventListener("play",setPlay);pv.addEventListener("pause",setPlay);
