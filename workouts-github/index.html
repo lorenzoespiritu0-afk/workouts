@@ -6780,7 +6780,7 @@ function speedMap(tr,cam,o,ex,dur){
   const at=(A,t)=>{const f=Math.max(0,Math.min(N-1,t*fps)),i0=Math.floor(f),i1=Math.min(N-1,i0+1);return A[i0]+(A[i1]-A[i0])*(f-i0);};
   // the player can't follow a smooth ramp (Safari stalls every time the speed changes), so live playback uses
   // just three speeds: normal, the base speed-up, and the fast-forward; exports use the smooth curve
-  const stepAt=t=>{const r=at(rate,t);return r<1.05?1:r>(k+R*k)/2?R*k:k;};
+  const STEPS=[1,1.25,1.5,2,2.5,3,4,5,6,8,10,12,16,20],stepAt=t=>{const r=at(rate,t);if(r<1.08)return 1;let b=1;for(const q of STEPS)if(q<=r*1.05)b=q;return b;};
   const m={runs,out:out[N-1],rate,R:R*k,outAt:t=>at(out,t),rateAt:t=>at(rate,t),stepAt};
   if(ex){ex._spdK=key;ex._spd=m;}return m;
 }
@@ -6938,14 +6938,20 @@ async function exportPoseWC(file,url,tr,o,extra,onProg,cancel){
     const samples=[];let desc=null,err=null;
     const enc=new VideoEncoder({output:(c,m)=>{const d=new Uint8Array(c.byteLength);c.copyTo(d);samples.push({data:d,pts:c.timestamp,dur:c.duration||0,key:c.type==="key"});if(m&&m.decoderConfig&&m.decoderConfig.description)desc=toU8(m.decoderConfig.description);},error:e=>{err=e;}});
     enc.configure(pk.cfg);
-    const dur=v.duration;let lastT=-1,lastOT=-1,lastKey=-9,lastPF=null,rate=.5;
+    const dur=v.duration;let lastT=-1,lastKey=-9,lastPF=null,rate=.5,accN=0,nextTick=0;
+    const acc=document.createElement("canvas");acc.width=W;acc.height=H;const ax=acc.getContext("2d");
     await new Promise((res,rej)=>{let done=false;const fin=()=>{if(!done){done=true;res();}};
       const step=async(now,md)=>{if(done)return;if(cancel.on||err){v.pause();fin();return;}
         // frames skipped by the player mean we're too slow at this speed: slow playback down
         if(lastPF!=null&&md.presentedFrames-lastPF>1&&rate>.12){rate=Math.max(.12,rate*.8);v.playbackRate=rate;}lastPF=md.presentedFrames;
         const t=md.mediaTime;
-        const ot=sped?spd.outAt(t):t;
-        if(t>lastT+1e-4&&ot>=lastOT+1/31){lastT=t;lastOT=ot;drawPoseFrame(x,v,tr,t,W,H,o,extra);const vf=new VideoFrame(cv,{timestamp:Math.round(ot*1e6)});const key=ot-lastKey>=2;if(key)lastKey=ot;enc.encode(vf,{keyFrame:key});vf.close();onProg(Math.min(.99,t/dur));}
+        if(!sped){if(t>lastT+1e-4){lastT=t;drawPoseFrame(x,v,tr,t,W,H,o,extra);const vf=new VideoFrame(cv,{timestamp:Math.round(t*1e6)});const key=t-lastKey>=2;if(key)lastKey=t;enc.encode(vf,{keyFrame:key});vf.close();onProg(Math.min(.99,t/dur));}}
+        else if(t>lastT+1e-4){lastT=t;const ot=spd.outAt(t);drawPoseFrame(x,v,tr,t,W,H,o,extra);
+          // running average of every source frame since the last output frame: fast parts get a soft motion blur
+          accN++;ax.globalAlpha=1/accN;ax.drawImage(cv,0,0);
+          if(ot>=nextTick-.4/30){const vf=new VideoFrame(acc,{timestamp:Math.round(nextTick*1e6)});const key=nextTick-lastKey>=2;if(key)lastKey=nextTick;enc.encode(vf,{keyFrame:key});vf.close();
+            accN=0;nextTick+=1/30;if(nextTick<ot)nextTick=Math.ceil(ot*30)/30;}
+          onProg(Math.min(.99,t/dur));}
         if(enc.encodeQueueSize>3){v.pause();while(enc.encodeQueueSize>1&&!cancel.on&&!err)await new Promise(r=>setTimeout(r,6));if(!done&&!v.ended)v.play().catch(()=>{});}
         if(!done)v.requestVideoFrameCallback(step);};
       v.requestVideoFrameCallback(step);v.addEventListener("ended",()=>setTimeout(fin,200),{once:true});
@@ -7093,7 +7099,7 @@ function openTracker(link,back){
     setTimeout(spdHint,0);
     const frame=()=>{if(!document.body.contains(cv)){stopPreview();return;}o.col=colOf();
       {const m=o.speed!=="off"?speedMap(tr,st.cam,o,st,tr.dur||pv.duration||0):null,r=m&&m.rate?m.stepAt(pv.currentTime):1,now=performance.now();
-        if(Math.abs(pv.playbackRate-r)>.01&&(!st._rateT||now-st._rateT>500||r===1)){st._rateT=now;try{pv.playbackRate=r;}catch(e){}}}if(pv.readyState>=2)drawPoseFrame(x,pv,tr,pv.currentTime,cv.width,cv.height,o,st);const sk=$("mt-seek");if(sk&&!sk.matches(":active")&&pv.duration)sk.value=Math.round(pv.currentTime/pv.duration*1000);loop=requestAnimationFrame(frame);};
+        if(Math.abs(pv.playbackRate-r)>.01&&(!st._rateT||now-st._rateT>220)){st._rateT=now;try{pv.playbackRate=r;}catch(e){}}}if(pv.readyState>=2)drawPoseFrame(x,pv,tr,pv.currentTime,cv.width,cv.height,o,st);const sk=$("mt-seek");if(sk&&!sk.matches(":active")&&pv.duration)sk.value=Math.round(pv.currentTime/pv.duration*1000);loop=requestAnimationFrame(frame);};
     vidReady(pv).then(()=>{pv.play().catch(()=>{});frame();});
     const setPlay=()=>{const b=$("mt-play");if(!b)return;const pl=!pv.paused;b.innerHTML=icon(pl?"pause":"play");b.setAttribute("aria-label",pl?"Pause":"Play");b.classList.toggle("off",!pl);};
     pv.addEventListener("play",setPlay);pv.addEventListener("pause",setPlay);
