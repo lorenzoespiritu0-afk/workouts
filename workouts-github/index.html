@@ -6713,14 +6713,60 @@ function drawIntro_(x,W,H,t,D,o,I,sticker){
   x.restore();
 }
 function fit2(x,t,font,size,maxW,min){let sz=size;x.font=font(sz);while(x.measureText(t).width>maxW&&sz>min){sz-=4;x.font=font(sz);}return sz;}
+/* ---------- route preview: before you leave the ground, the camera starts close on the top of the route,
+   pans down the line you're about to climb, then hands over to the normal camera as you start ---------- */
+const smooth01=q=>q<=0?0:q>=1?1:q*q*(3-2*q);
+function routeTop(cam,ts){if(cam._top!=null&&cam._ts===ts)return cam._top;let best=1e9,bt=ts;for(let i=Math.floor(ts*cam.fps);i<cam.N;i++)if(cam.cy[i]<best){best=cam.cy[i];bt=i/cam.fps;}cam._top=bt;cam._ts=ts;return bt;}
+function previewView(cam,tr,o,t,ts){
+  if(!cam||ts==null||ts<1||t>=ts)return null;
+  const top=routeTop(cam,ts);if(top-ts<1)return null;
+  const s=t/ts,r=smooth01((s-.22)/.56),tau=top-(top-ts)*r,W=tr.w,H=tr.h,a=outAspect(o,tr);
+  let h=Math.max(H*.2,camAt(cam,cam.bh,tau)*(CAM_ZOOM[o.zoom||"medium"]||2)),w=h*a;if(w>W){w=W;h=w/a;}if(h>H){h=H;w=h*a;}
+  const cx=camAt(cam,cam.cx,tau),cy=camAt(cam,cam.cy,tau)-h*(.16*(1-r)+.06)-h*.03*(1-smooth01(s/.22));// a slow drift while it holds on the top
+  const v=[Math.max(0,Math.min(W-w,cx-w/2)),Math.max(0,Math.min(H-h,cy-h/2)),w,h],q=smooth01((s-.8)/.2);
+  if(q<=0)return v;const f=camView(cam,tr,o,t);return v.map((p,i)=>p+(f[i]-p)*q);
+}
+/* colour looks, done with blend modes so they work on iPhone too (Safari has no canvas filters) */
+function applyLook(x,W,H,look){
+  if(!look||look==="natural")return;x.save();x.setTransform(1,0,0,1,0,0);const cw=x.canvas.width,ch=x.canvas.height;
+  if(look==="mono"){x.globalCompositeOperation="saturation";x.fillStyle="#808080";x.fillRect(0,0,cw,ch);x.globalCompositeOperation="soft-light";x.globalAlpha=.5;x.drawImage(x.canvas,0,0);}
+  else if(look==="warm"){x.globalCompositeOperation="soft-light";x.fillStyle="rgba(255,150,50,.38)";x.fillRect(0,0,cw,ch);}
+  else if(look==="cool"){x.globalCompositeOperation="soft-light";x.fillStyle="rgba(50,130,255,.34)";x.fillRect(0,0,cw,ch);}
+  else if(look==="punchy"){x.globalCompositeOperation="soft-light";x.globalAlpha=.65;x.drawImage(x.canvas,0,0);}
+  x.restore();
+}
+function drawVignette(x,W,H){const g=x.createRadialGradient(W/2,H/2,Math.min(W,H)*.35,W/2,H/2,Math.hypot(W,H)*.58);g.addColorStop(0,"rgba(0,0,0,0)");g.addColorStop(1,"rgba(0,0,0,.55)");x.fillStyle=g;x.fillRect(0,0,W,H);}
+function drawBars(x,W,H,q){const b=(H>W?H*.085:H*.11)*q;x.fillStyle="#000";x.fillRect(0,0,W,b);x.fillRect(0,H-b,W,b);}
+// height meter: how far up the route you are, from where you left the ground to your high point
+function drawMeter(x,cam,t,ts,W,H,col,u,A){
+  if(!cam||ts==null||t<ts)return;const top=routeTop(cam,ts),y0=camAt(cam,cam.cy,ts),y1=camAt(cam,cam.cy,top);if(y0-y1<10)return;
+  const p=Math.max(0,Math.min(1,(y0-camAt(cam,cam.cy,Math.min(t,top+.01)))/(y0-y1))),hh=H*(H>W?.34:.5),X=W-56*u,Y=H*(H>W?.3:.25);
+  x.save();x.globalAlpha=A;x.fillStyle="rgba(255,255,255,.22)";x.fillRect(X,Y,6*u,hh);x.fillStyle=col;x.fillRect(X,Y+hh*(1-p),6*u,hh*p);
+  for(let i=0;i<=4;i++){x.fillStyle="rgba(255,255,255,.55)";x.fillRect(X-8*u,Y+hh*i/4-1*u,6*u,2*u);}
+  x.beginPath();x.arc(X+3*u,Y+hh*(1-p),9*u,0,Math.PI*2);x.fillStyle="#fff";x.fill();
+  x.font=`700 ${Math.round(22*u)}px "WkMono",monospace`;x.textAlign="right";x.fillStyle="#fff";x.shadowColor="rgba(0,0,0,.6)";x.shadowBlur=8*u;x.fillText(`${Math.round(p*100)}%`,X-16*u,Y+hh*(1-p)+8*u);x.restore();
+}
+// stats at the top: time on the wall, hand moves, rests
+function drawEndStats(x,st,t,dur,W,H,col,u){
+  const S=st&&st.stats;if(!S)return;const q=Math.max(0,Math.min(1,(t-(dur-2.8))/.45));if(q<=0)return;
+  const rows=[["Time",`${Math.floor(S.time/60)}:${(S.time%60).toFixed(1).padStart(4,"0")}`],["Moves",String(S.moves)],["Rests",String(S.rests)]];
+  const M=64*u,cw=(W-2*M)/3,y=H>W?H*.8:H*.78;
+  x.save();x.globalAlpha=q;const g=x.createLinearGradient(0,y-80*u,0,H);g.addColorStop(0,"rgba(0,0,0,0)");g.addColorStop(1,"rgba(0,0,0,.55)");x.fillStyle=g;x.fillRect(0,y-80*u,W,H-y+80*u);
+  x.fillStyle=col;x.fillRect(M,y-34*u,(W-2*M)*easeOut(q),3*u);
+  rows.forEach(([l,v],i)=>{const cx=M+cw*i;x.fillStyle="rgba(255,255,255,.7)";capsT(x,l.toUpperCase(),cx,y+4*u,WSF.caps(22*u),22*u*.34,"left");x.font=SXF.wide(64*u);x.fillStyle="#FFFFFF";x.textAlign="left";x.fillText(v,cx,y+80*u);});
+  x.restore();
+}
 function drawPoseFrame(x,v,tr,t,W,H,o,extra){
   const cam=extra&&extra.cam,hasIntro=!!(extra&&extra.I&&o.intro&&o.intro!=="off"),D=hasIntro?introDur(o,extra):0;
-  let vp=camView(cam,tr,o,t);
+  let vp=camView(cam,tr,o,t);const ts=extra&&extra.climbT!=null?extra.climbT:null,pv=o.preview?previewView(cam,tr,o,t,ts):null;
+  if(pv)vp=pv;
   // with an intro, the camera starts wide and pushes in as the card leaves
-  if(hasIntro&&o.cam==="follow"){const wide=camView(cam,tr,{...o,cam:"full"},t),q=easeOut((t-(D-.7))/1.1);vp=wide.map((a,i)=>a+(vp[i]-a)*q);}
+  else if(hasIntro&&o.cam==="follow"){const wide=camView(cam,tr,{...o,cam:"full"},t),q=easeOut((t-(D-.7))/1.1);vp=wide.map((a,i)=>a+(vp[i]-a)*q);}
   const k=W/vp[2];
   x.drawImage(v,vp[0],vp[1],vp[2],vp[3],0,0,W,H);
+  applyLook(x,W,H,o.look);
   if(o.dim){x.fillStyle="rgba(6,8,12,.42)";x.fillRect(0,0,W,H);}
+  if(o.vign)drawVignette(x,W,H);
   const clean=hasIntro&&t<D-.25;// keep the frame clean under the intro card
   if(!clean){
     // glow: draw the coloured parts small, then scale up; a soft bloom for a fraction of the cost of canvas shadows
@@ -6731,8 +6777,11 @@ function drawPoseFrame(x,v,tr,t,W,H,o,extra){
       x.save();x.imageSmoothingEnabled=true;x.imageSmoothingQuality="high";x.globalAlpha=.9;x.drawImage(G,0,0,W,H);x.restore();}
     x.save();x.scale(k,H/vp[3]);x.translate(-vp[0],-vp[1]);drawPoseLayer(x,tr,t,tr.w,tr.h,o,o.skel==="clean"&&!glow?k:0);x.restore();
     if(o.box&&o.box!=="off")drawTrackBox(x,cam,tr,t,vp,W,H,o,(extra&&extra.label)||"TRACKING");}
+  const portrait=H>W,u=Math.min(W,H)/1080,dur0=tr.dur||v.duration||0;
+  if(o.bars)drawBars(x,W,H,1);
+  if(o.meter&&!clean)drawMeter(x,cam,t,ts,W,H,o.col,u,Math.min(1,ts!=null?(t-ts)/.5:1));
+  if(o.endStats&&extra)drawEndStats(x,extra,t,dur0,W,H,o.col,u);
   if(hasIntro)drawIntro(x,W,H,t,D,o,extra.I,extra.sticker);
-  const portrait=H>W,u=Math.min(W,H)/1080;
   if(o.timer&&!(hasIntro&&t<D)){const t0=extra&&extra.climbT!=null?extra.climbT:tr.T[0],tt=Math.max(0,Math.min(t,tr.T[tr.n-1])-t0),m=Math.floor(tt/60),s=tt%60;
     x.save();x.font=`700 ${Math.round(46*u)}px "WkMono",monospace`;x.fillStyle="#FFFFFF";x.shadowColor="rgba(0,0,0,.6)";x.shadowBlur=14*u;x.textBaseline="alphabetic";
     const ty=portrait?H*.15:80*u,txt=`${m}:${s.toFixed(1).padStart(4,"0")}`;x.textAlign="left";x.fillText(txt,64*u+30*u,ty);
@@ -6904,9 +6953,9 @@ async function exportPoseVideo(url,tr,o,extra,onProg,cancel){
 function openTracker(link,back){
   const st={url:null,A:null,tr:null,stats:null,sticker:null,cam:null,label:"TRACKING"};
   const f=link?sendFacts(link.s,link.i):null,gc=f&&f.p.gc;
-  const o={skel:"neon",trail:"hips",trailLen:"fade",color:gc?"grade":"#CDF54A",dim:false,timer:false,sound:true,sticker:link?"top":"off",intro:link?"title":"off",introLen:"auto",q:"full",cam:"follow",zoom:"medium",shape:"9:16",box:"off",push:false};
-  try{const sv=JSON.parse(localStorage.getItem("workouts-motion-v1")||"{}");for(const k of ["skel","trail","trailLen","color","dim","timer","sound","q","cam","zoom","shape","box","push","introLen","intro"])if(sv[k]!=null)o[k]=sv[k];if(o.color==="grade"&&!gc)o.color="#CDF54A";if(!["off","minimal","top","center","right","under","ledger","lower","frame","hero","corner","panel"].includes(o.intro))o.intro="minimal";if(!link)o.intro="off";else if(o.intro==="off"&&!localStorage.getItem("workouts-motion-intro"))o.intro="minimal";}catch(e){}
-  const saveO=()=>{try{const sv={};for(const k of ["skel","trail","trailLen","color","dim","timer","sound","q","cam","zoom","shape","box","push","introLen","intro"])sv[k]=o[k];localStorage.setItem("workouts-motion-v1",JSON.stringify(sv));}catch(e){}};
+  const o={skel:"neon",trail:"hips",trailLen:"fade",color:gc?"grade":"#CDF54A",dim:false,timer:false,sound:true,sticker:link?"top":"off",intro:link?"title":"off",introLen:"auto",q:"full",cam:"follow",zoom:"medium",shape:"9:16",box:"off",push:false,preview:false,look:"natural",bars:false,vign:false,meter:false,endStats:false};
+  try{const sv=JSON.parse(localStorage.getItem("workouts-motion-v1")||"{}");for(const k of ["skel","trail","trailLen","color","dim","timer","sound","q","cam","zoom","shape","box","push","introLen","intro","preview","look","bars","vign","meter","endStats"])if(sv[k]!=null)o[k]=sv[k];if(o.color==="grade"&&!gc)o.color="#CDF54A";if(!["off","minimal","top","center","right","under","ledger","lower","frame","hero","corner","panel"].includes(o.intro))o.intro="minimal";if(!link)o.intro="off";else if(o.intro==="off"&&!localStorage.getItem("workouts-motion-intro"))o.intro="minimal";}catch(e){}
+  const saveO=()=>{try{const sv={};for(const k of ["skel","trail","trailLen","color","dim","timer","sound","q","cam","zoom","shape","box","push","introLen","intro","preview","look","bars","vign","meter","endStats"])sv[k]=o[k];localStorage.setItem("workouts-motion-v1",JSON.stringify(sv));}catch(e){}};
   const colOf=()=>o.color==="grade"?(gc||"#CDF54A"):o.color;
   let loop=0,pv=null;
   const stopPreview=()=>{cancelAnimationFrame(loop);loop=0;if(pv){pv.pause();pv.remove();pv=null;}};
@@ -6984,9 +7033,10 @@ function openTracker(link,back){
       ${seg("Tracers","trail",[["off","None"],["hips","Hips"],["limbs","Hands and feet"],["all","All"]])}
       ${seg("Tracer length","trailLen",[["fade","Fading"],["full","Whole route"]])}
       ${seg("Color","color",cols)}
+      ${seg("Look","look",[["natural","Natural"],["warm","Warm"],["cool","Cool"],["mono","Mono"],["punchy","Punchy"]])}
       ${link?`<div class="plabel">Intro card</div><div class="tchips mt-ichips" data-mk="intro">${[["off","Off"],["minimal","Minimal"],["top","Top"],["center","Centered"],["right","Right"],["under","Underline"],["ledger","Ledger"],["lower","Lower third"],["frame","Frame"],["hero","Hero"],["corner","Corner"],["panel","Panel"]].map(([v,t])=>`<button class="tchip" data-v="${v}" aria-pressed="${o.intro===v}">${t}</button>`).join("")}</div>`+`<div id="mt-ilen"${o.intro==="off"?" hidden":""}>`+seg("Intro length","introLen",[["auto","Until you start"],["3","3 s"],["5","5 s"]])+`</div>`:`<p class="hint" style="margin-top:14px">To open the video with a title card of your send, start from the send instead: open it, tap Share, then Track a send video.</p>`}
       ${link?seg("Send sticker","sticker",[["off","Off"],["top","At the top"],["all","Whole video"]]):""}
-      <div class="plabel">Extras</div><div class="tchips">${[["push","Push in at the top"],["dim","Darken video"],["timer","Climb timer"],["sound","Keep the sound"]].map(([k,t])=>`<button class="tchip" data-mt="${k}" aria-pressed="${!!o[k]}"${k==="push"&&o.cam!=="follow"?" hidden":""}>${t}</button>`).join("")}</div></div>
+      <div class="plabel">Extras</div><div class="tchips">${[["preview","Show the route first"],["push","Push in at the top"],["meter","Height meter"],["endStats","Stats at the top"],["timer","Climb timer"],["bars","Cinematic bars"],["vign","Vignette"],["dim","Darken video"],["sound","Keep the sound"]].map(([k,t])=>`<button class="tchip" data-mt="${k}" aria-pressed="${!!o[k]}"${k==="push"&&o.cam!=="follow"?" hidden":""}>${t}</button>`).join("")}</div></div>
       <div class="row" style="margin-top:16px"><button class="btn primary" id="mt-save">Save video</button></div>
       <div class="row" style="margin-top:10px"><button class="btn" id="mt-new">Another video</button><button class="btn" id="mt-back">${back?"Back":"Done"}</button></div>`);
     const cv=$("mt-cv"),x=cv.getContext("2d");
@@ -7006,7 +7056,7 @@ function openTracker(link,back){
     $("mt-seek").oninput=e=>{if(pv.duration)pv.currentTime=e.target.value/1000*pv.duration;};
     document.querySelectorAll("[data-mk]").forEach(el=>el.querySelectorAll("button").forEach(b=>b.onclick=()=>{o[el.dataset.mk]=b.dataset.v;el.querySelectorAll("button").forEach(z=>z.setAttribute("aria-pressed",z===b));saveO();prep();haptic("light");
       if(el.dataset.mk==="shape")setStage();if(el.dataset.mk==="intro"){$("mt-ilen").hidden=o.intro==="off";try{localStorage.setItem("workouts-motion-intro","1");}catch(e){}if(pv){pv.currentTime=0;pv.play().catch(()=>{});}}if(el.dataset.mk==="cam"){$("mt-follow").hidden=o.cam!=="follow";const pb=document.querySelector('[data-mt="push"]');if(pb)pb.hidden=o.cam!=="follow";}}));
-    document.querySelectorAll("[data-mt]").forEach(b=>b.onclick=()=>{const k=b.dataset.mt;o[k]=!o[k];b.setAttribute("aria-pressed",o[k]);saveO();});
+    document.querySelectorAll("[data-mt]").forEach(b=>b.onclick=()=>{const k=b.dataset.mt;o[k]=!o[k];b.setAttribute("aria-pressed",o[k]);saveO();if((k==="preview"||k==="endStats")&&o[k]&&pv){pv.currentTime=k==="preview"?0:Math.max(0,(pv.duration||0)-3);pv.play().catch(()=>{});}});
     $("mt-new").onclick=()=>{stopPreview();pick();st.openPicker&&st.openPicker();};
     $("mt-back").onclick=goBack;
     $("mt-save").onclick=()=>render_();
