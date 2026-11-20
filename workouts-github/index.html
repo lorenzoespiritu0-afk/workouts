@@ -6756,6 +6756,38 @@ function drawEndStats(x,st,t,dur,W,H,col,u){
   rows.forEach(([l,v],i)=>{const cx=M+cw*i;x.fillStyle="rgba(255,255,255,.7)";capsT(x,l.toUpperCase(),cx,y+4*u,WSF.caps(22*u),22*u*.34,"left");x.font=SXF.wide(64*u);x.fillStyle="#FFFFFF";x.textAlign="left";x.fillText(v,cx,y+80*u);});
   x.restore();
 }
+/* ---------- speed up still stretches: while you hang working out a crux, the video fast-forwards; it plays at
+   normal speed whenever your body is moving, and never during the intro, the start or the last few seconds ---------- */
+function speedMap(tr,cam,o,ex,dur){
+  if(!o.speed||o.speed==="off"||!cam||!dur)return null;
+  const key=[o.speed,dur,ex&&ex.climbT,o.intro,o.introLen].join("|");if(ex&&ex._spdK===key)return ex._spd;
+  const fps=cam.fps,N=Math.max(2,Math.ceil(dur*fps)+1),tor=tr.torso,w=Math.round(fps*1.5),still=new Uint8Array(N);
+  const D=ex&&ex.I&&o.intro&&o.intro!=="off"?introDur(o,ex):0,p0=Math.max(ex&&ex.climbT!=null?ex.climbT:0,D)+.4,p1=dur-3;
+  for(let i=0;i<N;i++){const t=i/fps;if(t<p0||t>p1)continue;const a=Math.max(0,Math.min(cam.N-1,i-w)),b=Math.max(0,Math.min(cam.N-1,i+w));
+    still[i]=Math.hypot(cam.cx[b]-cam.cx[a],cam.cy[b]-cam.cy[a])/tor<.35?1:0;}
+  // only stretches of 2 s or more count
+  let runs=0;for(let i=0;i<N;){if(!still[i]){i++;continue;}let j=i;while(j<N&&still[j])j++;if(j-i<2*fps)still.fill(0,i,j);else runs++;i=j;}
+  if(!runs)return {runs:0,out:dur,rate:null};
+  let P=0,S=0,Mv=0;for(let i=0;i<N;i++){const t=i/fps;if(t<p0||t>p1)P++;else if(still[i])S++;else Mv++;}P/=fps;S/=fps;Mv/=fps;
+  let R=+o.speed||2,k=1;
+  if(o.speed==="fit"){const tgt=59.5;if(dur<=tgt){const m={runs,out:dur,rate:null};if(ex){ex._spdK=key;ex._spd=m;}return m;}R=2;while(R<8&&P+S/R+Mv>tgt)R+=.5;if(P+S/R+Mv>tgt)k=Math.min(2.5,(S/R+Mv)/Math.max(1,tgt-P));}
+  const lr=new Float32Array(N);for(let i=0;i<N;i++){const t=i/fps;lr[i]=t<p0||t>p1?0:Math.log((still[i]?R:1)*k);}
+  // ease in and out of the fast parts
+  const sg=.3*fps,Rr=Math.ceil(sg*3),K=[];for(let j=-Rr;j<=Rr;j++)K.push(Math.exp(-j*j/(2*sg*sg)));
+  const rate=new Float32Array(N),out=new Float32Array(N);
+  for(let i=0;i<N;i++){let a=0,ww=0;for(let j=-Rr;j<=Rr;j++){const q=Math.max(0,Math.min(N-1,i+j));a+=lr[q]*K[j+Rr];ww+=K[j+Rr];}rate[i]=Math.exp(a/ww);}
+  for(let i=1;i<N;i++)out[i]=out[i-1]+(1/fps)/((rate[i-1]+rate[i])/2);
+  const at=(A,t)=>{const f=Math.max(0,Math.min(N-1,t*fps)),i0=Math.floor(f),i1=Math.min(N-1,i0+1);return A[i0]+(A[i1]-A[i0])*(f-i0);};
+  const m={runs,out:out[N-1],rate,R:R*k,outAt:t=>at(out,t),rateAt:t=>at(rate,t)};
+  if(ex){ex._spdK=key;ex._spd=m;}return m;
+}
+function drawSpeedBadge(x,r,W,H,u){
+  if(r<1.4)return;const a=Math.min(1,(r-1.4)/.6);x.save();x.globalAlpha=a;const txt=`${r>=9.5?Math.round(r):(Math.round(r*2)/2)}×`;
+  x.font=`700 ${Math.round(30*u)}px "WkMono",monospace`;const tw=x.measureText(txt).width,X=W-64*u-tw-56*u,Y=H>W?H*.12:60*u;
+  rrPath(x,X,Y,tw+56*u,52*u,26*u);x.fillStyle="rgba(0,0,0,.45)";x.fill();
+  x.fillStyle="#FFFFFF";for(const dx of [0,13*u]){x.beginPath();x.moveTo(X+16*u+dx,Y+16*u);x.lineTo(X+28*u+dx,Y+26*u);x.lineTo(X+16*u+dx,Y+36*u);x.closePath();x.fill();}
+  x.textAlign="left";x.textBaseline="middle";x.fillText(txt,X+46*u,Y+27*u);x.restore();
+}
 function drawPoseFrame(x,v,tr,t,W,H,o,extra){
   const cam=extra&&extra.cam,hasIntro=!!(extra&&extra.I&&o.intro&&o.intro!=="off"),D=hasIntro?introDur(o,extra):0;
   let vp=camView(cam,tr,o,t);const ts=extra&&extra.climbT!=null?extra.climbT:null,pv=o.preview?previewView(cam,tr,o,t,ts):null;
@@ -6781,6 +6813,7 @@ function drawPoseFrame(x,v,tr,t,W,H,o,extra){
   if(o.bars)drawBars(x,W,H,1);
   if(o.meter&&!clean)drawMeter(x,cam,t,ts,W,H,o.col,u,Math.min(1,ts!=null?(t-ts)/.5:1));
   if(o.endStats&&extra)drawEndStats(x,extra,t,dur0,W,H,o.col,u);
+  if(o.speed&&o.speed!=="off"&&o.speedBadge!==false){const m=speedMap(tr,cam,o,extra,dur0);if(m&&m.rate)drawSpeedBadge(x,m.rateAt(t),W,H,u);}
   if(hasIntro)drawIntro(x,W,H,t,D,o,extra.I,extra.sticker);
   if(o.timer&&!(hasIntro&&t<D)){const t0=extra&&extra.climbT!=null?extra.climbT:tr.T[0],tt=Math.max(0,Math.min(t,tr.T[tr.n-1])-t0),m=Math.floor(tt/60),s=tt%60;
     x.save();x.font=`700 ${Math.round(46*u)}px "WkMono",monospace`;x.fillStyle="#FFFFFF";x.shadowColor="rgba(0,0,0,.6)";x.shadowBlur=14*u;x.textBaseline="alphabetic";
@@ -6893,21 +6926,23 @@ async function exportPoseWC(file,url,tr,o,extra,onProg,cancel){
   try{
     await vidReady(v);
     const pk=await pickVideoCodec(W,H,30);if(!pk)throw new Error("nowc");
-    let audio=null,note="";
-    if(o.sound&&file){try{audio=await encodeAudio(file,v.duration);}catch(e){audio=null;}if(!audio)note="This phone couldn't add the original sound to the smooth version.";}
+    let audio=null,note="";const spd=speedMap(tr,extra&&extra.cam,o,extra,v.duration),sped=!!(spd&&spd.rate);
+    if(sped&&o.sound)note="Sound is left off because parts of the video are sped up.";
+    if(o.sound&&file&&!sped){try{audio=await encodeAudio(file,v.duration);}catch(e){audio=null;}if(!audio)note="This phone couldn't add the original sound to the smooth version.";}
     v.play().catch(()=>{});await vidFrames(v);v.pause();
     if(v.currentTime>0)await new Promise(r=>{const to=setTimeout(r,1500);v.addEventListener("seeked",()=>{clearTimeout(to);r();},{once:true});v.currentTime=0;});
     const cv=document.createElement("canvas");cv.width=W;cv.height=H;const x=cv.getContext("2d");
     const samples=[];let desc=null,err=null;
     const enc=new VideoEncoder({output:(c,m)=>{const d=new Uint8Array(c.byteLength);c.copyTo(d);samples.push({data:d,pts:c.timestamp,dur:c.duration||0,key:c.type==="key"});if(m&&m.decoderConfig&&m.decoderConfig.description)desc=toU8(m.decoderConfig.description);},error:e=>{err=e;}});
     enc.configure(pk.cfg);
-    const dur=v.duration;let lastT=-1,lastKey=-9,lastPF=null,rate=.5;
+    const dur=v.duration;let lastT=-1,lastOT=-1,lastKey=-9,lastPF=null,rate=.5;
     await new Promise((res,rej)=>{let done=false;const fin=()=>{if(!done){done=true;res();}};
       const step=async(now,md)=>{if(done)return;if(cancel.on||err){v.pause();fin();return;}
         // frames skipped by the player mean we're too slow at this speed: slow playback down
         if(lastPF!=null&&md.presentedFrames-lastPF>1&&rate>.12){rate=Math.max(.12,rate*.8);v.playbackRate=rate;}lastPF=md.presentedFrames;
         const t=md.mediaTime;
-        if(t>lastT+1e-4){lastT=t;drawPoseFrame(x,v,tr,t,W,H,o,extra);const vf=new VideoFrame(cv,{timestamp:Math.round(t*1e6)});const key=t-lastKey>=2;if(key)lastKey=t;enc.encode(vf,{keyFrame:key});vf.close();onProg(Math.min(.99,t/dur));}
+        const ot=sped?spd.outAt(t):t;
+        if(t>lastT+1e-4&&ot>lastOT+1/45){lastT=t;lastOT=ot;drawPoseFrame(x,v,tr,t,W,H,o,extra);const vf=new VideoFrame(cv,{timestamp:Math.round(ot*1e6)});const key=ot-lastKey>=2;if(key)lastKey=ot;enc.encode(vf,{keyFrame:key});vf.close();onProg(Math.min(.99,t/dur));}
         if(enc.encodeQueueSize>3){v.pause();while(enc.encodeQueueSize>1&&!cancel.on&&!err)await new Promise(r=>setTimeout(r,6));if(!done&&!v.ended)v.play().catch(()=>{});}
         if(!done)v.requestVideoFrameCallback(step);};
       v.requestVideoFrameCallback(step);v.addEventListener("ended",()=>setTimeout(fin,200),{once:true});
@@ -6921,6 +6956,7 @@ async function exportPoseWC(file,url,tr,o,extra,onProg,cancel){
 }
 /* fallback: replay at normal speed onto a canvas and record it in real time */
 async function exportPoseVideo(url,tr,o,extra,onProg,cancel){
+  if(o.speed&&o.speed!=="off"&&extra&&extra.cam&&tr.dur){const m=speedMap(tr,extra.cam,o,extra,tr.dur);if(m&&m.rate)o={...o,sound:false};}
   const v=hiddenVideo(url,!o.sound);let actx=null;
   if(o.sound){try{const AC=window.AudioContext||window.webkitAudioContext;actx=new AC();actx.resume&&actx.resume();}catch(e){actx=null;}}
   // start playback inside the tap so the browser lets this (unmuted) video play later
@@ -6940,7 +6976,7 @@ async function exportPoseVideo(url,tr,o,extra,onProg,cancel){
     const stopped=new Promise(r=>rec.onstop=r);
     drawPoseFrame(x,v,tr,0,W,H,o,extra);rec.start(250);
     await new Promise((res,rej)=>{let done=false;const fin=()=>{if(!done){done=true;res();}};
-      const paint=()=>{if(done)return;if(cancel.on){v.pause();fin();return;}drawPoseFrame(x,v,tr,v.currentTime,W,H,o,extra);onProg(v.currentTime/(v.duration||1));
+      const paint=()=>{if(done)return;if(cancel.on){v.pause();fin();return;}const sm=o.speed&&o.speed!=="off"?speedMap(tr,extra&&extra.cam,o,extra,v.duration):null;if(sm&&sm.rate){const r=sm.rateAt(v.currentTime);if(Math.abs(v.playbackRate-r)>.05)v.playbackRate=r;}drawPoseFrame(x,v,tr,v.currentTime,W,H,o,extra);onProg(v.currentTime/(v.duration||1));
         if("requestVideoFrameCallback" in v)v.requestVideoFrameCallback(paint);else requestAnimationFrame(paint);};
       v.addEventListener("ended",()=>{drawPoseFrame(x,v,tr,v.duration,W,H,o,extra);setTimeout(fin,180);},{once:true});
       v.play().catch(()=>{v.muted=true;return v.play();}).then(paint).catch(rej);});
@@ -6953,9 +6989,9 @@ async function exportPoseVideo(url,tr,o,extra,onProg,cancel){
 function openTracker(link,back){
   const st={url:null,A:null,tr:null,stats:null,sticker:null,cam:null,label:"TRACKING"};
   const f=link?sendFacts(link.s,link.i):null,gc=f&&f.p.gc;
-  const o={skel:"neon",trail:"hips",trailLen:"fade",color:gc?"grade":"#CDF54A",dim:false,timer:false,sound:true,sticker:link?"top":"off",intro:link?"title":"off",introLen:"auto",q:"full",cam:"follow",zoom:"medium",shape:"9:16",box:"off",push:false,preview:false,look:"natural",bars:false,vign:false,meter:false,endStats:false};
-  try{const sv=JSON.parse(localStorage.getItem("workouts-motion-v1")||"{}");for(const k of ["skel","trail","trailLen","color","dim","timer","sound","q","cam","zoom","shape","box","push","introLen","intro","preview","look","bars","vign","meter","endStats"])if(sv[k]!=null)o[k]=sv[k];if(o.color==="grade"&&!gc)o.color="#CDF54A";if(!["off","minimal","top","center","right","under","ledger","lower","frame","hero","corner","panel"].includes(o.intro))o.intro="minimal";if(!link)o.intro="off";else if(o.intro==="off"&&!localStorage.getItem("workouts-motion-intro"))o.intro="minimal";}catch(e){}
-  const saveO=()=>{try{const sv={};for(const k of ["skel","trail","trailLen","color","dim","timer","sound","q","cam","zoom","shape","box","push","introLen","intro","preview","look","bars","vign","meter","endStats"])sv[k]=o[k];localStorage.setItem("workouts-motion-v1",JSON.stringify(sv));}catch(e){}};
+  const o={skel:"neon",trail:"hips",trailLen:"fade",color:gc?"grade":"#CDF54A",dim:false,timer:false,sound:true,sticker:link?"top":"off",intro:link?"title":"off",introLen:"auto",q:"full",cam:"follow",zoom:"medium",shape:"9:16",box:"off",push:false,preview:false,look:"natural",bars:false,vign:false,meter:false,endStats:false,speed:"off"};
+  try{const sv=JSON.parse(localStorage.getItem("workouts-motion-v1")||"{}");for(const k of ["skel","trail","trailLen","color","dim","timer","sound","q","cam","zoom","shape","box","push","introLen","intro","preview","look","bars","vign","meter","endStats","speed"])if(sv[k]!=null)o[k]=sv[k];if(o.color==="grade"&&!gc)o.color="#CDF54A";if(!["off","minimal","top","center","right","under","ledger","lower","frame","hero","corner","panel"].includes(o.intro))o.intro="minimal";if(!link)o.intro="off";else if(o.intro==="off"&&!localStorage.getItem("workouts-motion-intro"))o.intro="minimal";}catch(e){}
+  const saveO=()=>{try{const sv={};for(const k of ["skel","trail","trailLen","color","dim","timer","sound","q","cam","zoom","shape","box","push","introLen","intro","preview","look","bars","vign","meter","endStats","speed"])sv[k]=o[k];localStorage.setItem("workouts-motion-v1",JSON.stringify(sv));}catch(e){}};
   const colOf=()=>o.color==="grade"?(gc||"#CDF54A"):o.color;
   let loop=0,pv=null;
   const stopPreview=()=>{cancelAnimationFrame(loop);loop=0;if(pv){pv.pause();pv.remove();pv=null;}};
@@ -7034,6 +7070,7 @@ function openTracker(link,back){
       ${seg("Tracer length","trailLen",[["fade","Fading"],["full","Whole route"]])}
       ${seg("Color","color",cols)}
       ${seg("Look","look",[["natural","Natural"],["warm","Warm"],["cool","Cool"],["mono","Mono"],["punchy","Punchy"]])}
+      ${seg("Speed up still parts","speed",[["off","Off"],["2","2×"],["4","4×"],["fit","Fit to 1 min"]])}<p class="hint" id="mt-spd" style="margin-top:6px"></p>
       ${link?`<div class="plabel">Intro card</div><div class="tchips mt-ichips" data-mk="intro">${[["off","Off"],["minimal","Minimal"],["top","Top"],["center","Centered"],["right","Right"],["under","Underline"],["ledger","Ledger"],["lower","Lower third"],["frame","Frame"],["hero","Hero"],["corner","Corner"],["panel","Panel"]].map(([v,t])=>`<button class="tchip" data-v="${v}" aria-pressed="${o.intro===v}">${t}</button>`).join("")}</div>`+`<div id="mt-ilen"${o.intro==="off"?" hidden":""}>`+seg("Intro length","introLen",[["auto","Until you start"],["3","3 s"],["5","5 s"]])+`</div>`:`<p class="hint" style="margin-top:14px">To open the video with a title card of your send, start from the send instead: open it, tap Share, then Track a send video.</p>`}
       ${link?seg("Send sticker","sticker",[["off","Off"],["top","At the top"],["all","Whole video"]]):""}
       <div class="plabel">Extras</div><div class="tchips">${[["preview","Show the route first"],["push","Push in at the top"],["meter","Height meter"],["endStats","Stats at the top"],["timer","Climb timer"],["bars","Cinematic bars"],["vign","Vignette"],["dim","Darken video"],["sound","Keep the sound"]].map(([k,t])=>`<button class="tchip" data-mt="${k}" aria-pressed="${!!o[k]}"${k==="push"&&o.cam!=="follow"?" hidden":""}>${t}</button>`).join("")}</div></div>
@@ -7047,7 +7084,12 @@ function openTracker(link,back){
       const sv=JSON.parse(localStorage.getItem("workouts-send-look-v1")||"{}");for(const k of ["layout","color","font","bg","shadow","outline","date","gym","tries"])if(sv[k]!=null)lo[k]=sv[k];if(sv.accent==="text")lo.accent="text";lo.layout=({tape:"aura",dymo:"plaque",volume:"chrome",diecut:"seal"})[lo.layout]||lo.layout;if(lo.bg==="glass"&&STORY_LAYOUTS.includes(lo.layout))lo.bg="none";
       st.sticker=await drawSendCard(link.s,link.i,lo);}catch(e){st.sticker=null;}}};
     prep();
-    const frame=()=>{if(!document.body.contains(cv)){stopPreview();return;}o.col=colOf();if(pv.readyState>=2)drawPoseFrame(x,pv,tr,pv.currentTime,cv.width,cv.height,o,st);const sk=$("mt-seek");if(sk&&!sk.matches(":active")&&pv.duration)sk.value=Math.round(pv.currentTime/pv.duration*1000);loop=requestAnimationFrame(frame);};
+    const fmtS=t=>`${Math.floor(t/60)}:${String(Math.round(t%60)).padStart(2,"0")}`;
+    const spdHint=()=>{const el=$("mt-spd");if(!el)return;const d=tr.dur||pv.duration||0,m=o.speed==="off"?null:speedMap(tr,st.cam,o,st,d);
+      el.textContent=o.speed==="off"?"Plays at normal speed. Turn this on to fast-forward the stretches where you hang still.":!m?"":!m.runs?"No still stretches long enough to speed up in this clip.":!m.rate?`Already under a minute (${fmtS(d)}), so nothing needs speeding up.`:`Fast-forwards ${m.runs} still stretch${m.runs===1?"":"es"}${o.speed==="fit"?` at up to ${Math.round(m.R*10)/10}×`:""}: ${fmtS(d)} becomes ${fmtS(m.out)}.${m.out>60?" Still over a minute.":""} Sound is left off when sped up.`;};
+    setTimeout(spdHint,0);
+    const frame=()=>{if(!document.body.contains(cv)){stopPreview();return;}o.col=colOf();
+      {const m=o.speed!=="off"?speedMap(tr,st.cam,o,st,tr.dur||pv.duration||0):null,r=m&&m.rate?m.rateAt(pv.currentTime):1;if(Math.abs(pv.playbackRate-r)>.05)try{pv.playbackRate=r;}catch(e){}}if(pv.readyState>=2)drawPoseFrame(x,pv,tr,pv.currentTime,cv.width,cv.height,o,st);const sk=$("mt-seek");if(sk&&!sk.matches(":active")&&pv.duration)sk.value=Math.round(pv.currentTime/pv.duration*1000);loop=requestAnimationFrame(frame);};
     vidReady(pv).then(()=>{pv.play().catch(()=>{});frame();});
     const setPlay=()=>{const b=$("mt-play");if(!b)return;const pl=!pv.paused;b.innerHTML=icon(pl?"pause":"play");b.setAttribute("aria-label",pl?"Pause":"Play");b.classList.toggle("off",!pl);};
     pv.addEventListener("play",setPlay);pv.addEventListener("pause",setPlay);
@@ -7055,7 +7097,7 @@ function openTracker(link,back){
     $("mt-play").onclick=tog;cv.onclick=tog;
     $("mt-seek").oninput=e=>{if(pv.duration)pv.currentTime=e.target.value/1000*pv.duration;};
     document.querySelectorAll("[data-mk]").forEach(el=>el.querySelectorAll("button").forEach(b=>b.onclick=()=>{o[el.dataset.mk]=b.dataset.v;el.querySelectorAll("button").forEach(z=>z.setAttribute("aria-pressed",z===b));saveO();prep();haptic("light");
-      if(el.dataset.mk==="shape")setStage();if(el.dataset.mk==="intro"){$("mt-ilen").hidden=o.intro==="off";try{localStorage.setItem("workouts-motion-intro","1");}catch(e){}if(pv){pv.currentTime=0;pv.play().catch(()=>{});}}if(el.dataset.mk==="cam"){$("mt-follow").hidden=o.cam!=="follow";const pb=document.querySelector('[data-mt="push"]');if(pb)pb.hidden=o.cam!=="follow";}}));
+      if(el.dataset.mk==="shape")setStage();if(el.dataset.mk==="speed"||el.dataset.mk==="intro")spdHint();if(el.dataset.mk==="intro"){$("mt-ilen").hidden=o.intro==="off";try{localStorage.setItem("workouts-motion-intro","1");}catch(e){}if(pv){pv.currentTime=0;pv.play().catch(()=>{});}}if(el.dataset.mk==="cam"){$("mt-follow").hidden=o.cam!=="follow";const pb=document.querySelector('[data-mt="push"]');if(pb)pb.hidden=o.cam!=="follow";}}));
     document.querySelectorAll("[data-mt]").forEach(b=>b.onclick=()=>{const k=b.dataset.mt;o[k]=!o[k];b.setAttribute("aria-pressed",o[k]);saveO();if((k==="preview"||k==="endStats")&&o[k]&&pv){pv.currentTime=k==="preview"?0:Math.max(0,(pv.duration||0)-3);pv.play().catch(()=>{});}});
     $("mt-new").onclick=()=>{stopPreview();pick();st.openPicker&&st.openPicker();};
     $("mt-back").onclick=goBack;
