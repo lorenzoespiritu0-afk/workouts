@@ -4671,8 +4671,8 @@ function openAccolade(id){
   const tt=tierOf(A.xp);
   openSheet(`<div class="celeb"><div class="acc3d">${medal3D({icon:A.icon,c1:tt[3],c2:tt[2],size:Math.min(200,Math.round(innerWidth*.5)),locked:!e,label:A.name,back:e?`${esc(A.name)}<br><span>${fmtDate(e.date,{month:"short",day:"numeric",year:"numeric"})}</span>`:"Locked"})}</div><p class="k3hint">${e?"Drag to spin. Tap to flip.":"Not earned yet. Drag to spin."}</p>
     <h3>${esc(A.name)}</h3><p class="sub">${esc(A.desc)}. Worth ${A.xp||100} XP.</p><span class="xpchip" style="background:${tierOf(A.xp)[2]}">${tierOf(A.xp)[1]}</span>
-    ${e?`<p>Earned ${fmtDate(e.date,{month:"long",day:"numeric",year:"numeric"})}</p><div class="row"><button class="btn" id="aopen">View workout</button><button class="btn primary" id="aclose">Close</button></div>`:`${prog}<div class="row"><button class="btn primary" id="aclose">Close</button></div>`}</div>`);
-  $("aclose").onclick=closeSheet;if($("aopen"))$("aopen").onclick=()=>openDetail(sessions[e.sid]);
+    ${e?`<p>Earned ${fmtDate(e.date,{month:"long",day:"numeric",year:"numeric"})}</p><div class="row"><button class="btn" id="aopen">View workout</button><button class="btn" id="ashare">Share trophy</button></div><div class="row"><button class="btn primary" id="aclose">Close</button></div>`:`${prog}<div class="row"><button class="btn primary" id="aclose">Close</button></div>`}</div>`);
+  $("aclose").onclick=closeSheet;if($("aopen"))$("aopen").onclick=()=>openDetail(sessions[e.sid]);if($("ashare"))$("ashare").onclick=()=>openTrophyShare(id);
   {const m=document.querySelector("#sheet .acc3d .k3");m3Spin(m,{intro:true,turns:1,introMs:1200,alive:()=>m.isConnected&&$("scrim").classList.contains("open")});}
 }
 
@@ -6762,7 +6762,9 @@ function speedMap(tr,cam,o,ex,dur){
   if(!o.speed||o.speed==="off"||!cam||!dur)return null;
   const key=[o.speed,dur,ex&&ex.climbT,o.intro,o.introLen].join("|");if(ex&&ex._spdK===key)return ex._spd;
   const fps=cam.fps,N=Math.max(2,Math.ceil(dur*fps)+1),tor=tr.torso,w=Math.round(fps*1.5),still=new Uint8Array(N);
-  const D=ex&&ex.I&&o.intro&&o.intro!=="off"?introDur(o,ex):0,p0=Math.max(ex&&ex.climbT!=null?ex.climbT:0,D)+.4,p1=dur-3;
+  // never speed up before the climb, or its opening moves: protect until you're clearly off the ground plus 4 s
+  const ct=ex&&ex.climbT!=null?ex.climbT:0,y0=camAt(cam,cam.cy,ct);let lift=ct;for(let i=Math.floor(ct*fps);i<cam.N;i++)if(cam.cy[i]<y0-.6*tor){lift=i/fps;break;}
+  const D=ex&&ex.I&&o.intro&&o.intro!=="off"?introDur(o,ex):0,p0=Math.max(ct+4,lift+3,D+.4),p1=dur-3;
   for(let i=0;i<N;i++){const t=i/fps;if(t<p0||t>p1)continue;const a=Math.max(0,Math.min(cam.N-1,i-w)),b=Math.max(0,Math.min(cam.N-1,i+w));
     still[i]=Math.hypot(cam.cx[b]-cam.cx[a],cam.cy[b]-cam.cy[a])/tor<.35?1:0;}
   // only stretches of 2 s or more count
@@ -7163,6 +7165,53 @@ function openSendShare(s,i,back){
   $("is-extra").innerHTML=`<button class="btn mt-entry" id="ss-track">${icon("climb")} Track a send video</button><p class="hint" style="margin-top:6px">Adds a skeleton and tracers to your send video, with this sticker on it.</p>`;$("ss-track").onclick=()=>openTracker({s,i},()=>openSendShare(s,i,back));
 }
 
+/* ---------- share a trophy: a medal card for any trophy you've earned ---------- */
+async function drawTrophyCanvas(A,e,o){
+  try{await Promise.all([document.fonts.load('80px "WkWide"'),document.fonts.load('40px "WkSans"'),document.fonts.load('italic 40px "WkSerif"')]);}catch(err){}
+  const tt=tierOf(A.xp),W=1080,M=60,cw=o.width==="full"?W-2*M:880,pad=64,R=150;
+  const c=document.createElement("canvas"),x=c.getContext("2d");x.font=WSF.serif(44);
+  const lines=wrapLines(x,A.desc+".",cw-2*pad,WSF.serif(44));
+  const ch=pad+40+2*R+70+(o.title!==false?110:0)+lines.length*58+(o.date?70:0)+(o.xp?90:0)+pad-10;
+  const H=M*2+ch,tot=o.size==="story"?Math.max(1920,H):o.size==="square"?Math.max(1080,H):H;
+  c.width=W;c.height=tot;if(o.canvas!=="none"){x.fillStyle=o.canvas==="dark"?"#14171F":"#F4F5F7";x.fillRect(0,0,W,tot);}
+  const X=(W-cw)/2,Y=(tot-H)/2+M,light=o.style==="light",ink=o.style==="none"?o.color:light?"#14171F":"#FFFFFF";
+  // card
+  if(o.style!=="none"){rrPath(x,X,Y,cw,ch,+o.radius);
+    if(o.style==="tier"){const g=x.createLinearGradient(X,Y,X+cw,Y+ch);g.addColorStop(0,tt[3]);g.addColorStop(1,tt[2]);x.fillStyle=g;}
+    else x.fillStyle=o.style==="glass"?"rgba(20,22,30,.55)":light?"#FFFFFF":"#16181F";
+    x.fill();if(o.style==="glass"){x.strokeStyle="rgba(255,255,255,.18)";x.lineWidth=2;x.stroke();}}
+  const cx=W/2;let y=Y+pad+40+R;
+  // medal: a ribbon, a ring in the tier's colours, the trophy's icon
+  x.save();x.fillStyle=tt[2];x.beginPath();x.moveTo(cx-90,y-R-40);x.lineTo(cx-30,y-R-40);x.lineTo(cx+10,y-40);x.lineTo(cx-50,y-40);x.closePath();x.fill();
+  x.fillStyle=tt[3];x.beginPath();x.moveTo(cx+90,y-R-40);x.lineTo(cx+30,y-R-40);x.lineTo(cx-10,y-40);x.lineTo(cx+50,y-40);x.closePath();x.fill();x.restore();
+  const rg=x.createLinearGradient(cx-R,y-R,cx+R,y+R);rg.addColorStop(0,tt[3]);rg.addColorStop(1,tt[2]);
+  x.save();x.shadowColor="rgba(0,0,0,.35)";x.shadowBlur=30;x.shadowOffsetY=10;x.beginPath();x.arc(cx,y,R,0,Math.PI*2);x.fillStyle=rg;x.fill();x.restore();
+  x.beginPath();x.arc(cx,y,R-18,0,Math.PI*2);x.fillStyle="rgba(0,0,0,.22)";x.fill();x.beginPath();x.arc(cx,y,R-24,0,Math.PI*2);x.fillStyle=rg;x.fill();
+  const hl=x.createRadialGradient(cx-R*.4,y-R*.5,10,cx,y,R);hl.addColorStop(0,"rgba(255,255,255,.45)");hl.addColorStop(.5,"rgba(255,255,255,0)");x.beginPath();x.arc(cx,y,R-24,0,Math.PI*2);x.fillStyle=hl;x.fill();
+  x.font=`${Math.round(R*1.05)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;x.textAlign="center";x.textBaseline="middle";x.fillText(A.icon,cx,y+8);x.textBaseline="alphabetic";
+  y+=R+70;
+  const sub=o.style==="tier"?"rgba(255,255,255,.82)":light?"rgba(20,23,31,.62)":"rgba(255,255,255,.66)";
+  x.fillStyle=sub;capsT(x,"TROPHY UNLOCKED",cx,y,WSF.caps(26),26*.34,"center");y+=20;
+  if(o.title!==false){const fs=fit2(x,A.name,SXF.wide,80,cw-2*pad,40);y+=fs*.95;x.font=SXF.wide(fs);x.fillStyle=ink;x.fillText(A.name,cx,y);y+=20;}
+  x.font=WSF.serif(44);x.fillStyle=o.style==="none"?ink:sub;lines.forEach(l=>{y+=58;x.fillText(l,cx,y);});
+  if(o.date&&e){y+=70;x.fillStyle=sub;capsT(x,`EARNED ${fmtDate(e.date,{month:"short",day:"numeric",year:"numeric"}).toUpperCase()}`,cx,y,WSF.caps(26),26*.34,"center");}
+  if(o.xp){y+=90;const lab=`${tt[1].toUpperCase()}  ·  +${A.xp||100} XP`;const fs=24,tw=capsW(x,lab,WSF.caps(fs),fs*.32)+64;rrPath(x,cx-tw/2,y-44,tw,60,30);
+    x.fillStyle=o.style==="tier"?"rgba(0,0,0,.25)":tt[2];x.fill();x.fillStyle="#FFFFFF";capsT(x,lab,cx,y-5,WSF.caps(fs),fs*.32,"center");}
+  return c;
+}
+function wrapLines(x,txt,maxW,font){x.font=font;const out=[];let cur="";for(const w of txt.split(" ")){const t=cur?cur+" "+w:w;if(x.measureText(t).width>maxW&&cur){out.push(cur);cur=w;}else cur=t;}if(cur)out.push(cur);return out;}
+function openTrophyShare(id){
+  const A=ACC.find(x=>x.id===id),e=getC().earned[id];if(!A||!e)return;
+  const o={style:"dark",radius:"48",size:"fit",canvas:"none",color:"#FFFFFF",width:"card",date:true,xp:true,title:true};
+  imageSheet("Share trophy","A medal card for this trophy. Save it, or copy it straight into your story.",()=>drawTrophyCanvas(A,e,o),(A.name+" trophy").toLowerCase().replace(/[^a-z0-9]+/g,"-")+".png",[
+    {label:"Card",key:"style",opts:[["dark","Dark"],["glass","Glass"],["light","Light"],["tier","Medal colour"],["none","No card"]]},
+    {label:"Corners",key:"radius",opts:[["48","Rounded"],["96","Extra round"],["0","Square"]]},
+    {label:"Width",key:"width",opts:[["card","Card"],["full","Full width"]]},
+    {label:"Behind the card",key:"canvas",opts:[["none","Transparent"],["dark","Dark"],["light","Light"]]},
+    {label:"Size",key:"size",opts:[["fit","Fit"],["story","Story 9:16"],["square","Square"]]},
+    {label:"Text color (no card only)",key:"color",opts:[["#FFFFFF","White"],["#121212","Black"]]}],
+    [["date","Date earned"],["xp","Tier and XP"]],o,()=>openAccolade(id));
+}
 function openPRShare(s){
   const r=getC().by[s.id];if(!r)return;
   const all=[...r.medals.map((m,i)=>({...m,k:"a"+i})),...(r.ymedals||[]).map((m,i)=>({...m,k:"y"+i}))].sort((a,b)=>a.rank-b.rank||(a.year?1:0)-(b.year?1:0));
