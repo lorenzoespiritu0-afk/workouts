@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <title>Workouts</title>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#000000">
@@ -36,7 +36,7 @@
 #mt-seek{width:100%;margin:12px 0 4px;accent-color:var(--accent)}
 .mt-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:10px 0 4px}
 .mt-stats div{background:var(--bg);border-radius:12px;padding:10px;text-align:center}.mt-stats b{display:block;font-family:var(--num);font-size:1.3rem;font-variant-numeric:tabular-nums}.mt-stats span{font-size:.75rem;color:var(--muted)}
-.mt-out{display:block;width:100%;max-height:58vh;border-radius:18px;background:#000;margin:6px 0 4px}
+.mt-out{display:block;width:100%;max-height:58vh;max-height:58svh;border-radius:18px;background:#000;margin:6px 0 4px}
 .mt-entry{width:100%;margin-top:14px;display:inline-flex;align-items:center;justify-content:center;gap:8px}.mt-entry .ico{width:18px;height:18px}
 #mt-pick{display:inline-flex;align-items:center;justify-content:center;gap:8px}#mt-pick .ico{width:20px;height:20px}
 .mt-diag{white-space:pre-line;font-size:.78rem;opacity:.75;margin-top:6px}.mt-alt{display:block;width:max-content;margin:8px auto 0;cursor:pointer}
@@ -154,7 +154,7 @@ body.hm-open{overflow:hidden}
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px);
   padding-bottom:env(safe-area-inset-bottom,0px);
-  --bg:#000000;--surface:#141416;--ink:#F5F5F7;--muted:#8E8E93;--line:#26272B;--chip:#1E1F23;
+  --bg:#000000;--surface:#141416;--ink:#F5F5F7;--muted:#98989D;--line:#26272B;--chip:#1E1F23;
   --run:#4F8DFF;--walk:#A58BFF;--ride:#2FC48D;--lift:#4CC4E0;--climb:#FF5C8A;--hike:#C99A5B;--core:#FF7A59;--hang:#FF8A4C;--pickle:#E4D33C;--stair:#2DD4BF;--other:#8E8E93;
   --gold:#F4B63F;--silver:#C0C6CF;--bronze:#C8834B;--xp:#F4B63F;--accent:#CDF54A;--on-accent:#0B0F00;--red:#FF453A;--accent2:#5AC8FA;
   --num:-apple-system,BlinkMacSystemFont,"SF Pro Display","Inter",system-ui,sans-serif;
@@ -229,6 +229,10 @@ h2.sec i{width:12px;height:12px;border-radius:3px;background:var(--c)}
 .lvnum b{font-family:var(--num);font-weight:800;font-size:3rem;display:block}
 .lvnum span{font-size:.7rem;font-weight:600;opacity:.85}
 .rank{font-family:var(--num);font-weight:800;font-size:2rem;line-height:1}
+.ladv{border-left:3px solid var(--lc);padding:2px 0 2px 10px;margin:6px 0 12px}.ladv b{display:block;font-size:1.02rem}.ladv span{display:block;color:var(--muted);font-size:.88rem;margin-top:2px;line-height:1.35}
+.lfing{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:10px;border-top:1px solid var(--line);font-size:.9rem;color:var(--muted)}.lfing b{font-variant-numeric:tabular-nums;font-size:1rem}
+.lwk{display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted);margin-top:4px}
+.lweeks{display:flex;align-items:flex-end;gap:5px;height:44px;margin-top:14px}.lweeks i{flex:1;border-radius:3px 3px 1px 1px;min-height:3px}
 .xpbar{height:10px;border-radius:5px;background:var(--chip);overflow:hidden;margin:10px 0 6px}
 .xpbar span{display:block;height:100%;background:var(--xp);border-radius:5px;transition:width .9s cubic-bezier(.2,.8,.2,1)}
 .xpinfo{font-size:.85rem;color:var(--muted)}
@@ -332,7 +336,7 @@ th{font-weight:500;color:var(--muted);font-size:.8rem}
 .preview{border-radius:14px;padding:18px;display:grid;place-items:center;min-height:200px;
   background-color:#3b4250;background-image:linear-gradient(45deg,rgba(255,255,255,.06) 25%,transparent 25%,transparent 75%,rgba(255,255,255,.06) 75%),linear-gradient(45deg,rgba(255,255,255,.06) 25%,transparent 25%,transparent 75%,rgba(255,255,255,.06) 75%);background-size:24px 24px;background-position:0 0,12px 12px}
 .preview.light{background-color:#e8eaee;background-image:linear-gradient(45deg,rgba(0,0,0,.05) 25%,transparent 25%,transparent 75%,rgba(0,0,0,.05) 75%),linear-gradient(45deg,rgba(0,0,0,.05) 25%,transparent 25%,transparent 75%,rgba(0,0,0,.05) 75%)}
-.preview img{max-width:100%;max-height:52vh;display:block;-webkit-touch-callout:default}
+.preview img{max-width:100%;max-height:52vh;max-height:52svh;display:block;-webkit-touch-callout:default}
 .opts{display:grid;gap:10px;margin:14px 0 0}
 .toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:10px 16px;border-radius:999px;font-size:.9rem;opacity:0;transition:opacity .2s;pointer-events:none;z-index:30;max-width:90vw;text-align:center}
 .toast.show{opacity:1}
@@ -463,7 +467,7 @@ h2.sec i{width:8px;height:8px;border-radius:50%}
 .gchip{background:#2A2B30;color:var(--ink)}
 .gchip[aria-pressed=true]{background:#F5F5F7;color:#000}
 .typepick button{background:var(--chip);color:var(--ink)}
-nav{background:rgba(10,10,12,.72);-webkit-backdrop-filter:saturate(180%) blur(22px);backdrop-filter:saturate(180%) blur(22px);border-top:1px solid rgba(255,255,255,.08)}
+nav{background:rgba(10,10,12,.72);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);border-top:1px solid rgba(255,255,255,.08)}
 nav .tab{color:#6E6E73}
 nav .tab[aria-current=page]{color:var(--accent)}
 nav .plus{background:var(--accent);color:var(--on-accent);font-weight:500;box-shadow:0 6px 18px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.22)}
@@ -504,8 +508,11 @@ input[type=date],input[type=time]{color-scheme:dark}
 input[type=range]{accent-color:var(--accent)}
 button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible{outline-color:var(--accent)}
 .btn.go{background:var(--accent);color:var(--on-accent)}
-.rec-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--red);margin-right:6px;vertical-align:1px;box-shadow:0 0 0 0 rgba(255,59,71,.6);animation:recpulse 1.6s ease-out infinite}
-@keyframes recpulse{0%{box-shadow:0 0 0 0 rgba(255,59,71,.55)}70%{box-shadow:0 0 0 9px rgba(255,59,71,0)}100%{box-shadow:0 0 0 0 rgba(255,59,71,0)}}
+.rec-dot{display:inline-block;position:relative;width:9px;height:9px;border-radius:50%;background:var(--red);margin-right:6px;vertical-align:1px}
+/* the pulse is a ring that scales and fades: composited, so a long recording doesn't repaint every frame */
+.rec-dot::after{content:"";position:absolute;inset:0;border-radius:50%;background:rgba(255,59,71,.55);animation:recpulse 1.6s ease-out infinite;pointer-events:none}
+@keyframes recpulse{0%{transform:scale(1);opacity:1}70%{transform:scale(3);opacity:0}100%{transform:scale(3);opacity:0}}
+@media (prefers-reduced-motion:reduce){.rec-dot::after{animation:none;opacity:0}}
 @media (prefers-reduced-motion:reduce){.rec-dot{animation:none}}
 .live-banner{border:1px solid rgba(255,59,71,.55)!important;background:linear-gradient(90deg,rgba(255,59,71,.14),rgba(255,59,71,.03)),var(--surface)!important}
 .cday.empty{background:none!important;border:0!important;padding:0}
@@ -557,7 +564,7 @@ nav .plus:active{transform:scale(.9)}
 #app.enter{animation:appin .28s var(--ease-out)}
 @keyframes appin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 /* iOS-style compact title on scroll */
-#mini{position:fixed;top:0;left:0;right:0;z-index:4;height:calc(48px + env(safe-area-inset-top,0px));display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.7);-webkit-backdrop-filter:saturate(180%) blur(22px);backdrop-filter:saturate(180%) blur(22px);border-bottom:1px solid rgba(255,255,255,.07);opacity:0;transform:translateY(-8px);transition:opacity .18s ease,transform .3s var(--ease-out);pointer-events:none}
+#mini{position:fixed;top:0;left:0;right:0;z-index:4;height:calc(48px + env(safe-area-inset-top,0px));display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.7);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid rgba(255,255,255,.07);opacity:0;transform:translateY(-8px);transition:opacity .18s ease,transform .3s var(--ease-out);pointer-events:none}
 #mini b{padding-bottom:13px;font-size:1.02rem;font-weight:600;letter-spacing:-.01em}
 body.scrolled #mini{opacity:1;transform:none}
 /* tab bar with drawn icons */
@@ -581,7 +588,7 @@ nav .plus:active{transform:translateY(-6px) scale(.9)}
 .card .nums{margin-top:6px}
 .card .atplace{display:none}
 /* toast: a floating material, not a white pill */
-.toast{background:rgba(44,44,48,.88);color:#fff;-webkit-backdrop-filter:saturate(180%) blur(24px);backdrop-filter:saturate(180%) blur(24px);border:1px solid rgba(255,255,255,.1);box-shadow:0 12px 34px rgba(0,0,0,.45);font-weight:500;padding:11px 18px;transform:translate(-50%,14px) scale(.96);transition:opacity .2s ease,transform .45s var(--ease-out);max-width:calc(100% - 40px);text-align:center;z-index:30}
+.toast{background:rgba(44,44,48,.88);color:#fff;-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);border:1px solid rgba(255,255,255,.1);box-shadow:0 12px 34px rgba(0,0,0,.45);font-weight:500;padding:11px 18px;transform:translate(-50%,14px) scale(.96);transition:opacity .2s ease,transform .45s var(--ease-out);max-width:calc(100% - 40px);text-align:center;z-index:30}
 .toast.show{transform:translate(-50%,0) scale(1)}
 /* climbing: send counter + steppers */
 .tally{background:radial-gradient(120% 140% at 0% 0%,rgba(255,92,138,.16),transparent 60%),#0B0B0C;border:1px solid rgba(255,92,138,.22);border-radius:22px;padding:14px 12px 12px;margin:18px 0 4px}
@@ -673,7 +680,7 @@ nav .plus:active{transform:translateY(-6px) scale(.9)}
 .tmr-ib.armed{background:var(--red)}
 .tmr-ib.lg{width:64px;height:64px}
 .tmr-ib.lg svg{width:26px;height:26px}
-.tmr-ring{position:relative;width:min(78vw,46vh,400px);aspect-ratio:1;margin:auto 0 0}
+.tmr-ring{position:relative;width:min(78vw,46vh,400px);width:min(78vw,46svh,400px);aspect-ratio:1;margin:auto 0 0}
 .tmr-ring svg{width:100%;height:100%;display:block}
 .tmr-ring .trk{fill:none;stroke:rgba(255,255,255,.08);stroke-width:9}
 .tmr-ring .arc{fill:none;stroke:var(--tc);stroke-width:9;stroke-linecap:round;transition:stroke .4s ease}
@@ -713,7 +720,7 @@ nav .plus:active{transform:translateY(-6px) scale(.9)}
 .xpchip .sym,.redchip .sym{color:inherit}
 
 /* ---------- v3 palette & header refinements ---------- */
-:root{--surface:#121214;--chip:#1C1D21;--line:#232428;--muted:#8E8E93}
+:root{--surface:#121214;--chip:#1C1D21;--line:#232428;--muted:#98989D}
 h1{font-size:2.35rem;letter-spacing:-.035em}
 .top{flex-wrap:nowrap;align-items:center;margin-bottom:16px}
 .top h1{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -739,7 +746,7 @@ nav .tab[aria-current=page] span{color:var(--ink)}
 .tmr-ib.armed{background:var(--red)}
 
 /* ================= v5 sleek: Apple Fitness × Strava ================= */
-:root{--bg:#000;--surface:#1C1C1E;--surface2:#2C2C2E;--chip:#2C2C2E;--line:#38383A;--muted:#8E8E93;--ink:#FFFFFF;
+:root{--bg:#000;--surface:#1C1C1E;--surface2:#2C2C2E;--chip:#2C2C2E;--line:#38383A;--muted:#98989D;--ink:#FFFFFF;
   --num:ui-rounded,"SF Pro Rounded",-apple-system,BlinkMacSystemFont,"Inter",system-ui,sans-serif;
   --display:-apple-system,BlinkMacSystemFont,"SF Pro Display","Inter",system-ui,sans-serif}
 h1{font-family:var(--display);font-weight:700;font-size:2.125rem;letter-spacing:-.022em;line-height:1.05}
@@ -1520,7 +1527,8 @@ function predictTime(D){ // Riegel from recent best efforts
   return best;
 }
 function hardestIn(gs,placeId){let b=-1;for(const s of live())if(s.type==="climb"&&(s.gs||"v")===gs&&(gs!=="color"||(s.placeId||"")===(placeId||""))){const h=hardest(s);if(h&&h.g>b)b=h.g;}return b;}
-function bestE1rm(name){const k=(name||"").trim().toLowerCase();let b=0;if(!k)return 0;for(const s of live())if(s.type==="lift")for(const e of s.ex||[]){const n=(e.name||"").toLowerCase();if(n===k||n.includes(k)||k.includes(n)&&n.length>3){const v=e1rm(e)||0;if(v>b)b=v;}}return b;}
+const E1C=new Map();
+function bestE1rm(name){const k=(name||"").trim().toLowerCase();if(!k)return 0;if(E1C.has(k))return E1C.get(k);let b=0;for(const s of live())if(s.type==="lift")for(const e of s.ex||[]){const n=(e.name||"").toLowerCase();if(n===k||n.includes(k)||k.includes(n)&&n.length>3){const v=e1rm(e)||0;if(v>b)b=v;}}E1C.set(k,b);return b;}
 function currentFTP(){if(bio().ftp)return bio().ftp;const b=best(live().filter(s=>s.type==="ride"),s=>s.p20||null);return b?Math.round(b.v*0.95):0;}
 function ltCurrent(g){
   switch(g.kind){
@@ -1846,12 +1854,12 @@ const ACC=[
   {id:"gx4",icon:"🔁",name:"Four by four",desc:"Top every problem in a 4x4s session",xp:200,test:s=>s.mode==="x4"&&(s.probs||[]).length>=16&&s.probs.every(p=>p.res!=="attempt")},
   {id:"gpyr",icon:"🔺",name:"Pyramid scheme",desc:"Flash every step of a flash pyramid",xp:250,test:s=>s.mode==="pyr"&&(s.probs||[]).length>=10&&s.probs.every(p=>p.res==="flash")},
   // moves and grades
-  {id:"mdyno",icon:"🐒",name:"Dyno-mite",desc:"Send 10 problems with a dyno",xp:150,test:s=>s.type==="climb"&&live().filter(x=>chrono(x,s)<=0).reduce((a,x)=>a+sends(x).filter(p=>(p.moves||[]).includes("Dyno")).length,0)>=10},
-  {id:"mheel",icon:"🦶",name:"Heel hook hero",desc:"Send 25 problems with a heel hook",xp:200,test:s=>s.type==="climb"&&live().filter(x=>chrono(x,s)<=0).reduce((a,x)=>a+sends(x).filter(p=>(p.moves||[]).includes("Heel hook")).length,0)>=25},
+  {id:"mdyno",icon:"🐒",name:"Dyno-mite",desc:"Send 10 problems with a dyno",xp:150,test:s=>s.type==="climb"&&climbCum(s).dyno>=10},
+  {id:"mheel",icon:"🦶",name:"Heel hook hero",desc:"Send 25 problems with a heel hook",xp:200,test:s=>s.type==="climb"&&climbCum(s).heel>=25},
   {id:"mtool",icon:"🧰",name:"Full toolbox",desc:"Use 8 different moves in one session",xp:150,test:s=>new Set((s.probs||[]).flatMap(p=>p.moves||[])).size>=8},
   {id:"mrainbow",icon:"🌈",name:"Taste the rainbow",desc:"Send 6 different colours in one session at a colour-circuit gym",xp:150,test:s=>s.type==="climb"&&s.gs==="color"&&new Set(sends(s).map(p=>p.g)).size>=6},
   {id:"mjoker",icon:"🃏",name:"Why so serious?",desc:"Send a wild card or joker problem",xp:100,test:s=>s.type==="climb"&&s.gs==="color"&&sends(s).some(p=>{const it=gradeList(s.gs,s.placeId)[p.g];return !!it&&(gradeKind(it.label,it.color).wild||/wild|joker/i.test(it.label));})},
-  {id:"mtourist",icon:"🗺️",name:"Grade tourist",desc:"Send problems at 5 different gyms or boards",xp:200,test:s=>s.type==="climb"&&new Set(live().filter(x=>x.type==="climb"&&chrono(x,s)<=0&&sends(x).length).map(sysKey)).size>=5},
+  {id:"mtourist",icon:"🗺️",name:"Grade tourist",desc:"Send problems at 5 different gyms or boards",xp:200,test:s=>s.type==="climb"&&climbCum(s).gyms>=5},
   {id:"mflood",icon:"🌊",name:"Flash flood",desc:"Flash 8 problems in one session",xp:200,test:s=>s.type==="climb"&&flashes(s).length>=8},
   {id:"msiege",icon:"🏰",name:"Siege engine",desc:"Put 30 attempts into one session",xp:100,test:s=>s.type==="climb"&&(s.probs||[]).reduce((a,p)=>a+(p.att||1),0)>=30},
   // pace
@@ -1913,7 +1921,14 @@ function medalLabel(c,rank){
   return (rank===2?"2nd ":"3rd ")+c.kind+" "+c.noun;
 }
 let C=null;
-const invalidate=()=>{C=null};
+/* running climbing tallies up to and including each session, built once per recompute (trophy tests read them) */
+let CUM=null;
+function climbCum(s){
+  if(!CUM){CUM=new Map();let dyno=0,heel=0;const gyms=new Set();
+    for(const x of live().filter(x=>x.type==="climb").sort(chrono)){const S=sends(x);for(const p of S){const m=p.moves||[];if(m.includes("Dyno"))dyno++;if(m.includes("Heel hook"))heel++;}if(S.length)gyms.add(sysKey(x));CUM.set(x.id,{dyno,heel,gyms:gyms.size});}}
+  return CUM.get(s.id)||{dyno:0,heel:0,gyms:0};
+}
+const invalidate=()=>{C=null;CUM=null;E1C.clear();};
 const getC=()=>C||(C=compute());
 function rankCaption(rank,year){return "New "+(rank===1?"":rank===2?"2nd ":"3rd ")+"best of "+(year?year:"all-time")+"!";}
 function compute(){
@@ -2339,6 +2354,31 @@ function loadStats(){
   const histDays=(Date.now()-first)/864e5;
   return {acute,chronic,ratio:chronic>0?acute/chronic:null,enough:histDays>=14};
 }
+/* week-by-week load in rolling 7-day blocks (block 0 = the last 7 days), with fingers (bouldering + board) kept apart:
+   tendons adapt slower than the heart and lungs, so a finger spike matters even when total load looks steady */
+const FINGER_T=new Set(["climb","hang"]);
+function loadWeeks(n=8){
+  const L=live(),W=[...Array(n)].map(()=>({all:0,fing:0}));let first=Infinity;
+  for(const s of L){const d=daysAgo(s),i=Math.floor(Math.max(0,d)/7);first=Math.min(first,parseDate(s.date).getTime());if(d<-1||i>=n)continue;const l=loadOf(s);W[i].all+=l;if(FINGER_T.has(s.type))W[i].fing+=l;}
+  const histW=Math.floor((Date.now()-first)/(7*864e5));
+  // ratio for each block against the four blocks ending with it, like the headline ratio
+  W.forEach((w,i)=>{const ch=W.slice(i,i+4);if(ch.length<4||histW<i+3){w.r=null;w.fr=null;return;}const c=ch.reduce((a,x)=>a+x.all,0)/4,cf=ch.reduce((a,x)=>a+x.fing,0)/4;w.r=c>0?w.all/c:null;w.fr=cf>0?w.fing/cf:null;});
+  let spikes=0;for(const w of W){if(w.r!=null&&w.r>1.5)spikes++;else break;}
+  let rising=0;for(let i=0;i<W.length-1;i++){if(W[i+1].all>0&&W[i].all>W[i+1].all*1.05)rising++;else break;}
+  const peak=Math.max(...W.slice(0,4).map(w=>w.all)),pre=W.slice(spikes,spikes+4),base=pre.length?pre.reduce((a,w)=>a+w.all,0)/pre.length:0;
+  return {W,histW,spikes,rising,peak,base,fr:W[0].fr,fing:W[0].fing};
+}
+// one line on what to do this week, from the ratio, repeated spikes, a run of rising weeks and the finger load
+function loadAdvice(ls,lw){
+  if(!ls.enough||ls.ratio==null)return null;
+  if(lw.spikes>=2)return {c:"var(--red)",t:"Back off this week",x:`That's ${lw.spikes} spike weeks in a row. One big week is fine; stacking them is when injuries happen. Keep this week to about ${Math.round(lw.base)} load, what you did before the jump.`};
+  if(ls.ratio>1.5)return {c:"var(--red)",t:"Add an easy day or two",x:"This week is well above your usual. Fine once, but don't stack another big week on it."};
+  if(lw.fr!=null&&lw.fr>1.5&&lw.fing>60)return {c:PMC_C.neg,t:"Go easy on your fingers",x:"Your bouldering and board load jumped well past your usual. Finger tendons adapt slower than muscles, so keep the next sessions to bigger holds or fewer hard attempts."};
+  if(lw.rising>=3)return {c:PMC_C.neg,t:"Plan a lighter week",x:`Load has risen ${lw.rising} weeks running. A lighter week now (about ${Math.round(lw.peak*.65)} load, two-thirds of your biggest) lets the fitness sink in. Keep a little intensity.`};
+  if(ls.ratio>1.3)return {c:PMC_C.neg,t:"Hold steady next week",x:"You're building fast. Keep next week similar to this one rather than adding more."};
+  if(ls.ratio<.8)return {c:"var(--muted)",t:"Room to build",x:"You're under your usual. If you feel good, add about 10% more time or one extra session."};
+  return {c:PMC_C.pos,t:"Right in the sweet spot",x:"Your load is in line with your recent weeks. Keep the same rhythm, and add no more than about 10% a week."};
+}
 /* ---------- fitness, fatigue, form (Banister model on session load) ---------- */
 const PMC_C={fit:"#4F8DFF",fat:"#E0457A",pos:"#279A6B",neg:"#C9772A"};
 let pmcCache=null;
@@ -2458,7 +2498,10 @@ function recommendations(){
   else if(rec.h>0)out.push({i:"🙂",t:"Nearly recovered",x:`About ${Math.round(rec.h)} hours of recovery left. Light training is fine now, and you'll be ready for a hard session soon.`});
   else out.push({i:"✅",t:"You're recovered",x:"Based on your recent workouts, today is a good day for a quality session if you feel up for it."});
   if(ls.enough&&ls.ratio!=null){
-    if(ls.ratio>1.5)out.push({i:"⚠️",t:"Your training load jumped",x:`This week's load is ${ls.ratio.toFixed(1)}× your 4-week average. Big jumps like this are linked to higher injury risk, so add an extra easy day or two.`});
+    const lw=loadWeeks();
+    if(lw.spikes>=2)out.push({i:"🛑",t:"Back-to-back spike weeks",x:`${lw.spikes} weeks in a row well above your usual load. That's when injuries pile up: keep this week to about ${Math.round(lw.base)} load, what you did before the jump, and add an easy day.`});
+    else if(lw.rising>=3&&ls.ratio<=1.5)out.push({i:"📉",t:"Time for a lighter week",x:`Your load has gone up ${lw.rising} weeks in a row. Make next week about two-thirds of your biggest (around ${Math.round(lw.peak*.65)} load) so the fitness sinks in.`});
+    if(lw.spikes>=2){}else if(ls.ratio>1.5)out.push({i:"⚠️",t:"Your training load jumped",x:`This week's load is ${ls.ratio.toFixed(1)}× your 4-week average. Big jumps like this are linked to higher injury risk, so add an extra easy day or two.`});
     else if(ls.ratio>1.3)out.push({i:"📈",t:"Building fast",x:"Your load is a bit above your recent average. That's fine for a week, but don't stack another big week on top."});
     else if(ls.ratio<0.8)out.push({i:"🌱",t:"Room to build",x:"You're training less than your recent average. If you're feeling good, add about 10% more time or one extra session next week."});
     else out.push({i:"🎯",t:"Load is in the sweet spot",x:"Your weekly load is close to your 4-week average, which is the safest way to keep improving."});
@@ -3155,8 +3198,11 @@ function nomV(s,g){
 const calScore=p=>p.res==="flash"?1:p.res!=="attempt"?Math.max(.35,1-.15*((p.att||1)-1)):0;
 const fmtV=v=>v<-.5?"VB":"V"+(Math.round(v*10)/10).toFixed(1).replace(/\.0$/,"");
 function calFit(pts){
+  // identical (grade, score) points are fitted once with a weight: same answer, far fewer loops
+  const W=new Map();for(const p of pts){const k=p.v+"|"+p.y;W.set(k,(W.get(k)||0)+1);}
+  const V=[],Y=[],N=[];for(const [k,n] of W){const [v,y]=k.split("|");V.push(+v);Y.push(+y);N.push(n);}const K=V.length;
   let best=null;
-  for(let s=.6;s<=2.21;s+=.2)for(let m=-2;m<=16;m+=.1){let e=0;for(const p of pts){const q=1/(1+Math.exp((p.v-m)/s));e+=(p.y-q)*(p.y-q);}if(!best||e<best.e)best={m,s,e};}
+  for(let s=.6;s<=2.21;s+=.2)for(let m=-2;m<=16;m+=.1){let e=0;for(let i=0;i<K;i++){const q=1/(1+Math.exp((V[i]-m)/s)),d=Y[i]-q;e+=N[i]*d*d;}if(!best||e<best.e)best={m,s,e};}
   return best;
 }
 function gradeCal(climbs,since,until){
@@ -3945,10 +3991,12 @@ function renderInsights(){
   }
   // stats tab
   if(!live().length)return html+weightCard()+`<div class="empty"><strong>Nothing to analyze yet</strong>Log a few workouts to see your training load and VO2max estimate.</div>`;
-  const ls=loadStats();
+  const ls=loadStats(),lw=loadWeeks(),adv=loadAdvice(ls,lw);
   const pct=ls.ratio!=null?Math.min(100,ls.ratio/2*100):null;
-  html+=`<div class="ins"><h3>Training load</h3><div class="row2"><div class="n"><b>${Math.round(ls.acute)}</b><span>Last 7 days</span></div><div class="n"><b>${Math.round(ls.chronic)}</b><span>Weekly avg, 4 weeks</span></div><div class="n"><b>${ls.ratio!=null?ls.ratio.toFixed(2):"—"}</b><span>Ratio</span></div></div>
+  html+=`<div class="ins"><h3>Training load</h3>${adv?`<div class="ladv" style="--lc:${adv.c}"><b>${adv.t}</b><span>${esc(adv.x)}</span></div>`:""}<div class="row2"><div class="n"><b>${Math.round(ls.acute)}</b><span>Last 7 days</span></div><div class="n"><b>${Math.round(ls.chronic)}</b><span>Weekly avg, 4 weeks</span></div><div class="n"><b>${ls.ratio!=null?ls.ratio.toFixed(2):"—"}</b><span>Ratio</span></div></div>
     ${ls.enough&&pct!=null?`<div class="gauge"><i style="left:${pct}%"></i></div><div class="gscale"><span>Easing off</span><span>Sweet spot</span><span>High</span><span>Spike</span></div>`:`<p class="hint">Keep logging for two weeks to see how this week compares with your usual.</p>`}
+    ${lw.fr!=null&&lw.fing>0?`<div class="lfing"><span>🖐️ Fingers (bouldering and board)</span><b style="color:${lw.fr>1.5?"var(--red)":lw.fr>1.3?PMC_C.neg:"var(--ink)"}">${lw.fr.toFixed(2)}</b></div>`:""}
+    ${lw.histW>=4?`<div class="lweeks" role="img" aria-label="Weekly load, last 8 weeks">${lw.W.slice().reverse().map((w,i,A)=>{const mx=Math.max(1,...A.map(x=>x.all));return `<i style="height:${Math.max(3,Math.round(w.all/mx*100))}%;background:${w.r!=null&&w.r>1.5?"var(--red)":w.r!=null&&w.r>1.3?PMC_C.neg:i===A.length-1?"var(--xp)":"var(--line)"}"></i>`;}).join("")}</div><div class="lwk"><span>8 weeks ago</span><span>This week</span></div>`:""}
     <p class="hint">Load is your effort rating (1 to 10) multiplied by minutes. A ratio between 0.8 and 1.3 is the sweet spot for getting fitter without overdoing it.</p></div>`;
   html+=formCard();
   html+=`<button class="ins" data-act="fuelcalc" style="width:100%;text-align:left;display:block"><div class="row2"><div><h3>💧 Fuel calculator</h3><div class="xpinfo">Fluid, sodium, and gels for any session, tuned for heat and humidity</div></div><span class="chip">Open</span></div></button>`;
@@ -7102,7 +7150,7 @@ function openTracker(link,back){
       <div class="row" style="margin-top:16px"><button class="btn primary" id="mt-save">Save video</button></div>
       <div class="row" style="margin-top:10px"><button class="btn" id="mt-new">Another video</button><button class="btn" id="mt-back">${back?"Back":"Done"}</button></div>`);
     const cv=$("mt-cv"),x=cv.getContext("2d");
-    const setStage=()=>{const a=outAspect(o,tr),[w,h]=outDims(o,tr,720),sg=$("mt-stage");sg.style.aspectRatio=String(a);sg.style.width=`min(100%,calc(58vh * ${a.toFixed(4)}))`;if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h;}};setStage();
+    const setStage=()=>{const a=outAspect(o,tr),[w,h]=outDims(o,tr,720),sg=$("mt-stage");sg.style.aspectRatio=String(a);sg.style.width=`min(100%,calc(58svh * ${a.toFixed(4)}))`;if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h;}};setStage();
     pv=hiddenVideo(st.url,true);pv.loop=true;
     const prep=async()=>{try{await Promise.all(['80px "WkSerif"','italic 80px "WkSerif"','40px "WkSans"','80px "WkAnton"','40px "WkWide"','700 40px "WkMono"','40px "WkCond"'].map(q=>document.fonts.load(q)));}catch(e){}
       if(link&&(o.sticker!=="off"||o.intro==="sticker")&&!st.sticker){try{const lo={layout:"stack",font:"sport",color:"#FFFFFF",accent:f.p.gc?"grade":"text",bg:"none",shadow:true,outline:false,gym:!!f.gym,date:true,tries:true,name:!!f.name,style:false,high:true,logo:"none"};
@@ -8957,7 +9005,7 @@ function backfillEfforts(){
   if(viewer||(settings.effortsV||0)>=3)return;
   let n=0;
   for(const s of live())if(refreshEfforts(s)){s.updatedAt=Date.now();pushSession(s);n++;}
-  settings.effortsV=3;settings.updatedAt=Date.now();invalidate();saveLocal();try{pushSettings();}catch(e){}if(n)render();
+  settings.effortsV=3;settings.updatedAt=Date.now();if(n)invalidate();saveLocal();try{pushSettings();}catch(e){}if(n)render();
 }
 
 /* ================= workout targets ================= */
@@ -9359,7 +9407,7 @@ const EXLIB=[
  ["External rotation","Shoulders",["Shoulders"],"cb"],["Dumbbell external rotation","Shoulders",["Shoulders"],"db"],["Front lever tucks","Core",["Core","Back"],"bw"],["Windshield wipers","Core",["Core"],"bw"],
  ["Sled push","Full body",["Full body","Legs"],"mc"],["Battle ropes","Full body",["Full body","Shoulders"],"mc"],["Burpees","Full body",["Full body","Chest","Legs"],"bw"]
 ].map(([name,g,mus,eq])=>({name,g,mus,eq}));
-const exByName=n=>EXLIB.find(x=>x.name.toLowerCase()===String(n||"").trim().toLowerCase());
+let EXIDX=null;const exByName=n=>{if(!EXIDX||EXIDX.n!==EXLIB.length){EXIDX=new Map();EXIDX.n=EXLIB.length;for(const x of EXLIB){const k=x.name.toLowerCase();if(!EXIDX.has(k))EXIDX.set(k,x);}}return EXIDX.get(String(n||"").trim().toLowerCase());};
 const isBW=e=>!!(e&&(e.bw===true||(e.bw!==false&&exByName(e.name)&&exByName(e.name).eq==="bw")));
 /* full-screen picker that sits above the form; onAdd gets [{name,mus,bw}] */
 function openExPicker(onAdd,opt){
@@ -9475,10 +9523,10 @@ function startTimer(cfg,opts){
       $("tm-set").textContent=`${it.set+1}/${Math.max(1,cfg.sets|0)}`;$("tm-rep").textContent=`${it.rep+1}/${R}`;
       const nx=seq[TM.i+1];$("tm-next").textContent=nx?`Then ${PH_LABEL[nx.ph].toLowerCase()} ${fmtS(nx.dur)}${nx.name?`: ${nx.name}`:""}`:"Last interval";
       const n=$("tm-n");n.classList.remove("tick");void n.offsetWidth;n.classList.add("tick");}
-    const sec=Math.ceil(rem-0.0001);$("tm-n").textContent=sec>=60?`${Math.floor(sec/60)}:${pad(sec%60)}`:String(sec);
+    const sec=Math.ceil(rem-0.0001),setT=(id,t)=>{const e=$(id);if(e.textContent!==t)e.textContent=t;};setT("tm-n",sec>=60?`${Math.floor(sec/60)}:${pad(sec%60)}`:String(sec));
     $("tm-arc").setAttribute("stroke-dashoffset",String(C*(1-rem/it.dur)));
     let after=0;for(let k=TM.i+1;k<seq.length;k++)after+=seq[k].dur;const leftAll=after+rem;
-    $("tm-left").textContent=fmtClock(Math.ceil(leftAll));$("tm-tot").textContent=`${fmtClock(Math.ceil(leftAll))} left`;
+    setT("tm-left",fmtClock(Math.ceil(leftAll)));setT("tm-tot",`${fmtClock(Math.ceil(leftAll))} left`);
     $("tm-bar").style.transform=`scaleX(${1-leftAll/TM.total})`;
     if(!TM.paused&&sec<=3&&sec>=1&&sec!==TM.lastBeep&&(it.ph!=="work"||it.dur>=8)){TM.lastBeep=sec;beep(it.ph==="work"?740:880,120,0.22);}
   };
