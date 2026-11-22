@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Workouts</title><link rel="manifest" href="manifest.webmanifest">
+<title>Workouts</title>
+<link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#000000">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -69,6 +70,15 @@
 .lgc-i{display:grid;grid-template-columns:22px 1fr auto;gap:10px;align-items:center;padding:7px 0}.lgc-i b{display:block;font-size:.88rem;font-weight:600}.lgc-i i{display:block;height:4px;border-radius:2px;margin-top:6px;background:linear-gradient(90deg,var(--climb) calc(var(--p)*100%),rgba(255,255,255,.1) 0)}
 .lgc-i small{font-family:var(--num);color:var(--muted);font-size:.8rem}.lgc-c{width:22px;height:22px;border-radius:50%;border:1.5px solid rgba(255,255,255,.25);display:grid;place-items:center;font-size:.75rem;font-weight:800}
 .lgc-i.done .lgc-c{background:#34C759;border-color:#34C759;color:#00170D}.lgc-i.done b{color:var(--muted);text-decoration:line-through;text-decoration-color:rgba(255,255,255,.3)}
+.hm-lay{position:fixed;inset:0;z-index:9999;background:#000;display:flex;flex-direction:column;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+.hm-top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px}.hm-top b{font-size:1rem;color:#fff;text-align:center;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.hm-top .btn{flex:none;min-height:40px;padding:0 16px}
+.hm-stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}.hm-stage canvas{touch-action:manipulation;border-radius:10px}
+.hm-busy{position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-weight:600}
+.hm-bar{padding:10px 14px 14px;background:#0c0c0e}.hm-cols{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none}.hm-cols::-webkit-scrollbar{display:none}
+.hm-col{flex:none;display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;background:#1c1c1e;color:#fff;font-weight:600;font-size:.88rem}.hm-col i{width:16px;height:16px;border-radius:50%;box-shadow:0 0 0 1.5px rgba(255,255,255,.35)}.hm-col small{color:var(--muted);font-weight:500}
+.hm-col[aria-pressed=true]{background:#fff;color:#000}.hm-tools{margin-top:4px}.hm-bar .hint{margin:8px 0 0;min-height:2.6em}
+body.hm-open{overflow:hidden}
+.pj-wall .pj-img{width:100%;height:auto;border-radius:14px;display:block}.pj-prog{margin-top:10px}.pj-prog span{display:block;font-size:.82rem;color:var(--muted);margin-top:6px}
 .calcard{padding:16px}.calcard .l{font-size:.82rem;color:var(--muted)}.calv{font-family:var(--num);font-size:2.2rem;font-weight:800;margin-top:2px}.calv span{font-family:var(--sans,inherit);font-size:.8rem;font-weight:600;color:var(--muted);margin-left:10px}
 .caleq{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-weight:700}.caleq small{color:var(--muted);font-weight:500;font-size:.75rem}.caleq i{font-style:normal;color:var(--muted)}
 .calrow{align-items:center}.calg{display:flex;align-items:center;gap:6px;min-width:84px}.calf{font-family:var(--num);font-size:1.05rem;white-space:nowrap}
@@ -6804,6 +6814,8 @@ function drawPoseFrame(x,v,tr,t,W,H,o,extra){
   applyLook(x,W,H,o.look);
   if(o.dim){x.fillStyle="rgba(6,8,12,.42)";x.fillRect(0,0,W,H);}
   if(o.vign)drawVignette(x,W,H);
+  if(o.holds&&extra&&extra.route){const r=extra.route,ct=extra.climbT??0,a=t<ct-.4?1:Math.max(0,1-(t-(ct-.4))/.9);
+    if(a>0){const kx=W/vp[2],ky=H/vp[3];hmDrawRoute(x,r,kx*tr.w/r.gw,ky*tr.h/r.gh,-vp[0]*kx,-vp[1]*ky,a,{u:Math.min(W,H)/1080,high:false,dim:.62});}}
   const clean=hasIntro&&t<D-.25;// keep the frame clean under the intro card
   if(!clean){
     // glow: draw the coloured parts small, then scale up; a soft bloom for a fraction of the cost of canvas shadows
@@ -7084,6 +7096,8 @@ function openTracker(link,back){
       ${seg("Speed up still parts","speed",[["off","Off"],["2","2×"],["4","4×"],["fit","Fit to 1 min"]])}<p class="hint" id="mt-spd" style="margin-top:6px"></p>
       ${link?`<div class="plabel">Intro card</div><div class="tchips mt-ichips" data-mk="intro">${[["off","Off"],["minimal","Minimal"],["top","Top"],["center","Centered"],["right","Right"],["under","Underline"],["ledger","Ledger"],["lower","Lower third"],["frame","Frame"],["hero","Hero"],["corner","Corner"],["panel","Panel"]].map(([v,t])=>`<button class="tchip" data-v="${v}" aria-pressed="${o.intro===v}">${t}</button>`).join("")}</div>`+`<div id="mt-ilen"${o.intro==="off"?" hidden":""}>`+seg("Intro length","introLen",[["auto","Until you start"],["3","3 s"],["5","5 s"]])+`</div>`:`<p class="hint" style="margin-top:14px">To open the video with a title card of your send, start from the send instead: open it, tap Share, then Track a send video.</p>`}
       ${link?seg("Send sticker","sticker",[["off","Off"],["top","At the top"],["all","Whole video"]]):""}
+      <div class="plabel">Problem holds</div><div class="tchips"><button class="tchip" id="mt-holds">${st.route?"Re-pick the holds":"Pick the holds"}</button>${st.route?`<button class="tchip" data-mt="holds" aria-pressed="${!!o.holds}">Light them up before the climb</button>`:""}</div>
+      <p class="hint" style="margin-top:6px">${st.route?`${st.route.holds.length} holds picked. Before you start, the wall dims and the problem is outlined, with its start and top tagged.`:"Pick your problem's holds on a frame of this video. Before you start, the wall dims and the problem lights up."}</p>
       <div class="plabel">Extras</div><div class="tchips">${[["preview","Show the route first"],["push","Push in at the top"],["meter","Height meter"],["endStats","Stats at the top"],["timer","Climb timer"],["bars","Cinematic bars"],["vign","Vignette"],["dim","Darken video"],["sound","Keep the sound"]].map(([k,t])=>`<button class="tchip" data-mt="${k}" aria-pressed="${!!o[k]}"${k==="push"&&o.cam!=="follow"?" hidden":""}>${t}</button>`).join("")}</div></div>
       <div class="row" style="margin-top:16px"><button class="btn primary" id="mt-save">Save video</button></div>
       <div class="row" style="margin-top:10px"><button class="btn" id="mt-new">Another video</button><button class="btn" id="mt-back">${back?"Back":"Done"}</button></div>`);
@@ -7112,6 +7126,10 @@ function openTracker(link,back){
       if(el.dataset.mk==="shape")setStage();if(el.dataset.mk==="speed"||el.dataset.mk==="intro")spdHint();if(el.dataset.mk==="intro"){$("mt-ilen").hidden=o.intro==="off";try{localStorage.setItem("workouts-motion-intro","1");}catch(e){}if(pv){pv.currentTime=0;pv.play().catch(()=>{});}}if(el.dataset.mk==="cam"){$("mt-follow").hidden=o.cam!=="follow";const pb=document.querySelector('[data-mt="push"]');if(pb)pb.hidden=o.cam!=="follow";}}));
     document.querySelectorAll("[data-mt]").forEach(b=>b.onclick=()=>{const k=b.dataset.mt;o[k]=!o[k];b.setAttribute("aria-pressed",o[k]);saveO();if((k==="preview"||k==="endStats")&&o[k]&&pv){pv.currentTime=k==="preview"?0:Math.max(0,(pv.duration||0)-3);pv.play().catch(()=>{});}});
     $("mt-new").onclick=()=>{stopPreview();pick();st.openPicker&&st.openPicker();};
+    $("mt-holds").onclick=async()=>{if(!pv)return;pv.pause();const t0=Math.max(0,Math.min((st.climbT||0)-1,.3));
+      await new Promise(r=>{let done=false;const fin=()=>{if(!done){done=true;r();}};pv.addEventListener("seeked",fin,{once:true});pv.currentTime=t0;setTimeout(fin,1500);});
+      const fr=document.createElement("canvas");fr.width=pv.videoWidth;fr.height=pv.videoHeight;fr.getContext("2d").drawImage(pv,0,0);
+      openHoldPicker(fr,{title:"Pick the problem",high:false,route:st.route,onSave:r=>{st.route=r;o.holds=true;stopPreview();ready();},onCancel:()=>pv&&pv.play().catch(()=>{})});};
     $("mt-back").onclick=goBack;
     $("mt-save").onclick=()=>render_();
   };
@@ -7229,6 +7247,173 @@ function openPRShare(s){
   document.querySelectorAll("[data-pk]").forEach(b=>b.onclick=()=>{const k=b.dataset.pk;if(o.picked.has(k))o.picked.delete(k);else{if(o.picked.size>=6){toast("Up to 6 medals");return;}o.picked.add(k);}b.setAttribute("aria-pressed",o.picked.has(k));redraw();});
 }
 
+/* ================= hold mapping =================
+   Find the holds in a photo of the wall, group them by colour, then pick out one problem: its start holds, top
+   and your high point. Runs entirely on the phone. Holds are found where the colour stands out from the wall
+   (colourful, or much darker/lighter than the wall around it); small blobs are kept so jibs aren't lost, and the
+   "add" tool grows a hold from wherever you tap, for anything the detector missed. Each hold is kept as its own
+   pixel mask, so outlines follow its real shape. */
+const HM_MAX=560;
+const HM_LIN=(()=>{const a=new Float32Array(256);for(let i=0;i<256;i++){const c=i/255;a[i]=c<=.04045?c/12.92:Math.pow((c+.055)/1.055,2.4);}return a;})();
+const hmF=t=>t>.008856?Math.cbrt(t):7.787*t+16/116;
+function hmDetect(src){
+  const sw=src.videoWidth||src.naturalWidth||src.width,sh=src.videoHeight||src.naturalHeight||src.height,sc=Math.min(1,HM_MAX/Math.max(sw,sh));
+  const w=Math.max(8,Math.round(sw*sc)),h=Math.max(8,Math.round(sh*sc)),N=w*h,cv=document.createElement("canvas");cv.width=w;cv.height=h;
+  const cx=cv.getContext("2d",{willReadFrequently:true});cx.drawImage(src,0,0,w,h);const px=cx.getImageData(0,0,w,h).data;
+  const L=new Float32Array(N),A=new Float32Array(N),B=new Float32Array(N),C=new Float32Array(N);
+  for(let i=0,j=0;i<N;i++,j+=4){const R=HM_LIN[px[j]],G=HM_LIN[px[j+1]],Bb=HM_LIN[px[j+2]];
+    const X=hmF((R*.4124+G*.3576+Bb*.1805)/.95047),Y=hmF(R*.2126+G*.7152+Bb*.0722),Z=hmF((R*.0193+G*.1192+Bb*.9505)/1.08883);
+    L[i]=116*Y-16;A[i]=500*(X-Y);B[i]=200*(Y-Z);C[i]=Math.hypot(A[i],B[i]);}
+  // the wall: local average brightness (holds are small next to it) and the typical colourfulness of the whole shot
+  const r=Math.max(4,Math.round(Math.max(w,h)*.045)),ii=new Float64Array((w+1)*(h+1));
+  for(let y=0;y<h;y++){let s=0;for(let x=0;x<w;x++){s+=L[y*w+x];ii[(y+1)*(w+1)+x+1]=ii[y*(w+1)+x+1]+s;}}
+  const locL=(x,y)=>{const x0=Math.max(0,x-r),y0=Math.max(0,y-r),x1=Math.min(w,x+r+1),y1=Math.min(h,y+r+1);return (ii[y1*(w+1)+x1]-ii[y0*(w+1)+x1]-ii[y1*(w+1)+x0]+ii[y0*(w+1)+x0])/((x1-x0)*(y1-y0));};
+  const cs=Array.from(C.filter((_,i)=>i%7===0)).sort((a,b)=>a-b),Cm=cs[Math.floor(cs.length*.5)]||0,cThr=Math.max(17,Cm+11);
+  let m=new Uint8Array(N);
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=y*w+x,ll=locL(x,y);
+    if(C[i]>=cThr||(L[i]<ll-24&&L[i]<48)||(L[i]>ll+16&&L[i]>82&&C[i]<12))m[i]=1;}
+  // tidy: drop single stray pixels, fill pinholes
+  const m2=new Uint8Array(N);for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const i=y*w+x;let n=0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++)n+=m[i+dy*w+dx];m2[i]=m[i]?(n>=3?1:0):(n>=7?1:0);}m=m2;
+  const lab=new Int32Array(N).fill(-1),comps=[],stack=new Int32Array(N),maxA=N*.05;
+  for(let s=0;s<N;s++){if(!m[s]||lab[s]>=0)continue;let sp=0;stack[sp++]=s;lab[s]=comps.length;const pts=[];
+    while(sp){const i=stack[--sp];pts.push(i);const x=i%w,y=(i-x)/w;
+      for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy)continue;const X=x+dx,Y=y+dy;if(X<0||Y<0||X>=w||Y>=h)continue;const q=Y*w+X;
+        if(m[q]&&lab[q]<0&&Math.hypot((L[q]-L[i])*.5,A[q]-A[i],B[q]-B[i])<15){lab[q]=comps.length;stack[sp++]=q;}}}
+    if(pts.length<5||pts.length>maxA){for(const i of pts)lab[i]=-2;continue;}
+    comps.push(hmComp(pts,w,L,A,B,C,px));}
+  // labels of dropped blobs are cleared
+  for(let i=0;i<N;i++)if(lab[i]===-2)lab[i]=-1;
+  const groups=hmGroups(comps);
+  return {w,h,src,img:cv,L,A,B,C,px,lab,comps,groups};
+}
+function hmComp(pts,w,L,A,B,C,px){
+  let sl=0,sa=0,sb=0,sr=0,sg=0,sbb=0,x0=1e9,y0=1e9,x1=-1,y1=-1,sx=0,sy=0;
+  for(const i of pts){const x=i%w,y=(i-x)/w;sl+=L[i];sa+=A[i];sb+=B[i];sr+=px[i*4];sg+=px[i*4+1];sbb+=px[i*4+2];sx+=x;sy+=y;if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;}
+  const n=pts.length,c={n,L:sl/n,a:sa/n,b:sb/n,rgb:[sr/n|0,sg/n|0,sbb/n|0],cx:sx/n,cy:sy/n,x0,y0,x1,y1,pts};
+  c.name=hmColorName(c.L,c.a,c.b);return c;
+}
+function hmColorName(L,a,b){
+  const C=Math.hypot(a,b);if(C<13)return L<38?"Black":L>76?"White":"Grey";
+  let h=Math.atan2(b,a)*180/Math.PI;if(h<0)h+=360;
+  if(h>=340||h<15)return L>=55?"Pink":"Red";if(h<50)return "Red";if(h<72)return "Orange";if(h<108)return "Yellow";if(h<175)return "Green";if(h<238)return "Teal";if(h<283)return "Blue";if(h<318)return "Purple";return "Magenta";
+}
+function hmGroups(comps){
+  // cluster hold colours with mean shift in (a, b, lightness): each problem's holds share a colour, so they pile up
+  // into one mode; faint, nearly grey blobs (wall texture, mats, shadows) go to Black, Grey or White instead
+  const live=comps.map((c,i)=>({c,i})).filter(o=>!o.c.gone),pts=[],ach={};
+  for(const o of live){const C=Math.hypot(o.c.a,o.c.b);if(C<20){const k=o.c.L<38?"Black":o.c.L>76?"White":"Grey";(ach[k]||(ach[k]=[])).push(o);}else{o.v=[o.c.a,o.c.b,o.c.L*.45];o.w=Math.sqrt(o.c.n);pts.push(o);}}
+  const BW=7.5;for(const o of pts){let m=o.v.slice();for(let it=0;it<20;it++){let sx=0,sy=0,sz=0,sw=0;for(const q of pts){const d2=(q.v[0]-m[0])**2+(q.v[1]-m[1])**2+(q.v[2]-m[2])**2;if(d2>BW*BW*4)continue;const w=q.w*Math.exp(-d2/(2*BW*BW));sx+=q.v[0]*w;sy+=q.v[1]*w;sz+=q.v[2]*w;sw+=w;}
+      const nm=[sx/sw,sy/sw,sz/sw],mv=Math.hypot(nm[0]-m[0],nm[1]-m[1],nm[2]-m[2]);m=nm;if(mv<.2)break;}o.mode=m;}
+  const modes=[];for(const o of pts){let k=modes.findIndex(M=>Math.hypot(M.m[0]-o.mode[0],M.m[1]-o.mode[1],M.m[2]-o.mode[2])<5);if(k<0){modes.push({m:o.mode,arr:[]});k=modes.length-1;}modes[k].arr.push(o);}
+  const out=[];const add=(arr,nameF)=>{let n=0,r=0,g=0,b=0,L=0,A=0,B=0;for(const o of arr){const w=o.c.n;n+=w;r+=o.c.rgb[0]*w;g+=o.c.rgb[1]*w;b+=o.c.rgb[2]*w;L+=o.c.L*w;A+=o.c.a*w;B+=o.c.b*w;}
+    out.push({name:nameF||hmColorName(L/n,A/n,B/n),ids:arr.map(o=>o.i),area:n,sw:`rgb(${r/n|0},${g/n|0},${b/n|0})`,L:L/n});};
+  modes.forEach(M=>add(M.arr));Object.entries(ach).forEach(([k,a])=>add(a,k));
+  const keep=out.filter(g=>g.ids.length>=2||g.area>60).sort((a,b)=>b.ids.length-a.ids.length);
+  // two clusters with the same name: call the lighter one light
+  const by={};keep.forEach(g=>(by[g.name]||(by[g.name]=[])).push(g));
+  Object.values(by).forEach(gs=>{if(gs.length<2)return;gs.sort((a,b)=>b.L-a.L);gs.forEach((g,i)=>{g.name=i===0?`Light ${g.name.toLowerCase()}`:i===gs.length-1?`Dark ${g.name.toLowerCase()}`:`${g.name} ${i+1}`;});});
+  return keep;
+}
+// "add": grow a hold out from where you tapped, through pixels of the same colour
+function hmWand(det,gx,gy){
+  const {w,h,L,A,B,C,lab,px}=det,s0=Math.round(gy)*w+Math.round(gx);if(s0<0||s0>=w*h)return null;
+  let sl=0,sa=0,sb=0,n=0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const q=s0+dy*w+dx;if(q>=0&&q<w*h){sl+=L[q];sa+=A[q];sb+=B[q];n++;}}sl/=n;sa/=n;sb/=n;
+  const seen=new Uint8Array(w*h),pts=[],st=[s0],maxA=w*h*.03,tol=13;seen[s0]=1;
+  while(st.length&&pts.length<maxA){const i=st.pop();pts.push(i);const x=i%w,y=(i-x)/w;
+    for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const X=x+dx,Y=y+dy;if(X<0||Y<0||X>=w||Y>=h)continue;const q=Y*w+X;if(seen[q])continue;seen[q]=1;
+      if(Math.hypot(L[q]-sl,(A[q]-sa)*1.3,(B[q]-sb)*1.3)<tol)st.push(q);}}
+  if(pts.length>=maxA)return null;// leaked into the wall: fall back to a small circle
+  if(pts.length<6){pts.length=0;const R=Math.max(3,Math.round(Math.max(w,h)*.008));for(let dy=-R;dy<=R;dy++)for(let dx=-R;dx<=R;dx++){if(dx*dx+dy*dy>R*R)continue;const X=Math.round(gx)+dx,Y=Math.round(gy)+dy;if(X>=0&&Y>=0&&X<w&&Y<h)pts.push(Y*w+X);}}
+  const id=det.comps.length,c=hmComp(pts,w,L,A,B,C,px);for(const i of pts)if(lab[i]<0)lab[i]=id;det.comps.push(c);return id;
+}
+/* a route keeps only its own holds, each as a packed bitmask over its bounding box (grid coords) */
+function hmPack(c,w){const bw=c.x1-c.x0+1,bh=c.y1-c.y0+1,bits=new Uint8Array(Math.ceil(bw*bh/8));
+  for(const i of c.pts){const x=i%w-c.x0,y=(i-i%w)/w-c.y0,k=y*bw+x;bits[k>>3]|=1<<(k&7);}
+  let s="";for(const b of bits)s+=String.fromCharCode(b);return {x:c.x0,y:c.y0,w:bw,h:bh,m:btoa(s),cx:+c.cx.toFixed(1),cy:+c.cy.toFixed(1),n:c.n};}
+function hmUnpack(hd){const s=atob(hd.m),out=[];for(let k=0;k<hd.w*hd.h;k++)if(s.charCodeAt(k>>3)&(1<<(k&7)))out.push([hd.x+k%hd.w,hd.y+Math.floor(k/hd.w)]);return out;}
+// mask and outline canvases at grid size, cached on the route
+function hmLayers(route){
+  if(route._L&&route._L.mk instanceof HTMLCanvasElement)return route._L;const {gw,gh}=route,mk=document.createElement("canvas");mk.width=gw;mk.height=gh;const mx=mk.getContext("2d"),id=mx.createImageData(gw,gh);
+  for(const hd of route.holds)for(const [x,y] of hmUnpack(hd)){const k=(y*gw+x)*4;id.data[k]=id.data[k+1]=id.data[k+2]=255;id.data[k+3]=255;}
+  mx.putImageData(id,0,0);
+  const ring=document.createElement("canvas");ring.width=gw;ring.height=gh;const rx=ring.getContext("2d"),rr=Math.max(1.2,gw/360);
+  for(let k=0;k<16;k++){const a=k/16*Math.PI*2;rx.drawImage(mk,Math.cos(a)*rr*1.6,Math.sin(a)*rr*1.6);}
+  rx.globalCompositeOperation="destination-out";for(let k=0;k<8;k++){const a=k/8*Math.PI*2;rx.drawImage(mk,Math.cos(a)*rr*.5,Math.sin(a)*rr*.5);}rx.drawImage(mk,0,0);
+  route._L={mk,ring};return route._L;
+}
+/* draw a route over whatever is already on x. map: grid -> canvas via scale sx,sy and offset ox,oy.
+   a = strength (0–1). Everything but the route is dimmed; the holds get a crisp white outline and role tags. */
+function hmDrawRoute(x,route,sx,sy,ox,oy,a,o={}){
+  if(!route||!route.holds||!route.holds.length||a<=0)return;const {mk,ring}=hmLayers(route),W=x.canvas.width,H=x.canvas.height;
+  let T=hmDrawRoute._t;if(!T||T.width!==W||T.height!==H){T=document.createElement("canvas");T.width=W;T.height=H;hmDrawRoute._t=T;}
+  const t=T.getContext("2d");t.setTransform(1,0,0,1,0,0);t.globalCompositeOperation="source-over";t.clearRect(0,0,W,H);t.fillStyle=`rgba(0,0,0,${(o.dim??.6)})`;t.fillRect(0,0,W,H);
+  t.globalCompositeOperation="destination-out";t.imageSmoothingEnabled=true;t.setTransform(sx,0,0,sy,ox,oy);t.drawImage(mk,0,0);
+  x.save();x.setTransform(1,0,0,1,0,0);x.globalAlpha=a;x.drawImage(T,0,0);
+  x.setTransform(sx,0,0,sy,ox,oy);x.imageSmoothingEnabled=true;x.shadowColor="rgba(0,0,0,.6)";x.shadowBlur=4;x.drawImage(ring,0,0);x.shadowBlur=0;
+  x.setTransform(1,0,0,1,0,0);
+  const u=o.u||Math.min(W,H)/1080,tag=(i,txt,bg,fg)=>{const hd=route.holds[i];if(!hd)return;const X=(hd.cx)*sx+ox,Y=(hd.y)*sy+oy-10*u;
+    x.font=`800 ${Math.round(24*u)}px "WkSans",system-ui,sans-serif`;const tw=x.measureText(txt).width+22*u;rrPath(x,X-tw/2,Y-34*u,tw,32*u,16*u);x.fillStyle=bg;x.fill();x.fillStyle=fg;x.textAlign="center";x.textBaseline="middle";x.fillText(txt,X,Y-18*u);x.textBaseline="alphabetic";};
+  if(o.labels!==false){(route.start||[]).forEach(i=>tag(i,"START","#FFFFFF","#111"));(route.top||[]).forEach(i=>tag(i,"TOP","#FFFFFF","#111"));if(route.high!=null&&o.high!==false)tag(route.high,"★ HIGH POINT",o.col||"#CDF54A","#111");}
+  x.restore();
+}
+// progress: how far the high point is between the start holds and the top
+function hmProgress(route){
+  if(!route||route.high==null||!route.holds.length)return null;const H=route.holds,ys=(route.start||[]).map(i=>H[i]&&H[i].cy).filter(v=>v!=null),yt=(route.top||[]).map(i=>H[i]&&H[i].cy).filter(v=>v!=null);
+  const y0=ys.length?Math.max(...ys):Math.max(...H.map(h=>h.cy)),y1=yt.length?Math.min(...yt):Math.min(...H.map(h=>h.cy)),yh=H[route.high]&&H[route.high].cy;
+  if(yh==null||y0<=y1)return null;return Math.max(0,Math.min(1,(y0-yh)/(y0-y1)));
+}
+/* the picker: a full-screen layer over whatever is open, so the tracker or project underneath keeps its state */
+function openHoldPicker(src,opt={}){
+  const lay=document.createElement("div");lay.className="hm-lay";lay.innerHTML=`<div class="hm-top"><button class="btn" id="hm-x">Cancel</button><b>${esc(opt.title||"Pick the problem")}</b><button class="btn primary" id="hm-ok">Save</button></div>
+    <div class="hm-stage"><canvas id="hm-cv"></canvas><div class="hm-busy" id="hm-busy">Finding holds…</div></div>
+    <div class="hm-bar"><div class="hm-cols" id="hm-cols"></div>
+      <div class="seg hm-tools" id="hm-tools">${[["holds","Holds"],["add","Add"],["start","Start"],["top","Top"],["high","High point"]].filter(([k])=>k!=="high"||opt.high!==false).map(([k,t])=>`<button data-t="${k}" aria-pressed="${k==="holds"}">${t}</button>`).join("")}</div>
+      <p class="hint" id="hm-hint"></p></div>`;
+  document.body.appendChild(lay);document.body.classList.add("hm-open");
+  const cv=lay.querySelector("#hm-cv"),x=cv.getContext("2d");let det=null,sel=new Set(),roles={start:[],top:[],high:null},tool="holds",grp=null;
+  const close=()=>{lay.remove();document.body.classList.remove("hm-open");};
+  const HINT={holds:"Pick a colour above, then tap holds to add or remove them. Small jibs count too.",add:"Tap a hold the app missed and it grows the hold out from there.",start:"Tap the start hold or holds (up to two).",top:"Tap the top hold.",high:"Tap the furthest hold you've reached."};
+  const fit=()=>{const st=lay.querySelector(".hm-stage"),mw=st.clientWidth,mh=st.clientHeight,k=Math.min(mw/det.w,mh/det.h),dpr=Math.min(2,devicePixelRatio||1);
+    cv.style.width=Math.round(det.w*k)+"px";cv.style.height=Math.round(det.h*k)+"px";cv.width=Math.round(det.w*k*dpr);cv.height=Math.round(det.h*k*dpr);};
+  const route=()=>{const ids=[...sel],holds=ids.map(i=>hmPack(det.comps[i],det.w)),ix=i=>ids.indexOf(i);
+    return {gw:det.w,gh:det.h,holds,start:roles.start.map(ix).filter(i=>i>=0),top:roles.top.map(ix).filter(i=>i>=0),high:roles.high!=null&&ix(roles.high)>=0?ix(roles.high):null,color:grp,at:Date.now()};};
+  const draw=()=>{if(!det)return;const k=cv.width/det.w;x.setTransform(1,0,0,1,0,0);x.drawImage(det.src,0,0,cv.width,cv.height);
+    if(sel.size){const r=route();hmDrawRoute(x,r,k,k,0,0,1,{u:cv.width/1080*1.6,col:"#CDF54A"});}
+    else{// nothing picked yet: show every hold faintly so you can see what was found
+      x.save();x.globalAlpha=.9;x.strokeStyle="rgba(255,255,255,.75)";x.lineWidth=1.5;det.comps.forEach(c=>{x.strokeRect(c.x0*k,c.y0*k,(c.x1-c.x0+1)*k,(c.y1-c.y0+1)*k);});x.restore();}
+    lay.querySelector("#hm-hint").textContent=HINT[tool]+(sel.size?` ${sel.size} hold${sel.size===1?"":"s"} in this problem.`:"");};
+  const cols=()=>{lay.querySelector("#hm-cols").innerHTML=det.groups.length?det.groups.map(g=>`<button class="hm-col" data-g="${g.name}" aria-pressed="${grp===g.name}"><i style="background:${g.sw}"></i>${g.name} <small>${g.ids.length}</small></button>`).join(""):`<span class="hint">No coloured holds found. Use Add to tap them in.</span>`;
+    lay.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>{grp=b.dataset.g;const g=det.groups.find(q=>q.name===grp);sel=new Set(g.ids);roles={start:[],top:[],high:null};cols();draw();});};
+  const hitAt=(gx,gy)=>{const {w,h,lab,comps}=det;const xi=Math.round(gx),yi=Math.round(gy);if(xi>=0&&yi>=0&&xi<w&&yi<h&&lab[yi*w+xi]>=0)return lab[yi*w+xi];
+    let best=-1,bd=(Math.max(w,h)*.025)**2;comps.forEach((c,i)=>{const d=(c.cx-gx)**2+(c.cy-gy)**2;if(d<bd&&(tool==="holds"||tool==="add"||sel.has(i))){bd=d;best=i;}});return best;};
+  cv.addEventListener("click",ev=>{if(!det)return;const R=cv.getBoundingClientRect(),gx=(ev.clientX-R.left)/R.width*det.w,gy=(ev.clientY-R.top)/R.height*det.h;
+    if(tool==="add"){let id=hitAt(gx,gy);if(id<0||!(det.lab[Math.round(gy)*det.w+Math.round(gx)]>=0))id=hmWand(det,gx,gy);if(id==null){toast("Couldn't find a hold there. Tap closer to its centre.");return;}sel.add(id);}
+    else{const id=hitAt(gx,gy);if(id<0)return;
+      if(tool==="holds"){if(sel.has(id)){sel.delete(id);roles.start=roles.start.filter(q=>q!==id);roles.top=roles.top.filter(q=>q!==id);if(roles.high===id)roles.high=null;}else sel.add(id);}
+      else{sel.add(id);if(tool==="start"){roles.start=roles.start.includes(id)?roles.start.filter(q=>q!==id):[...roles.start,id].slice(-2);}else if(tool==="top"){roles.top=roles.top.includes(id)?[]:[id];}else roles.high=roles.high===id?null:id;}}
+    draw();});
+  lay.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{tool=b.dataset.t;lay.querySelectorAll("[data-t]").forEach(z=>z.setAttribute("aria-pressed",z===b));draw();});
+  lay.querySelector("#hm-x").onclick=()=>{close();opt.onCancel&&opt.onCancel();};
+  lay.querySelector("#hm-ok").onclick=()=>{if(!sel.size){toast("Pick a colour or tap some holds first");return;}const r=route();close();opt.onSave&&opt.onSave(r);};
+  setTimeout(()=>{try{det=hmDetect(src);}catch(e){lay.querySelector("#hm-busy").textContent="Couldn't read that image.";return;}
+    // an existing route comes back as its own holds, and detected blobs it already covers are dropped
+    if(opt.route&&opt.route.gw===det.w&&opt.route.gh===det.h){const R=opt.route,map={};
+      R.holds.forEach((hd,i)=>{const pts=hmUnpack(hd).map(([X,Y])=>Y*det.w+X);for(const q of pts){const o=det.lab[q];if(o>=0&&det.comps[o])det.comps[o].gone=true;}
+        const id=det.comps.length,c=hmComp(pts,det.w,det.L,det.A,det.B,det.C,det.px);det.comps.push(c);for(const q of pts)det.lab[q]=id;map[i]=id;sel.add(id);});
+      det.comps.forEach((c,i)=>{if(c.gone){for(const q of c.pts)if(det.lab[q]===i)det.lab[q]=-1;c.cx=-1e4;c.cy=-1e4;c.x1=c.x0-1;}});
+      det.groups=hmGroups(det.comps);
+      roles={start:(R.start||[]).map(i=>map[i]),top:(R.top||[]).map(i=>map[i]),high:R.high!=null?map[R.high]:null};grp=R.color||null;
+      if(opt.tool){tool=opt.tool;lay.querySelectorAll("[data-t]").forEach(z=>z.setAttribute("aria-pressed",z.dataset.t===tool));}}
+    lay.querySelector("#hm-busy").remove();fit();cols();draw();},60);
+  addEventListener("resize",()=>{if(det&&lay.isConnected){fit();draw();}});
+}
+// a still of a route over its photo, for the project page
+async function hmRouteImage(photoId,route,maxW=900){
+  const url=await photoURL(photoId);if(!url)return null;const im=new Image();im.src=url;try{await im.decode();}catch(e){return null;}
+  const k=Math.min(1,maxW/im.width),c=document.createElement("canvas");c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);const x=c.getContext("2d");x.drawImage(im,0,0,c.width,c.height);
+  const s=c.width/route.gw;hmDrawRoute(x,route,s,c.height/route.gh,0,0,1,{u:c.width/1080*1.4});return c;
+}
+
 /* ---------- climbing projects ---------- */
 function renderProjects(){
   const P=projects().filter(p=>!p.archived),withS=P.map(p=>({p,st:projStats(p)}));
@@ -7237,7 +7422,7 @@ function renderProjects(){
   let html=`<div class="top"><h1>Projects</h1><div class="headbtns"><button class="chip" data-go="places">Places</button><button class="chip" data-newproj="">+ New</button></div></div>`;
   if(!P.length)return html+`<div class="empty"><strong>No projects yet</strong>A project is a problem you're working on across sessions. Create one here, or pick "Save this as a new project" on any problem when logging a bouldering session. Every attempt adds up, and sending it earns bonus XP.</div>`;
   html+=`<h2 class="sec" style="--c:var(--climb)"><i></i>Working on</h2>`;
-  html+=act.length?act.map(({p,st})=>`<button class="plc" data-proj="${p.id}"><div class="pic">${chip(p)}</div><div style="min-width:0"><b>${esc(p.name)}</b><span>${esc(p.gl)}${placeById(p.placeId)?", "+esc(placeById(p.placeId).name):""}${st.last?`, last tried ${fmtDate(st.last.date,{month:"short",day:"numeric"})}`:", not tried yet"}</span></div><div class="cn">${st.attempts}<small>${st.attempts===1?"attempt":"attempts"}</small></div></button>`).join(""):`<div class="empty">Nothing in progress. Time to pick a new project!</div>`;
+  html+=act.length?act.map(({p,st})=>`<button class="plc" data-proj="${p.id}"><div class="pic">${chip(p)}</div><div style="min-width:0"><b>${esc(p.name)}</b><span>${esc(p.gl)}${placeById(p.placeId)?", "+esc(placeById(p.placeId).name):""}${p.route&&hmProgress(p.route)!=null?`, ${Math.round(hmProgress(p.route)*100)}% of the way`:""}${st.last?`, last tried ${fmtDate(st.last.date,{month:"short",day:"numeric"})}`:", not tried yet"}</span></div><div class="cn">${st.attempts}<small>${st.attempts===1?"attempt":"attempts"}</small></div></button>`).join(""):`<div class="empty">Nothing in progress. Time to pick a new project!</div>`;
   if(done.length)html+=`<h2 class="sec" style="--c:var(--gold)"><i></i>Sent</h2>`+done.map(({p,st})=>`<button class="plc" data-proj="${p.id}"><div class="pic">${chip(p)}</div><div style="min-width:0"><b>🎯 ${esc(p.name)}</b><span>Sent ${fmtDate(st.sent.s.date)}, ${st.sent.sessions} session${st.sent.sessions===1?"":"s"}</span></div><div class="cn">${st.sent.attempts}<small>${st.sent.attempts===1?"attempt":"attempts"}</small></div></button>`).join("");
   const arch=projects().filter(p=>p.archived).length;
   if(arch)html+=`<p class="hint">${arch} archived project${arch===1?"":"s"} hidden.</p>`;
@@ -7250,12 +7435,27 @@ function openProject(p){
     <div class="dstats"><div class="n"><b>${st.attempts}</b><span>Attempts</span></div><div class="n"><b>${st.sessions}</b><span>Sessions</span></div><div class="n"><b>${st.sent?"Sent":"Working"}</b><span>${st.sent?fmtDate(st.sent.s.date,{month:"short",day:"numeric"}):"Status"}</span></div></div>
     ${st.sent?`<p class="hint" style="margin-top:-6px">Sent after ${st.sent.attempts} attempt${st.sent.attempts===1?"":"s"} over ${st.sent.sessions} session${st.sent.sessions===1?"":"s"}.</p><div class="row" style="margin-top:4px"><button class="btn go" id="pj-share">Share the send</button></div>`:""}
     ${st.hist.length?`<h4>History</h4><div class="tlist">${st.hist.slice().reverse().map(h=>`<button class="trow" data-o="${h.s.id}"><span class="mdot" style="background:${h.q.res==="attempt"?"var(--chip)":"var(--climb)"};color:${h.q.res==="attempt"?"var(--muted)":"#fff"};font-size:.75rem">${h.q.att||1}</span><div class="tx"><b>${fmtDate(h.s.date)}</b><span>${RESULTS[h.q.res]}, ${h.q.att||1} attempt${(h.q.att||1)===1?"":"s"}</span></div></button>`).join("")}</div>`:`<div class="empty" style="background:var(--bg)">No attempts logged yet. Link a problem to this project when you log a session.</div>`}
+    <h4>On the wall</h4><div id="pj-wall" class="pj-wall">${p.route&&p.photo?`<div class="hint">Loading photo…</div>`:`<p class="hint" style="margin:0 0 10px">Take a photo of the wall. The app finds the holds and groups them by colour, then you pick this problem, its start holds, the top and how far you've got.</p>`}</div>
+    <div class="row" style="margin-top:8px">${p.route&&p.photo?`<button class="btn go" id="pj-high">Update high point</button><button class="btn" id="pj-edit">Edit holds</button>`:`<button class="btn go" id="pj-map">Map it from a photo</button>`}</div>${p.route&&p.photo?`<div class="row"><button class="btn" id="pj-map">New photo</button></div>`:""}
+    <input type="file" id="pj-file" accept="image/*" hidden>
     <label for="pj-name">Name</label><input id="pj-name" type="text" maxlength="50" value="${esc(p.name)}">
     <label for="pj-notes">Beta and notes</label><textarea id="pj-notes" placeholder="Moves, sequences, what to try next">${esc(p.notes||"")}</textarea>
     <div class="row"><button class="btn" id="pj-arch">${p.archived?"Unarchive":"Archive"}</button><button class="btn danger" id="pj-del">Delete</button></div>
     <div class="row" style="margin-top:10px"><button class="btn primary" id="pj-save">Save and close</button></div>`);
   const save=(patch)=>{settings.projects=projects().map(x=>x.id===p.id?{...x,...patch}:x);settings.updatedAt=Date.now();invalidate();saveLocal();pushSettings();render();};
   $("sheet").querySelectorAll("[data-o]").forEach(b=>b.onclick=()=>openDetail(sessions[b.dataset.o]));
+  const clean=r=>{const o={...r};delete o._L;return o;},reopen=()=>openProject(projects().find(x=>x.id===p.id));
+  const saveRoute=(r,photo)=>{const pct=hmProgress(r),hist=[...((p.route&&p.route.hist)||[])];if(pct!=null&&(!hist.length||hist[hist.length-1].pct!==pct))hist.push({d:keyOf(new Date()),pct:+pct.toFixed(3)});
+    save({route:{...clean(r),hist},photo:photo||p.photo});reopen();};
+  const withPhoto=async(fn)=>{const url=await photoURL(p.photo);if(!url){toast("Couldn't load the photo");return;}const im=new Image();im.src=url;await im.decode().catch(()=>{});fn(im);};
+  if(p.route&&p.photo)hmRouteImage(p.photo,p.route).then(c=>{const el=$("pj-wall");if(!el)return;if(!c){el.innerHTML=`<p class="hint">The photo isn't on this device.</p>`;return;}
+    const pct=hmProgress(p.route),h=(p.route.hist||[]).slice(-1)[0];el.innerHTML="";c.className="pj-img";el.appendChild(c);
+    el.insertAdjacentHTML("beforeend",`<div class="pj-prog"><div class="xpbar"><span style="width:${pct!=null?Math.round(pct*100):0}%;background:var(--climb)"></span></div><span>${pct!=null?`High point ${Math.round(pct*100)}% of the way${h?`, ${fmtDate(h.d,{month:"short",day:"numeric"})}`:""}`:"Mark your high point to track progress"} · ${p.route.holds.length} holds</span></div>`);});
+  if($("pj-map"))$("pj-map").onclick=()=>$("pj-file").click();
+  $("pj-file").onchange=async e=>{const f=e.target.files[0];if(!f)return;const blob=await compressPhoto(f),id="proj-"+p.id+"-"+Date.now();await photoPut(id,blob);
+    const im=new Image();im.src=URL.createObjectURL(blob);await im.decode().catch(()=>{});openHoldPicker(im,{title:p.name,onSave:r=>{if(p.photo&&p.photo!==id)photoDel(p.photo);saveRoute({...r,hist:[]},id);},onCancel:()=>photoDel(id)});};
+  if($("pj-high"))$("pj-high").onclick=()=>withPhoto(im=>openHoldPicker(im,{title:"Your high point",route:p.route,tool:"high",onSave:r=>saveRoute(r)}));
+  if($("pj-edit"))$("pj-edit").onclick=()=>withPhoto(im=>openHoldPicker(im,{title:p.name,route:p.route,onSave:r=>saveRoute(r)}));
   if($("pj-share"))$("pj-share").onclick=()=>{const S=st.sent.s;openSendShare(S,(S.probs||[]).indexOf(st.sent.q),()=>openProject(p));};
   $("pj-save").onclick=()=>{save({name:$("pj-name").value.trim()||p.name,notes:$("pj-notes").value.trim()});closeSheet();toast("Project saved");};
   $("pj-arch").onclick=()=>{save({archived:!p.archived});closeSheet();toast(p.archived?"Project restored":"Project archived");};
