@@ -7275,10 +7275,10 @@ function hmDetect(src){
   // tidy: drop single stray pixels, fill pinholes
   const m2=new Uint8Array(N);for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const i=y*w+x;let n=0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++)n+=m[i+dy*w+dx];m2[i]=m[i]?(n>=3?1:0):(n>=7?1:0);}m=m2;
   const lab=new Int32Array(N).fill(-1),comps=[],stack=new Int32Array(N),maxA=N*.05;
-  for(let s=0;s<N;s++){if(!m[s]||lab[s]>=0)continue;let sp=0;stack[sp++]=s;lab[s]=comps.length;const pts=[];
+  for(let s=0;s<N;s++){if(!m[s]||lab[s]!==-1)continue;let sp=0;stack[sp++]=s;lab[s]=comps.length;const pts=[];
     while(sp){const i=stack[--sp];pts.push(i);const x=i%w,y=(i-x)/w;
       for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy)continue;const X=x+dx,Y=y+dy;if(X<0||Y<0||X>=w||Y>=h)continue;const q=Y*w+X;
-        if(m[q]&&lab[q]<0&&Math.hypot((L[q]-L[i])*.5,A[q]-A[i],B[q]-B[i])<15){lab[q]=comps.length;stack[sp++]=q;}}}
+        if(m[q]&&lab[q]===-1&&Math.hypot((L[q]-L[i])*.5,A[q]-A[i],B[q]-B[i])<15){lab[q]=comps.length;stack[sp++]=q;}}}
     if(pts.length<5||pts.length>maxA){for(const i of pts)lab[i]=-2;continue;}
     comps.push(hmComp(pts,w,L,A,B,C,px));}
   // labels of dropped blobs are cleared
@@ -7302,8 +7302,8 @@ function hmGroups(comps){
   // into one mode; faint, nearly grey blobs (wall texture, mats, shadows) go to Black, Grey or White instead
   const live=comps.map((c,i)=>({c,i})).filter(o=>!o.c.gone),pts=[],ach={};
   for(const o of live){const C=Math.hypot(o.c.a,o.c.b);if(C<20){const k=o.c.L<38?"Black":o.c.L>76?"White":"Grey";(ach[k]||(ach[k]=[])).push(o);}else{o.v=[o.c.a,o.c.b,o.c.L*.45];o.w=Math.sqrt(o.c.n);pts.push(o);}}
-  const BW=7.5;for(const o of pts){let m=o.v.slice();for(let it=0;it<20;it++){let sx=0,sy=0,sz=0,sw=0;for(const q of pts){const d2=(q.v[0]-m[0])**2+(q.v[1]-m[1])**2+(q.v[2]-m[2])**2;if(d2>BW*BW*4)continue;const w=q.w*Math.exp(-d2/(2*BW*BW));sx+=q.v[0]*w;sy+=q.v[1]*w;sz+=q.v[2]*w;sw+=w;}
-      const nm=[sx/sw,sy/sw,sz/sw],mv=Math.hypot(nm[0]-m[0],nm[1]-m[1],nm[2]-m[2]);m=nm;if(mv<.2)break;}o.mode=m;}
+  const BW=7.5,nb=pts.length>700?[...pts].sort((a,b)=>b.w-a.w).slice(0,700):pts;for(const o of pts){let m=o.v.slice();for(let it=0;it<20;it++){let sx=0,sy=0,sz=0,sw=0;for(const q of nb){const d2=(q.v[0]-m[0])**2+(q.v[1]-m[1])**2+(q.v[2]-m[2])**2;if(d2>BW*BW*4)continue;const w=q.w*Math.exp(-d2/(2*BW*BW));sx+=q.v[0]*w;sy+=q.v[1]*w;sz+=q.v[2]*w;sw+=w;}
+      if(!sw)break;const nm=[sx/sw,sy/sw,sz/sw],mv=Math.hypot(nm[0]-m[0],nm[1]-m[1],nm[2]-m[2]);m=nm;if(mv<.2)break;}o.mode=m;}
   const modes=[];for(const o of pts){let k=modes.findIndex(M=>Math.hypot(M.m[0]-o.mode[0],M.m[1]-o.mode[1],M.m[2]-o.mode[2])<5);if(k<0){modes.push({m:o.mode,arr:[]});k=modes.length-1;}modes[k].arr.push(o);}
   const out=[];const add=(arr,nameF)=>{let n=0,r=0,g=0,b=0,L=0,A=0,B=0;for(const o of arr){const w=o.c.n;n+=w;r+=o.c.rgb[0]*w;g+=o.c.rgb[1]*w;b+=o.c.rgb[2]*w;L+=o.c.L*w;A+=o.c.a*w;B+=o.c.b*w;}
     out.push({name:nameF||hmColorName(L/n,A/n,B/n),ids:arr.map(o=>o.i),area:n,sw:`rgb(${r/n|0},${g/n|0},${b/n|0})`,L:L/n});};
