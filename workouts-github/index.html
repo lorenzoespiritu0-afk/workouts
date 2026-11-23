@@ -5486,9 +5486,11 @@ function openShare(s){
   $("o-bg").querySelectorAll("button").forEach(b=>b.onclick=()=>{if(b.dataset.v==="photo"&&!o.upimg&&!s.photo){pickPhoto();return;}o.bg=b.dataset.v;press("o-bg",o.bg);redraw();});
   $("o-ptog").querySelectorAll("button").forEach(b=>b.onclick=async()=>{const k=b.dataset.t;if(k==="motion")motionSet=true;o[k]=!o[k];b.setAttribute("aria-pressed",o[k]);
     if(k==="depth"&&o.depth){const hint=$("shint"),was=hint.textContent,cached=HM_AI.sess.modnet||await hmCached(["modnet"]);o.cutFail=false;
+      const g=hmGuard.get();if(g&&g.step==="cutout"){hmGuard.clear();toast("Subject in front closed the app last time (low memory). Tap it again to retry.");o.depth=false;b.setAttribute("aria-pressed","false");return;}
+      hmGuard.set("cutout");
       hint.textContent=cached?"Cutting you out of the photo…":"Downloading the cutout model (13 MB, one time only)… 0%";
       o.onCutProg=p=>{if(!cached)hint.textContent=`Downloading the cutout model (13 MB, one time only)… ${Math.round(p*100)}%`;if(p>=1)hint.textContent="Cutting you out of the photo…";};
-      await redraw();hint.textContent=was;
+      await redraw();hmGuard.clear();hint.textContent=was;
       if(o.cutFail){o.depth=false;b.setAttribute("aria-pressed","false");toast("Couldn't load the cutout model here. Check your connection and try again.");redraw();}
       return;}
     redraw();});
@@ -6942,9 +6944,11 @@ function speedMap(tr,cam,o,ex,dur){
   for(let i=0;i<N;i++){let a=0,ww=0;for(let j=-Rr;j<=Rr;j++){const q=Math.max(0,Math.min(N-1,i+j));a+=lr[q]*K[j+Rr];ww+=K[j+Rr];}rate[i]=Math.exp(a/ww);}
   for(let i=1;i<N;i++)out[i]=out[i-1]+(1/fps)/((rate[i-1]+rate[i])/2);
   const at=(A,t)=>{const f=Math.max(0,Math.min(N-1,t*fps)),i0=Math.floor(f),i1=Math.min(N-1,i0+1);return A[i0]+(A[i1]-A[i0])*(f-i0);};
-  // the player can't follow a smooth ramp (Safari stalls every time the speed changes), so live playback uses
-  // just three speeds: normal, the base speed-up, and the fast-forward; exports use the smooth curve
-  const STEPS=[1,1.25,1.5,2,2.5,3,4,5,6,8,10,12,16,20],stepAt=t=>{const r=at(rate,t);if(r<1.08)return 1;let b=1;for(const q of STEPS)if(q<=r*1.05)b=q;return b;};
+  // the player can't follow a smooth ramp (Safari freezes for a moment every time the speed changes), so live
+  // playback switches only twice per fast stretch: straight to the full speed-up halfway up the ramp, and back
+  // halfway down. Exports use the smooth curve.
+  const Rp=R*k,mid=Math.sqrt(Rp),STEPS=[1,1.5,2,2.5,3,4,5,6,8,10,12,16,20];let Rs=1;for(const q of STEPS)if(q<=Rp*1.05)Rs=q;
+  const stepAt=t=>at(rate,t)>=mid?Rs:1;
   const m={runs,out:out[N-1],rate,R:R*k,outAt:t=>at(out,t),rateAt:t=>at(rate,t),stepAt};
   if(ex){ex._spdK=key;ex._spd=m;}return m;
 }
@@ -7408,47 +7412,92 @@ function openPRShare(s){
 const HM_MAX=560;
 /* On-device AI models (ONNX Runtime Web, loaded on request and kept for offline use):
    - hold finder: yolo-holds (samolego, AGPL-3.0) finds holds and volumes in about a second;
-     SlimSAM (Apache-2.0) then traces the exact outline of the holds you pick when you save
+     NanoSAM (PPHGNetV2-B1 encoder + MobileSAM decoder, Apache-2.0) then traces the exact outline of the holds you pick when you save.
+     Phones have little memory for this, so only one model is loaded at a time and each is released when done.
    - subject cutout: MODNet (Apache-2.0), for "subject in front" share images */
 const HM_AI={
   base:/github\.io$/.test(location.hostname)&&/workouts-github/.test(location.pathname)?new URL("models/",location.href).href:"https://lorenzoespiritu0-afk.github.io/workouts/workouts-github/models/",
-  ort:"https://cdnjs.cloudflare.com/ajax/libs/onnxruntime-web/1.29.0/",cache:"models-v2",
-  files:{yolo:["holds-yolo.onnx",10.1],enc:["sam-encoder.onnx",8.9],dec:["sam-decoder.onnx",4.9],modnet:["modnet.onnx",13.1]},
-  holdKeys:["yolo","enc","dec"],sess:{},loading:{}
+  ort:"https://cdnjs.cloudflare.com/ajax/libs/onnxruntime-web/1.29.0/",cache:"models-v3",
+  files:{yolo:["holds-yolo.onnx",10.1],nenc:["nano-encoder.onnx",12.7],bdec:["sam-box-decoder.onnx",16.5],modnet:["modnet.onnx",13.1]},
+  holdKeys:["yolo","nenc","bdec"],sess:{},loading:{}
 };
 HM_AI.size=HM_AI.holdKeys.reduce((a,k)=>a+HM_AI.files[k][1],0);
 const hmUrl=k=>HM_AI.base+HM_AI.files[k][0];
 async function hmCached(keys){try{if(!("caches" in window))return false;const c=await caches.open(HM_AI.cache);for(const k of keys)if(!(await c.match(hmUrl(k))))return false;return true;}catch(e){return false;}}
 const hmAiCached=()=>hmCached(HM_AI.holdKeys);
 function hmLoadScript(src){return new Promise((res,rej)=>{if(window.ort)return res();const s=document.createElement("script");s.src=src;s.async=true;s.onload=res;s.onerror=()=>rej(new Error("script"));document.head.appendChild(s);});}
-async function hmOrt(){await hmLoadScript(HM_AI.ort+"ort.min.js");const ort=window.ort;ort.env.wasm.wasmPaths=HM_AI.ort;ort.env.wasm.numThreads=self.crossOriginIsolated?Math.min(4,navigator.hardwareConcurrency||2):1;
-  try{caches.delete("models-v1");}catch(e){} // the old 75 MB hold model
-  return ort;}
-// one model file: from the phone's cache, or downloaded with progress (0–1) and cached
+// Each AI step runs in its own background worker, which is shut down afterwards: that hands all of the engine's
+// memory back to the phone (it can't shrink otherwise) and keeps the screen responsive while a model runs.
+// Where workers aren't allowed, the same calls run on the page instead.
+const HM_W={w:null,seq:0,cb:{},keys:new Set(),mode:null};
+const hmT=(type,data,dims)=>({type,data,dims});
+// crash guard: if the phone runs out of memory mid-step the page reloads, so remember the step and don't repeat it automatically
+const HM_GUARD="workouts-ai-guard";
+const hmGuard={set(step){try{localStorage.setItem(HM_GUARD,JSON.stringify({step,t:Date.now()}));}catch(e){}},
+  clear(){try{localStorage.removeItem(HM_GUARD);}catch(e){}},
+  get(){try{return JSON.parse(localStorage.getItem(HM_GUARD)||"null");}catch(e){return null;}}};
+function hmWorker(){
+  if(HM_W.w)return HM_W.w;
+  const src=`importScripts(${JSON.stringify(HM_AI.ort+"ort.wasm.min.js")});ort.env.wasm.wasmPaths=${JSON.stringify(HM_AI.ort)};ort.env.wasm.numThreads=1;
+const S={};onmessage=async e=>{const {id,op,k,url,feeds}=e.data;try{
+  if(op==="load"){let r=null;try{const c=await caches.open(${JSON.stringify(HM_AI.cache)});r=await c.match(url);}catch(_){}if(!r)r=await fetch(url);let b=await r.arrayBuffer();
+    S[k]=await ort.InferenceSession.create(b,{executionProviders:["wasm"],graphOptimizationLevel:"basic",enableCpuMemArena:false,enableMemPattern:false});b=null;
+    postMessage({id,ok:1,inputNames:S[k].inputNames,outputNames:S[k].outputNames});}
+  else if(op==="run"){const f={};for(const n in feeds){const t=feeds[n];f[n]=new ort.Tensor(t.type,t.data,t.dims);}const o=await S[k].run(f),out={},tr=[];
+    for(const n in o){out[n]={data:o[n].data,dims:o[n].dims};tr.push(o[n].data.buffer);}postMessage({id,ok:1,out},tr);}
+  else if(op==="release"){if(S[k]){await S[k].release();delete S[k];}postMessage({id,ok:1});}
+}catch(err){postMessage({id,err:String(err&&err.message||err)});}};`;
+  const w=new Worker(URL.createObjectURL(new Blob([src],{type:"text/javascript"})));
+  w.onmessage=e=>{const c=HM_W.cb[e.data.id];if(!c)return;delete HM_W.cb[e.data.id];e.data.err?c.rej(new Error(e.data.err)):c.res(e.data);};
+  w.onerror=e=>{for(const id in HM_W.cb){HM_W.cb[id].rej(new Error("worker: "+(e.message||"failed")));delete HM_W.cb[id];}};
+  HM_W.w=w;return w;
+}
+function hmCall(msg,tr){return new Promise((res,rej)=>{const id=++HM_W.seq;HM_W.cb[id]={res,rej};hmWorker().postMessage({...msg,id},tr||[]);});}
+function hmKill(){if(HM_W.w){HM_W.w.terminate();HM_W.w=null;}for(const id in HM_W.cb){HM_W.cb[id].rej(new Error("stopped"));delete HM_W.cb[id];}HM_W.keys.clear();for(const k in HM_AI.sess)delete HM_AI.sess[k];}
+let hmOrtP=null;
+async function hmOrt(){if(!hmOrtP)hmOrtP=(async()=>{await hmLoadScript(HM_AI.ort+"ort.wasm.min.js");const ort=window.ort;ort.env.wasm.wasmPaths=HM_AI.ort;ort.env.wasm.numThreads=1;return ort;})();
+  return hmOrtP;}
+// one model file into the phone's cache (downloaded with progress 0–1 if it isn't there yet)
+let hmCleaned=false;
+async function hmFetch(k,onProg){const url=hmUrl(k);let c=null;
+  if(!hmCleaned){hmCleaned=true;try{caches.delete("models-v1");caches.delete("models-v2");}catch(e){}} // older hold models
+  // returns null once the file is in the cache, or the file itself if it couldn't be cached
+  try{c=await caches.open(HM_AI.cache);const hit=await c.match(url);if(hit){onProg&&onProg(1);return null;}}catch(e){}
+  const res=await fetch(url);if(!res.ok)throw new Error(k+" "+res.status);const tot=+res.headers.get("content-length")||HM_AI.files[k][1]*1e6;let got=0;const parts=[];
+  if(res.body&&res.body.getReader){const rd=res.body.getReader();for(;;){const {done,value}=await rd.read();if(done)break;parts.push(value);got+=value.length;onProg&&onProg(Math.min(1,got/tot));}}
+  else parts.push(new Uint8Array(await res.arrayBuffer()));
+  const blob=new Blob(parts);let stored=false;try{if(c){await c.put(url,new Response(blob,{headers:{"content-type":"application/octet-stream"}}));stored=true;}}catch(e){}
+  onProg&&onProg(1);return stored?null:new Response(blob);}
+// a model ready to run: {run(feeds)→outputs {name:{data,dims}}, inputNames, outputNames}
 async function hmModel(k,onProg){
   if(HM_AI.sess[k])return HM_AI.sess[k];if(HM_AI.loading[k])return HM_AI.loading[k];
-  HM_AI.loading[k]=(async()=>{const ort=await hmOrt(),url=hmUrl(k);let buf=null,c=null;
-    try{c=await caches.open(HM_AI.cache);const hit=await c.match(url);if(hit)buf=await hit.arrayBuffer();}catch(e){}
-    if(!buf){const res=await fetch(url);if(!res.ok)throw new Error(k+" "+res.status);const tot=+res.headers.get("content-length")||HM_AI.files[k][1]*1e6;let got=0;const parts=[];
-      if(res.body&&res.body.getReader){const rd=res.body.getReader();for(;;){const {done,value}=await rd.read();if(done)break;parts.push(value);got+=value.length;onProg&&onProg(Math.min(1,got/tot));}}
-      else parts.push(new Uint8Array(await res.arrayBuffer()));
-      const blob=new Blob(parts);buf=await blob.arrayBuffer();try{if(c)await c.put(url,new Response(blob,{headers:{"content-type":"application/octet-stream"}}));}catch(e){}}
-    onProg&&onProg(1);
-    // "basic" graph optimisation: "all" takes far longer to set up in the browser and runs no faster
-    HM_AI.sess[k]=await ort.InferenceSession.create(buf,{executionProviders:["wasm"],graphOptimizationLevel:"basic"});return HM_AI.sess[k];})();
+  HM_AI.loading[k]=(async()=>{let local=await hmFetch(k,onProg);let s=null;
+    if(HM_W.mode!=="page"&&!local){
+      try{const r=await hmCall({op:"load",k,url:hmUrl(k)});HM_W.mode="worker";HM_W.keys.add(k);
+        s={inputNames:r.inputNames,outputNames:r.outputNames,run:async feeds=>{const tr=[];for(const n in feeds)tr.push(feeds[n].data.buffer);return (await hmCall({op:"run",k,feeds},tr)).out;}};}
+      catch(e){console.warn("AI worker unavailable, using the page",e);hmKill();HM_W.mode="page";}}
+    if(!s){const ort=await hmOrt();const r=local||await (await caches.open(HM_AI.cache)).match(hmUrl(k));let buf=await r.arrayBuffer();
+      // "basic" graph optimisation: "all" takes far longer to set up and runs no faster. No memory arena or pre-planned buffers.
+      const ss=await ort.InferenceSession.create(buf,{executionProviders:["wasm"],graphOptimizationLevel:"basic",enableCpuMemArena:false,enableMemPattern:false});buf=null;
+      s={inputNames:ss.inputNames,outputNames:ss.outputNames,_s:ss,run:async feeds=>{const f={};for(const n in feeds){const t=feeds[n];f[n]=new ort.Tensor(t.type,t.data,t.dims);}const o=await ss.run(f),out={};for(const n in o)out[n]={data:o[n].data,dims:o[n].dims};return out;}};}
+    HM_AI.sess[k]=s;HM_AI.loading[k]=null;return s;})();
   try{return await HM_AI.loading[k];}catch(e){HM_AI.loading[k]=null;throw e;}
 }
-// all the hold finder's files, with one combined progress figure
+// release models; when the worker has none left it is shut down, returning all of its memory
+async function hmRelease(...ks){for(const k of ks){const s=HM_AI.sess[k];delete HM_AI.sess[k];if(!s)continue;
+    if(s._s){try{await s._s.release();}catch(e){}}else{HM_W.keys.delete(k);try{await hmCall({op:"release",k});}catch(e){}}}
+  if(HM_W.w&&!HM_W.keys.size)hmKill();}
+// download all of the hold finder's files (one combined progress figure), then get the hold detector ready
 async function hmAiLoad(onProg){const ks=HM_AI.holdKeys,tot=HM_AI.size,done={};
-  for(const k of ks){await hmModel(k,p=>{done[k]=p*HM_AI.files[k][1];onProg&&onProg(ks.reduce((a,q)=>a+(done[q]||0),0)/tot);});done[k]=HM_AI.files[k][1];}
+  for(const k of ks){await hmFetch(k,p=>{done[k]=p*HM_AI.files[k][1];onProg&&onProg(ks.reduce((a,q)=>a+(done[q]||0),0)/tot);});done[k]=HM_AI.files[k][1];}
   return HM_AI.sess;}
 const hmImgSize=src=>[src.videoWidth||src.naturalWidth||src.width,src.videoHeight||src.naturalHeight||src.height];
 // yolo-holds: boxes (0–1 of the image) with a score and class (0 hold, 1 volume)
 async function hmAiRun(src){
-  const ort=await hmOrt(),Y=await hmModel("yolo"),[sw,sh]=hmImgSize(src),S=1024,k=S/Math.max(sw,sh);
+  const Y=await hmModel("yolo"),[sw,sh]=hmImgSize(src),S=1024,k=S/Math.max(sw,sh);
   const cv=document.createElement("canvas");cv.width=cv.height=S;const cx=cv.getContext("2d",{willReadFrequently:true});cx.fillStyle="rgb(114,114,114)";cx.fillRect(0,0,S,S);cx.drawImage(src,0,0,sw*k,sh*k);
   const px=cx.getImageData(0,0,S,S).data,N=S*S,f=new Float32Array(3*N);for(let i=0,j=0;i<N;i++,j+=4){f[i]=px[j]/255;f[N+i]=px[j+1]/255;f[2*N+i]=px[j+2]/255;}
-  const o=await Y.run({[Y.inputNames[0]]:new ort.Tensor("float32",f,[1,3,S,S])}),d=o[Y.outputNames[0]].data,n=d.length/6,res=[];
+  const o=await Y.run({[Y.inputNames[0]]:hmT("float32",f,[1,3,S,S])}),d=o[Y.outputNames[0]].data,n=d.length/6,res=[];
   for(let i=0;i<n;i++){const s=d[i*6+4];if(s<.25)continue;res.push({x0:d[i*6]/k/sw,y0:d[i*6+1]/k/sh,x1:d[i*6+2]/k/sw,y1:d[i*6+3]/k/sh,s,cls:Math.round(d[i*6+5])});}
   return res.sort((a,b)=>b.s-a.s);
 }
@@ -7481,57 +7530,59 @@ function hmAiComps(det,ai){
     c.ai=d.s;c.box=[d.x0*w,d.y0*h,d.x1*w,d.y1*h];if(d.cls===1)c.vol=true;comps.push(c);}
   det.comps=comps;det.groups=hmGroups(comps);det.ai=true;return det;
 }
-/* SlimSAM: trace exact outlines for the given holds. One image pass (the slow part), then a quick pass per hold,
-   prompted with a point at the hold's centre. Of SAM's three guesses, keep the one that best fills the hold's box
-   without spilling over its edges; if none fits, the colour outline stays. onProg(done,total); stop() ends early. */
+/* NanoSAM: trace exact outlines for the given holds. One quick image pass, then one pass per hold prompted with
+   the hold's box. Of the decoder's four guesses, keep the one that best fills the box without spilling over its edges;
+   if none fits, the colour outline stays. onProg(done,total); stop() ends early. The detector is released first so
+   only these two small models are in memory. */
 async function hmSamRefine(src,det,ids,onProg,stop){
-  const ort=await hmOrt(),E=await hmModel("enc"),D=await hmModel("dec"),[sw,sh]=hmImgSize(src),S=1024,k=S/Math.max(sw,sh),Wr=Math.round(sw*k),Hr=Math.round(sh*k);
-  const cv=document.createElement("canvas");cv.width=Wr;cv.height=Hr;const cx=cv.getContext("2d",{willReadFrequently:true});cx.drawImage(src,0,0,Wr,Hr);
-  const px=cx.getImageData(0,0,Wr,Hr).data,N=S*S,f=new Float32Array(3*N),mu=[.485,.456,.406],sd=[.229,.224,.225];
-  for(let y=0;y<Hr;y++)for(let x=0;x<Wr;x++){const j=(y*Wr+x)*4,i=y*S+x;for(let ch=0;ch<3;ch++)f[ch*N+i]=(px[j+ch]/255-mu[ch])/sd[ch];}
-  onProg&&onProg(0,ids.length);
-  const emb=await E.run({pixel_values:new ort.Tensor("float32",f,[1,3,S,S])});
-  const {w,h,lab}=det,gx=Wr/w,gy=Hr/h;let done=0,fixed=0;
-  for(let q=0;q<ids.length;q+=8){if(stop&&stop())break;
-    const chunk=ids.slice(q,q+8).filter(i=>det.comps[i]),n=chunk.length;if(!n)continue;
-    const pts=new Float32Array(n*2);chunk.forEach((i,j)=>{const c=det.comps[i],b=c.box||[c.x0,c.y0,c.x1+1,c.y1+1];pts[j*2]=(b[0]+b[2])/2*gx;pts[j*2+1]=(b[1]+b[3])/2*gy;});
-    const o=await D.run({input_points:new ort.Tensor("float32",pts,[1,n,1,2]),input_labels:new ort.Tensor("int64",new BigInt64Array(n).fill(1n),[1,n,1]),image_embeddings:emb.image_embeddings,image_positional_embeddings:emb.image_positional_embeddings});
-    const M=o.pred_masks.data,IoU=o.iou_scores.data,R=256,sc=R/S;
-    chunk.forEach((id,j)=>{const c=det.comps[id],b=c.box||[c.x0,c.y0,c.x1+1,c.y1+1],bw=b[2]-b[0],bh=b[3]-b[1],e=c.box?.12:.3;
-      const X0=Math.max(0,Math.floor(b[0]-bw*e)),Y0=Math.max(0,Math.floor(b[1]-bh*e)),X1=Math.min(w-1,Math.ceil(b[2]+bw*e)),Y1=Math.min(h-1,Math.ceil(b[3]+bh*e));
-      let best=null,bs=.25;
-      for(let m3=0;m3<3;m3++){const base=(j*3+m3)*R*R;
-        const at=(X,Y)=>{const u=X*gx*sc-.5,v=Y*gy*sc-.5,u0=Math.max(0,Math.min(R-1,Math.floor(u))),v0=Math.max(0,Math.min(R-1,Math.floor(v))),u1=Math.min(R-1,u0+1),v1=Math.min(R-1,v0+1),fu=Math.min(1,Math.max(0,u-u0)),fv=Math.min(1,Math.max(0,v-v0));
-          return M[base+v0*R+u0]*(1-fu)*(1-fv)+M[base+v0*R+u1]*fu*(1-fv)+M[base+v1*R+u0]*(1-fu)*fv+M[base+v1*R+u1]*fu*fv;};
-        let tot=0;for(let i=0;i<R*R;i++)if(M[base+i]>0)tot++;const cell=(S/R/gx)*(S/R/gy);tot*=cell; // whole-image mask area in grid pixels
-        const inPts=[];for(let Y=Y0;Y<=Y1;Y++)for(let X=X0;X<=X1;X++)if(at(X+.5,Y+.5)>0)inPts.push(Y*w+X);
-        if(inPts.length<3)continue;
-        let rg=0,rn=0;const bx0=Math.round(b[0]),by0=Math.round(b[1]),bx1=Math.round(b[2]),by1=Math.round(b[3]);
-        for(let X=bx0;X<=bx1;X+=2){for(const Y of [by0,by1]){rn++;if(at(X+.5,Y+.5)>0)rg++;}}for(let Y=by0;Y<=by1;Y+=2){for(const X of [bx0,bx1]){rn++;if(at(X+.5,Y+.5)>0)rg++;}}
-        if(rn&&rg/rn>.55)continue; // the wall around the hold, not the hold
-        const frac=Math.min(1,inPts.length/Math.max(1,tot)),cov=Math.min(1,inPts.length/Math.max(1,bw*bh*.5)),s=frac*cov*(1+.15*IoU[j*3+m3]);
-        if(s>bs){bs=s;best=inPts;}}
-      if(best){for(const q2 of c.pts)if(lab[q2]===id)lab[q2]=-1;const mine=best.filter(q2=>lab[q2]===-1||lab[q2]===id);
-        if(mine.length>=3){for(const q2 of mine)lab[q2]=id;let x0=1e9,y0=1e9,x1=-1,y1=-1,sx=0,sy=0;for(const q2 of mine){const X=q2%w,Y=(q2-X)/w;sx+=X;sy+=Y;if(X<x0)x0=X;if(X>x1)x1=X;if(Y<y0)y0=Y;if(Y>y1)y1=Y;}
-          Object.assign(c,{pts:mine,n:mine.length,x0,y0,x1,y1,cx:sx/mine.length,cy:sy/mine.length,sam:true});fixed++;}
-        else for(const q2 of c.pts)if(lab[q2]===-1)lab[q2]=id;}
-      done++;});
-    onProg&&onProg(done,ids.length);await new Promise(r=>setTimeout(r,0));}
+  await hmRelease("yolo");
+  const E=await hmModel("nenc"),D=await hmModel("bdec"),[sw,sh]=hmImgSize(src),S5=512,k5=S5/Math.max(sw,sh),W5=Math.round(sw*k5),H5=Math.round(sh*k5);
+  const cv=document.createElement("canvas");cv.width=W5;cv.height=H5;const cx=cv.getContext("2d",{willReadFrequently:true});cx.drawImage(src,0,0,W5,H5);
+  const px=cx.getImageData(0,0,W5,H5).data,N=S5*S5,f=new Float32Array(3*N); // raw 0–255, zero padding (this encoder normalises inside)
+  for(let y=0;y<H5;y++)for(let x=0;x<W5;x++){const j=(y*W5+x)*4,i=y*S5+x;f[i]=px[j];f[N+i]=px[j+1];f[2*N+i]=px[j+2];}
+  cv.width=cv.height=0;onProg&&onProg(0,ids.length);
+  const emb0=(await E.run({image:hmT("float32",f,[1,3,S5,S5])})).image_embeddings;
+  const {w,h,lab}=det,S=1024,g=S/Math.max(sw,sh),gx=sw/w*g,gy=sh/h*g,R=256,sc=R/S; // grid → the decoder's 1024 frame → its 256 masks
+  
+  let done=0,fixed=0;
+  for(const id of ids){if(stop&&stop())break;const c=det.comps[id];if(!c){done++;continue;}
+    const b=c.box||(()=>{const bw=c.x1-c.x0+1,bh=c.y1-c.y0+1;return [c.x0-bw*.15,c.y0-bh*.15,c.x1+1+bw*.15,c.y1+1+bh*.15];})();
+    const o=await D.run({image_embeddings:hmT("float32",emb0.data.slice(),emb0.dims),point_coords:hmT("float32",new Float32Array([b[0]*gx,b[1]*gy,b[2]*gx,b[3]*gy]),[1,2,2]),point_labels:hmT("float32",new Float32Array([2,3]),[1,2]),mask_input:hmT("float32",new Float32Array(R*R),[1,1,R,R]),has_mask_input:hmT("float32",new Float32Array(1),[1])});
+    const M=o.low_res_masks.data,IoU=o.iou_predictions.data,nm=o.low_res_masks.dims[1]||1;
+    const bw=b[2]-b[0],bh=b[3]-b[1],e=.12,X0=Math.max(0,Math.floor(b[0]-bw*e)),Y0=Math.max(0,Math.floor(b[1]-bh*e)),X1=Math.min(w-1,Math.ceil(b[2]+bw*e)),Y1=Math.min(h-1,Math.ceil(b[3]+bh*e));
+    let best=null,bs=.25;
+    for(let m3=0;m3<nm;m3++){const base=m3*R*R;
+      const at=(X,Y)=>{const u=X*gx*sc-.5,v=Y*gy*sc-.5,u0=Math.max(0,Math.min(R-1,Math.floor(u))),v0=Math.max(0,Math.min(R-1,Math.floor(v))),u1=Math.min(R-1,u0+1),v1=Math.min(R-1,v0+1),fu=Math.min(1,Math.max(0,u-u0)),fv=Math.min(1,Math.max(0,v-v0));
+        return M[base+v0*R+u0]*(1-fu)*(1-fv)+M[base+v0*R+u1]*fu*(1-fv)+M[base+v1*R+u0]*(1-fu)*fv+M[base+v1*R+u1]*fu*fv;};
+      let tot=0;for(let i=0;i<R*R;i++)if(M[base+i]>0)tot++;tot*=(1/(gx*sc))*(1/(gy*sc));
+      const inPts=[];for(let Y=Y0;Y<=Y1;Y++)for(let X=X0;X<=X1;X++)if(at(X+.5,Y+.5)>0)inPts.push(Y*w+X);
+      if(inPts.length<3)continue;
+      let rg=0,rn=0;const bx0=Math.round(b[0]),by0=Math.round(b[1]),bx1=Math.round(b[2]),by1=Math.round(b[3]);
+      for(let X=bx0;X<=bx1;X+=2){for(const Y of [by0,by1]){rn++;if(at(X+.5,Y+.5)>0)rg++;}}for(let Y=by0;Y<=by1;Y+=2){for(const X of [bx0,bx1]){rn++;if(at(X+.5,Y+.5)>0)rg++;}}
+      if(rn&&rg/rn>.55)continue; // the wall around the hold, not the hold
+      const frac=Math.min(1,inPts.length/Math.max(1,tot)),cov=Math.min(1,inPts.length/Math.max(1,bw*bh*.5)),s=frac*cov*(1+.15*IoU[m3])*(m3===0?1.1:1);
+      if(s>bs){bs=s;best=inPts;}}
+    if(best){for(const q2 of c.pts)if(lab[q2]===id)lab[q2]=-1;const mine=best.filter(q2=>lab[q2]===-1||lab[q2]===id);
+      if(mine.length>=3){for(const q2 of mine)lab[q2]=id;let x0=1e9,y0=1e9,x1=-1,y1=-1,sx=0,sy=0;for(const q2 of mine){const X=q2%w,Y=(q2-X)/w;sx+=X;sy+=Y;if(X<x0)x0=X;if(X>x1)x1=X;if(Y<y0)y0=Y;if(Y>y1)y1=Y;}
+        Object.assign(c,{pts:mine,n:mine.length,x0,y0,x1,y1,cx:sx/mine.length,cy:sy/mine.length,sam:true});fixed++;}
+      else for(const q2 of c.pts)if(lab[q2]===-1)lab[q2]=id;}
+    done++;if(done%2===0||done===ids.length){onProg&&onProg(done,ids.length);await new Promise(r=>setTimeout(r,0));}}
+  await hmRelease("nenc","bdec");
   return fixed;
 }
 /* MODNet: a soft cutout of the person in a photo (a canvas with the background made transparent), cached per photo */
 const HM_CUT=new Map();
 async function hmCutout(img,onProg){
   const key=img.src;if(HM_CUT.has(key))return HM_CUT.get(key);
-  const ort=await hmOrt(),Mn=await hmModel("modnet",onProg),[iw,ih]=hmImgSize(img),k=512/Math.min(iw,ih),W=Math.max(32,Math.floor(iw*k/32)*32),H=Math.max(32,Math.floor(ih*k/32)*32);
+  const Mn=await hmModel("modnet",onProg),[iw,ih]=hmImgSize(img),k=512/Math.min(iw,ih),W=Math.max(32,Math.floor(iw*k/32)*32),H=Math.max(32,Math.floor(ih*k/32)*32);
   const cv=document.createElement("canvas");cv.width=W;cv.height=H;const cx=cv.getContext("2d",{willReadFrequently:true});cx.drawImage(img,0,0,W,H);
   const px=cx.getImageData(0,0,W,H).data,N=W*H,f=new Float32Array(3*N);for(let i=0,j=0;i<N;i++,j+=4){f[i]=(px[j]/255-.5)/.5;f[N+i]=(px[j+1]/255-.5)/.5;f[2*N+i]=(px[j+2]/255-.5)/.5;}
-  const o=await Mn.run({input:new ort.Tensor("float32",f,[1,3,H,W])}),m=o[Mn.outputNames[0]].data;
+  const o=await Mn.run({[Mn.inputNames[0]]:hmT("float32",f,[1,3,H,W])}),m=o[Mn.outputNames[0]].data;
   const mc=document.createElement("canvas");mc.width=W;mc.height=H;const mx=mc.getContext("2d"),md=mx.createImageData(W,H);
   for(let i=0;i<N;i++){const a=Math.max(0,Math.min(1,(m[i]-.08)/.84));md.data[i*4+3]=Math.round(a*255);}mx.putImageData(md,0,0);
   const s=Math.min(1,1600/Math.max(iw,ih)),cw=Math.round(iw*s),ch=Math.round(ih*s),out=document.createElement("canvas");out.width=cw;out.height=ch;const ox=out.getContext("2d");
   ox.drawImage(img,0,0,cw,ch);ox.globalCompositeOperation="destination-in";ox.imageSmoothingEnabled=true;ox.drawImage(mc,0,0,cw,ch);
-  HM_CUT.set(key,out);return out;
+  HM_CUT.set(key,out);hmRelease("modnet");return out;
 }
 // every hold the same colour as hold id (for "select all this colour")
 function hmSameColour(det,id){
@@ -7666,7 +7717,7 @@ function openHoldPicker(src,opt={}){
   const cv=lay.querySelector("#hm-cv"),x=cv.getContext("2d");let det=null,sel=new Set(),roles={start:[],top:[],high:null},tool="holds",grp=null,Z={s:1,tx:0,ty:0},moved=false;
   const applyZ=()=>{cv.style.transform=Z.s===1&&!Z.tx&&!Z.ty?"":`translate(${Z.tx}px,${Z.ty}px) scale(${Z.s})`;const b=lay.querySelector("#hm-z");if(b)b.hidden=Z.s===1;};
   const close=()=>{lay.remove();document.body.classList.remove("hm-open");};
-  let lastTap=null,aiFail=false;
+  let lastTap=null,aiFail=false,outlineCrash=false;
   const HINT={holds:"Pick a colour above, or tap one hold of your problem. Tap holds to add or remove them. Pinch to zoom in on small jibs.",add:"Tap a hold the app missed and it grows the hold out from there.",start:"Tap the start hold or holds (up to two).",top:"Tap the top hold.",high:"Tap the furthest hold you've reached."};
   const fit=()=>{const st=lay.querySelector(".hm-stage"),mw=st.clientWidth,mh=st.clientHeight,k=Math.min(mw/det.w,mh/det.h),sw0=det.src.videoWidth||det.src.naturalWidth||det.src.width,dpr=Math.max(Math.min(2,devicePixelRatio||1),Math.min(3,sw0/(det.w*k))); // extra resolution so pinch-zoom stays sharp
     cv.style.width=Math.round(det.w*k)+"px";cv.style.height=Math.round(det.h*k)+"px";cv.width=Math.round(det.w*k*dpr);cv.height=Math.round(det.h*k*dpr);Z={s:1,tx:0,ty:0};applyZ();};
@@ -7694,10 +7745,10 @@ function openHoldPicker(src,opt={}){
   lay.querySelector("#hm-ok").onclick=async()=>{if(!sel.size){toast("Pick a colour or tap some holds first");return;}
     const todo=[...sel].filter(i=>det.comps[i]&&!det.comps[i].sam);
     // trace exact outlines with SlimSAM when the hold finder is on the phone; Skip keeps the quick outlines
-    if(det.ai&&todo.length&&HM_AI.sess.enc&&HM_AI.sess.dec){let skip=false;
+    if(det.ai&&todo.length&&!outlineCrash&&await hmCached(["nenc","bdec"])){let skip=false;
       const show=(d,n)=>{busy(`${SPIN}Tracing exact outlines… ${d} of ${n}<small>So the holds look right on your project</small><button class="btn" id="hm-skip" style="margin-top:14px">Skip</button>`);const sb=lay.querySelector("#hm-skip");if(sb)sb.onclick=()=>{skip=true;sb.textContent="Finishing…";};};
       show(0,todo.length);await new Promise(r=>setTimeout(r,60));
-      try{await hmSamRefine(src,det,todo,(d,n)=>show(d,n),()=>skip);}catch(e){console.warn("outline AI",e);}
+      hmGuard.set("outline");try{await hmSamRefine(src,det,todo,(d,n)=>show(d,n),()=>skip);}catch(e){console.warn("outline AI",e);hmRelease("nenc","bdec");}hmGuard.clear();
       unbusy();}
     const r=route();close();opt.onSave&&opt.onSave(r);};
   const busy=t=>{let b=lay.querySelector("#hm-busy");if(!b){b=document.createElement("div");b.className="hm-busy";b.id="hm-busy";lay.querySelector(".hm-stage").appendChild(b);}b.innerHTML=t;};
@@ -7719,18 +7770,21 @@ function openHoldPicker(src,opt={}){
       await hmAiLoad(p=>busy(`${SPIN}Downloading the hold finder… ${Math.round(p*100)}%<small>One time only, then it works offline</small>`));
       busy(`${SPIN}Finding holds with AI…<small>A few seconds</small>`);
       await new Promise(r=>setTimeout(r,80)); // let that paint before the heavy work
-      const ai=await hmAiRun(src);if(!lay.isConnected)return;
+      hmGuard.set("holds");const ai=await hmAiRun(src);hmGuard.clear();hmRelease("yolo");if(!lay.isConnected)return;
       const d=hmAiComps(hmDetect(src,{skip:true}),ai);unbusy();setup(d);
       if(!d.comps.length)toast("No holds found. Try a straighter, closer photo, or tap holds in with Add.");}
-    catch(e){console.warn("hold AI",e);aiFail=true;if(!lay.isConnected)return;unbusy();if(!det){try{setup(hmDetect(src));}catch(_){busy("Couldn't read that image.");return;}}else aiBar();
+    catch(e){console.warn("hold AI",e);hmGuard.clear();hmRelease("yolo");aiFail=true;if(!lay.isConnected)return;unbusy();if(!det){try{setup(hmDetect(src));}catch(_){busy("Couldn't read that image.");return;}}else aiBar();
       toast("The AI hold finder couldn't run here, so colour detection is used.");}};
   const aiBar=()=>{const el=lay.querySelector("#hm-ai");if(!el||!det)return;
     if(det.ai){el.innerHTML=`<span class="hm-aion">✦ Holds found by AI</span>`;return;}
-    if(aiFail){el.innerHTML=`<span class="hint">The AI hold finder couldn't load here (offline?). Using colour detection.</span> <button class="hm-same" id="hm-aigo">Try again</button>`;}
+    if(aiCrash){el.innerHTML=`<span class="hint">The AI hold finder closed the app last time (your phone ran low on memory). Using colour detection. Closing other apps first can help.</span> <button class="hm-same" id="hm-aigo">Try AI again</button>`;}
+    else if(aiFail){el.innerHTML=`<span class="hint">The AI hold finder couldn't load here (offline?). Using colour detection.</span> <button class="hm-same" id="hm-aigo">Try again</button>`;}
     else el.innerHTML=`<button class="hm-aibtn" id="hm-aigo"><b>✦ Find holds with AI</b><span>Finds holds and volumes, skips mats and walls, and traces exact outlines. ${Math.round(HM_AI.size)} MB, downloaded once.</span></button>`;
-    const go=el.querySelector("#hm-aigo");if(go)go.onclick=()=>{aiFail=false;el.innerHTML="";runAI();};};
+    const go=el.querySelector("#hm-aigo");if(go)go.onclick=()=>{aiFail=false;aiCrash=false;el.innerHTML="";runAI();};};
+  // a step that didn't finish last time (the page was closed by the phone) isn't retried automatically
+  const gd0=hmGuard.get();let aiCrash=!!(gd0&&gd0.step==="holds");outlineCrash=!!(gd0&&gd0.step==="outline");if(gd0)hmGuard.clear();
   setTimeout(async()=>{
-    if(HM_AI.sess.yolo||await hmAiCached()){runAI();return;}
+    if(!aiCrash&&(HM_AI.sess.yolo||await hmAiCached())){runAI();return;}
     try{const d=hmDetect(src);unbusy();setup(d);}catch(e){busy("Couldn't read that image.");}},60);
   // pinch to zoom and drag to pan, so small jibs are easy to tap
   const stage=lay.querySelector(".hm-stage"),zb=lay.querySelector("#hm-z");cv.style.transformOrigin="0 0";
