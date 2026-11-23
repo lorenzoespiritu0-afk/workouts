@@ -1,5 +1,5 @@
 // Offline support: the app shell is cached, so it opens with no connection.
-const VERSION = "workouts-v98";
+const VERSION = "workouts-v99";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-180.png"];
 
 self.addEventListener("install", (e) => {
@@ -35,7 +35,7 @@ self.addEventListener("fetch", (e) => {
 
   // The hold finder's engine (ONNX Runtime Web) is pinned to a version, so keep it for offline use.
   if (/cdnjs\.cloudflare\.com\/ajax\/libs\/onnxruntime-web\//.test(req.url)) {
-    e.respondWith(caches.open("models-v1").then((c) => c.match(req).then((hit) => hit || fetch(req).then((res) => { if (res.ok) c.put(req, res.clone()); return res; }))));
+    e.respondWith(caches.open("models-ort").then((c) => c.match(req).then((hit) => hit || fetch(req).then((res) => { if (res.ok) c.put(req, res.clone()); return res; }))));
     return;
   }
 

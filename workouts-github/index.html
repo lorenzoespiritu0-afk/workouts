@@ -116,6 +116,7 @@ body.hm-open{overflow:hidden}
 #sopts:not([data-style="classic"]) .conly,#sopts:not([data-bg="photo"]) #o-ptog [data-t="bw"],#sopts:not([data-bg="photo"]):not([data-style="splits"]) #o-ptog [data-t="motion"],#sopts[data-bg="none"] #o-ptog [data-t="grain"],#sopts[data-bg="glass"] #o-ptog [data-t="grain"]{display:none}
 
 #sopts[data-style="splits"] #o-tog [data-t="route"]{display:none}
+#sopts:not([data-bg="photo"]) #o-ptog [data-t="depth"],#sopts:not([data-style="week"]):not([data-style="splits"]) #o-ptog [data-t="depth"]{display:none}
 #sopts[data-style="trace"] #o-accent,#sopts[data-style="trace"] .plabel:has(+#o-accent),#sopts[data-style="trace"] #o-tog [data-t="route"],#sopts[data-style="trace"] .hdonly,#sopts[data-style="trace"] .sonly,#sopts[data-style="trace"] #o-tog [data-t="prs"],#sopts[data-style="trace"] #o-tog [data-t="trophies"],#sopts[data-style="trace"] #o-tog [data-t="level"]{display:none}
 
 /* v51 food */
@@ -5153,13 +5154,13 @@ async function drawPoster(s,o){
   const W=1080,P=88,ink=o.color,acc=o.accent||"#E8323C",c=document.createElement("canvas"),x=c.getContext("2d");
   const lum=h=>{const n=parseInt(h.slice(1),16);return ((n>>16)*0.299+((n>>8)&255)*0.587+(n&255)*0.114)/255;};
   const shade=lum(ink)>0.5?"rgba(0,0,0,.55)":"rgba(255,255,255,.5)";
-  const ops=[];let y=0,band=0;const push=f=>ops.push({f,b:band});const maxW=W-2*P;const head=headlineOf(s,o);
+  const ops=[];let y=0,band=0,headN=-1;const push=f=>ops.push({f,b:band});const maxW=W-2*P;const head=headlineOf(s,o);
   const LB=logoBand(o);if(LB&&LB.top){push(()=>logoAt(x,o,LB,W,P,off,TYPE_HEX[s.type]));y+=LB.h+LB.gap;}
   const by=Object.fromEntries(allStats(s).map(z=>[z.k,z]));
   if(o.style==="week"){
     const SX=1,TR=-.035,hs=fitS(x,head,PF.wide,200,maxW+16,SX,40,TR);
-    y+=hs*.72;const yh=y;push(()=>{x.fillStyle=acc;txS(x,head,W/2,off+yh,PF.wide(hs),SX,1,"center",TR);});
-    const sub=[(TYPES[s.type]||"Workout").toUpperCase(),...(()=>{const L=o.stats.map(k=>by[k]).filter(Boolean).slice(0,3);return L.map(z=>z.k==="time"?durCaps(s.dur):/^[\d,.]+$/.test(z.v)?`${z.v} ${(+z.v.replace(/,/g,"")===1?z.l.replace(/es$|s$/,""):z.l)}`.toUpperCase():z.v.replace(/\s*\/\s*/,"/").toUpperCase());})()];
+    y+=hs*.72;const yh=y;push(()=>{x.fillStyle=acc;txS(x,head,W/2,off+yh,PF.wide(hs),SX,1,"center",TR);});headN=ops.length;
+    const sub=[(TYPES[s.type]||"Workout").toUpperCase(),...(()=>{const L=o.stats.map(k=>by[k]).filter(z=>z&&z.v!=null).slice(0,3);return L.map(z=>z.k==="time"?durCaps(s.dur):/^[\d,.]+$/.test(z.v)?`${z.v} ${(+z.v.replace(/,/g,"")===1?z.l.replace(/es$|s$/,""):z.l)}`.toUpperCase():z.v.replace(/\s*\/\s*/,"/").toUpperCase());})()];
     let ss=48;const crowd=()=>{const w=sub.map(t=>trkW(x,t,-.01));if(w.length<3)return w.reduce((a,b)=>a+b,0)>maxW-50;if(w.length===3)return w[0]+w[1]/2>maxW/2-36||w[2]+w[1]/2>maxW/2-36;return w.reduce((a,b)=>a+b,0)>maxW-36*(w.length-1)||w[0]+w[1]/2>maxW/3-24||w[3]+w[2]/2>maxW/3-24;};x.font=PF.wide(ss);while(crowd()&&ss>20){ss-=2;x.font=PF.wide(ss);}
     y+=22+ss*.9;const ys=y;
     push(()=>{x.fillStyle=acc;const n=sub.length;sub.forEach((t,i)=>{const X=n===1?W/2:P+(maxW)*(i/(n-1)),al=n===1?"center":i===0?"left":i===n-1?"right":"center";txS(x,t,X,off+ys,PF.wide(ss),1,1,al,-.01);});});
@@ -5183,7 +5184,7 @@ async function drawPoster(s,o){
     const SY=1.32,TR=-.012;let hs=fitS(x,head,PF.tall,340,maxW+40,1,60,TR);
     y+=hs*.74*SY;const yh=y;push(()=>{x.fillStyle=ink;
       if(o.motion){x.save();x.shadowColor="transparent";try{x.filter="blur(5px)";}catch(e){}for(const [dx,a] of [[-46,.10],[-26,.16],[22,.12],[44,.07]]){x.globalAlpha=a;txS(x,head,W/2+dx,off+yh,PF.tall(hs),1,SY,"center",TR);}x.restore();}
-      txS(x,head,W/2,off+yh,PF.tall(hs),1,SY,"center",TR);});
+      txS(x,head,W/2,off+yh,PF.tall(hs),1,SY,"center",TR);});headN=ops.length;
     const day=live().filter(z=>z.date===s.date&&z.type===s.type).sort((a,b)=>chrono(a,b));
     const lines=(o.day&&day.length>1?day:[s]).map(dayLine);
     y+=36;let ls=74;x.font=PF.tallM(ls);while(lines.some(l=>x.measureText(l.l).width+x.measureText(l.r).width>maxW-70)&&ls>30){ls-=2;x.font=PF.tallM(ls);}
@@ -5235,7 +5236,18 @@ async function drawPoster(s,o){
   await posterBg(x,s,o,W,c.height);
   x.textBaseline="alphabetic";
   if(o.shadow){x.shadowColor=shade;x.shadowBlur=22;x.shadowOffsetY=2;}
-  for(const {f,b} of ops){off=base+gaps.slice(0,b+1).reduce((a,g)=>a+g,0);x.save();f();x.restore();}
+  // subject in front: the person from the photo goes over the headline, under everything else
+  let cut=null,cimg=null;
+  if(o.depth&&o.bg==="photo"&&(o.style==="week"||o.style==="splits")){const u=o.upimg||await photoURL(s.id);
+    if(u){cimg=await new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.onerror=()=>r(null);i.src=u;});if(cimg)try{cut=await hmCutout(cimg,o.onCutProg);}catch(e){console.warn("cutout",e);o.cutFail=true;}}}
+  const drawCut=()=>{const Wc=c.width,Hc=c.height,sc=Math.max(Wc/cimg.width,Hc/cimg.height),iw=cimg.width*sc,ih=cimg.height*sc;
+    const t=document.createElement("canvas");t.width=Wc;t.height=Hc;const tx=t.getContext("2d",{willReadFrequently:true});tx.drawImage(cut,(Wc-iw)/2,(Hc-ih)/2,iw,ih);if(o.bw)toBW(tx);
+    tx.globalCompositeOperation="source-atop";const g=tx.createLinearGradient(0,0,0,Hc);g.addColorStop(0,"rgba(0,0,0,.45)");g.addColorStop(.45,"rgba(0,0,0,.18)");g.addColorStop(1,"rgba(0,0,0,.62)");tx.fillStyle=g;tx.fillRect(0,0,Wc,Hc);
+    x.save();x.shadowColor="transparent";x.setTransform(1,0,0,1,0,0);x.drawImage(t,0,0);x.restore();};
+  let cutDone=!cut;
+  // only the big headline goes behind the subject; every stat stays readable on top
+  ops.forEach(({f,b},i)=>{if(!cutDone&&(headN>=0?i===headN:b>0)){drawCut();cutDone=true;}off=base+gaps.slice(0,b+1).reduce((a,g)=>a+g,0);x.save();f();x.restore();});
+  if(!cutDone)drawCut();
   return c;
 }
 /* ---------- shared poster pieces: muscles, PR card, medals and level; a row of extra stats ---------- */
@@ -5410,7 +5422,7 @@ let shareDl=null;
 function openShare(s){
   const hasRoute=!!(s.track&&s.track.length>1);
   const o={layout:"stack",size:"fit",color:"#FFFFFF",font:"sport",align:"center",bg:"none",title:true,date:true,place:false,route:hasRoute,trophies:false,level:false,shadow:false,outline:false,rcolor:"same",sends:s.type==="climb"&&sendGroups(s).length>0,mus:s.type==="lift"&&!!(s.ex&&s.ex.length),stats:defaultStats(s),
-    style:"classic",head:"day",accent:"#E8323C",day:true,splits:true,bw:true,grain:true,motion:false,upimg:null,logo:"none",lcol:"volt",lpos:"bc",accOn:"none"};let motionSet=false;
+    style:"classic",head:"day",accent:"#E8323C",day:true,depth:false,splits:true,bw:true,grain:true,motion:false,upimg:null,logo:"none",lcol:"volt",lpos:"bc",accOn:"none"};let motionSet=false;
   /* remember the look you last used (not the stats, which depend on the activity) */
   const SPK="workouts-share-look-v1",LOOK=["style","layout","size","color","font","align","bg","shadow","outline","accent","accOn","logo","lcol","lpos","head","grain","bw","motion","rcolor","trophies","level"];
   try{const sv=JSON.parse(localStorage.getItem(SPK)||"{}");for(const k of LOOK)if(sv[k]!=null)o[k]=sv[k];if(o.bg==="photo"&&!s.photo)o.bg="dark";if(o.style==="trace"&&!hasRoute)o.style="classic";if(o.style==="classic"&&o.size==="poster")o.size="fit";}catch(e){}
@@ -5431,7 +5443,7 @@ function openShare(s){
       <div class="plabel">Style</div>${segH("o-style","style",[["classic","Classic"],["week","Weekday"],["splits","Splits"]])}${segH("o-style2","style",[["tick","Ticked"],["bib","Bib"],["bill","Billboard"],...(hasRoute?[["trace","Trace"]]:[])])}
       <div class="oc"><div class="plabel">Layout</div>${segH("o-layout","layout",[["stack","Stacked"],["list","List"],["row","Row"],["grid","Grid"],["hero","Big"]])}</div>
       <div class="op"><div class="hdonly"><div class="plabel">Headline</div>${segH("o-head","head",[["day","Weekday"],["title","Title"],["type","Activity"]])}</div>
-        <div class="plabel">Poster</div><div class="tchips" id="o-ptog">${[...(sameDay?[["day","Whole day"]]:[]),...(canSplit?[["splits","Lap table"]]:[]),["bw","Black and white photo"],["motion","Motion blur"],["grain","Film grain"]].map(([k,t])=>`<button class="tchip${k==="day"||k==="splits"?" sonly":""}" data-t="${k}" aria-pressed="${o[k]}">${t}</button>`).join("")}</div>
+        <div class="plabel">Poster</div><div class="tchips" id="o-ptog">${[...(sameDay?[["day","Whole day"]]:[]),...(canSplit?[["splits","Lap table"]]:[]),["depth","Subject in front"],["bw","Black and white photo"],["motion","Motion blur"],["grain","Film grain"]].map(([k,t])=>`<button class="tchip${k==="day"||k==="splits"?" sonly":""}" data-t="${k}" aria-pressed="${o[k]}">${t}</button>`).join("")}</div>
         </div><div class="plabel">Accent color</div><div class="swrow" id="o-accent">${accents.map(([h,n])=>`<button class="sw" style="--sw:${h}" data-v="${h}" aria-label="${n}" title="${n}" aria-pressed="${o.accent===h}"></button>`).join("")}</div>
       <div class="oc"><div class="plabel">Accent on</div>${segH("o-acc","accOn",[["none","Nothing"],["title","Title"],["hero","First stat"],["values","All stats"]])}</div>
       <div class="plabel">Size</div>${segH("o-size","size",[["fit","Fit to content"],["story","Story 9:16"],["poster","Poster 2:3"],["square","Square"]])}
@@ -5472,7 +5484,14 @@ function openShare(s){
   $("o-file").onchange=()=>{const f=$("o-file").files&&$("o-file").files[0];if(!f)return;if(o.upimg)URL.revokeObjectURL(o.upimg);o.upimg=URL.createObjectURL(f);o.bg="photo";press("o-bg","photo");$("o-pick").textContent="Use a different photo";redraw();};
   $("o-pick").onclick=pickPhoto;
   $("o-bg").querySelectorAll("button").forEach(b=>b.onclick=()=>{if(b.dataset.v==="photo"&&!o.upimg&&!s.photo){pickPhoto();return;}o.bg=b.dataset.v;press("o-bg",o.bg);redraw();});
-  $("o-ptog").querySelectorAll("button").forEach(b=>b.onclick=()=>{const k=b.dataset.t;if(k==="motion")motionSet=true;o[k]=!o[k];b.setAttribute("aria-pressed",o[k]);redraw();});
+  $("o-ptog").querySelectorAll("button").forEach(b=>b.onclick=async()=>{const k=b.dataset.t;if(k==="motion")motionSet=true;o[k]=!o[k];b.setAttribute("aria-pressed",o[k]);
+    if(k==="depth"&&o.depth){const hint=$("shint"),was=hint.textContent,cached=HM_AI.sess.modnet||await hmCached(["modnet"]);o.cutFail=false;
+      hint.textContent=cached?"Cutting you out of the photo…":"Downloading the cutout model (13 MB, one time only)… 0%";
+      o.onCutProg=p=>{if(!cached)hint.textContent=`Downloading the cutout model (13 MB, one time only)… ${Math.round(p*100)}%`;if(p>=1)hint.textContent="Cutting you out of the photo…";};
+      await redraw();hint.textContent=was;
+      if(o.cutFail){o.depth=false;b.setAttribute("aria-pressed","false");toast("Couldn't load the cutout model here. Check your connection and try again.");redraw();}
+      return;}
+    redraw();});
   $("o-stats").querySelectorAll("button").forEach(b=>b.onclick=()=>{const k=b.dataset.k,i=o.stats.indexOf(k);if(i>=0)o.stats.splice(i,1);else{if(o.stats.length>=6){toast("Up to 6 stats");return;}o.stats.push(k);}b.setAttribute("aria-pressed",i<0);redraw();});
   $("o-tog").querySelectorAll("button").forEach(b=>b.onclick=()=>{const k=b.dataset.t;o[k]=!o[k];b.setAttribute("aria-pressed",o[k]);redraw();});
   $("sback").onclick=()=>openDetail(s);
@@ -7387,64 +7406,132 @@ function openPRShare(s){
    "add" tool grows a hold from wherever you tap, for anything the detector missed. Each hold is kept as its own
    pixel mask, so outlines follow its real shape. */
 const HM_MAX=560;
-/* AI hold finder: a Mask R-CNN trained on climbing walls (d12's crux hold segmentation model, MIT, int8/fp16 ONNX
-   by AEYohn/crux-models), run on the phone with ONNX Runtime Web. It outlines each hold and ignores mats, floors,
-   tape and walls far better than colour rules can. 75 MB, downloaded once on request and kept for offline use. */
+/* On-device AI models (ONNX Runtime Web, loaded on request and kept for offline use):
+   - hold finder: yolo-holds (samolego, AGPL-3.0) finds holds and volumes in about a second;
+     SlimSAM (Apache-2.0) then traces the exact outline of the holds you pick when you save
+   - subject cutout: MODNet (Apache-2.0), for "subject in front" share images */
 const HM_AI={
-  model:/github\.io$/.test(location.hostname)&&/workouts-github/.test(location.pathname)?new URL("models/holds.onnx",location.href).href:"https://lorenzoespiritu0-afk.github.io/workouts/workouts-github/models/holds.onnx",
-  ort:"https://cdnjs.cloudflare.com/ajax/libs/onnxruntime-web/1.29.0/",cache:"models-v1",size:74.5,short:640,sess:null,loading:null
+  base:/github\.io$/.test(location.hostname)&&/workouts-github/.test(location.pathname)?new URL("models/",location.href).href:"https://lorenzoespiritu0-afk.github.io/workouts/workouts-github/models/",
+  ort:"https://cdnjs.cloudflare.com/ajax/libs/onnxruntime-web/1.29.0/",cache:"models-v2",
+  files:{yolo:["holds-yolo.onnx",10.1],enc:["sam-encoder.onnx",8.9],dec:["sam-decoder.onnx",4.9],modnet:["modnet.onnx",13.1]},
+  holdKeys:["yolo","enc","dec"],sess:{},loading:{}
 };
-async function hmAiCached(){try{if(!("caches" in window))return false;const c=await caches.open(HM_AI.cache);return !!(await c.match(HM_AI.model));}catch(e){return false;}}
-function hmLoadScript(src){return new Promise((res,rej)=>{if(document.querySelector(`script[src="${src}"]`)&&window.ort)return res();const s=document.createElement("script");s.src=src;s.async=true;s.onload=res;s.onerror=()=>rej(new Error("script"));document.head.appendChild(s);});}
-async function hmAiLoad(onProg){
-  if(HM_AI.sess)return HM_AI.sess;
-  if(HM_AI.loading)return HM_AI.loading;
-  HM_AI.loading=(async()=>{
-    await hmLoadScript(HM_AI.ort+"ort.min.js");
-    const ort=window.ort;ort.env.wasm.wasmPaths=HM_AI.ort;ort.env.wasm.numThreads=self.crossOriginIsolated?Math.min(4,navigator.hardwareConcurrency||2):1;
-    let buf=null,c=null;try{c=await caches.open(HM_AI.cache);const hit=await c.match(HM_AI.model);if(hit)buf=await hit.arrayBuffer();}catch(e){}
-    if(!buf){
-      const res=await fetch(HM_AI.model);if(!res.ok)throw new Error("model "+res.status);
-      const tot=+res.headers.get("content-length")||HM_AI.size*1e6;let got=0;const parts=[];
-      if(res.body&&res.body.getReader){const rd=res.body.getReader();for(;;){const {done,value}=await rd.read();if(done)break;parts.push(value);got+=value.length;onProg&&onProg(got/tot);}}
-      else{parts.push(new Uint8Array(await res.arrayBuffer()));}
-      const blob=new Blob(parts);buf=await blob.arrayBuffer();
-      try{if(c)await c.put(HM_AI.model,new Response(blob,{headers:{"content-type":"application/octet-stream"}}));}catch(e){}
-    }
+HM_AI.size=HM_AI.holdKeys.reduce((a,k)=>a+HM_AI.files[k][1],0);
+const hmUrl=k=>HM_AI.base+HM_AI.files[k][0];
+async function hmCached(keys){try{if(!("caches" in window))return false;const c=await caches.open(HM_AI.cache);for(const k of keys)if(!(await c.match(hmUrl(k))))return false;return true;}catch(e){return false;}}
+const hmAiCached=()=>hmCached(HM_AI.holdKeys);
+function hmLoadScript(src){return new Promise((res,rej)=>{if(window.ort)return res();const s=document.createElement("script");s.src=src;s.async=true;s.onload=res;s.onerror=()=>rej(new Error("script"));document.head.appendChild(s);});}
+async function hmOrt(){await hmLoadScript(HM_AI.ort+"ort.min.js");const ort=window.ort;ort.env.wasm.wasmPaths=HM_AI.ort;ort.env.wasm.numThreads=self.crossOriginIsolated?Math.min(4,navigator.hardwareConcurrency||2):1;
+  try{caches.delete("models-v1");}catch(e){} // the old 75 MB hold model
+  return ort;}
+// one model file: from the phone's cache, or downloaded with progress (0–1) and cached
+async function hmModel(k,onProg){
+  if(HM_AI.sess[k])return HM_AI.sess[k];if(HM_AI.loading[k])return HM_AI.loading[k];
+  HM_AI.loading[k]=(async()=>{const ort=await hmOrt(),url=hmUrl(k);let buf=null,c=null;
+    try{c=await caches.open(HM_AI.cache);const hit=await c.match(url);if(hit)buf=await hit.arrayBuffer();}catch(e){}
+    if(!buf){const res=await fetch(url);if(!res.ok)throw new Error(k+" "+res.status);const tot=+res.headers.get("content-length")||HM_AI.files[k][1]*1e6;let got=0;const parts=[];
+      if(res.body&&res.body.getReader){const rd=res.body.getReader();for(;;){const {done,value}=await rd.read();if(done)break;parts.push(value);got+=value.length;onProg&&onProg(Math.min(1,got/tot));}}
+      else parts.push(new Uint8Array(await res.arrayBuffer()));
+      const blob=new Blob(parts);buf=await blob.arrayBuffer();try{if(c)await c.put(url,new Response(blob,{headers:{"content-type":"application/octet-stream"}}));}catch(e){}}
     onProg&&onProg(1);
-    HM_AI.sess=await ort.InferenceSession.create(buf,{executionProviders:["wasm"],graphOptimizationLevel:"basic"}); // "all" takes ~25 s to set up in the browser and runs no faster
-    return HM_AI.sess;
-  })();
-  try{return await HM_AI.loading;}catch(e){HM_AI.loading=null;throw e;}
+    // "basic" graph optimisation: "all" takes far longer to set up in the browser and runs no faster
+    HM_AI.sess[k]=await ort.InferenceSession.create(buf,{executionProviders:["wasm"],graphOptimizationLevel:"basic"});return HM_AI.sess[k];})();
+  try{return await HM_AI.loading[k];}catch(e){HM_AI.loading[k]=null;throw e;}
 }
-// run the model; returns holds as boxes (0–1 of the image) with a 28×28 soft mask each, best first
+// all the hold finder's files, with one combined progress figure
+async function hmAiLoad(onProg){const ks=HM_AI.holdKeys,tot=HM_AI.size,done={};
+  for(const k of ks){await hmModel(k,p=>{done[k]=p*HM_AI.files[k][1];onProg&&onProg(ks.reduce((a,q)=>a+(done[q]||0),0)/tot);});done[k]=HM_AI.files[k][1];}
+  return HM_AI.sess;}
+const hmImgSize=src=>[src.videoWidth||src.naturalWidth||src.width,src.videoHeight||src.naturalHeight||src.height];
+// yolo-holds: boxes (0–1 of the image) with a score and class (0 hold, 1 volume)
 async function hmAiRun(src){
-  const sess=await hmAiLoad(),ort=window.ort;
-  const sw=src.videoWidth||src.naturalWidth||src.width,sh=src.videoHeight||src.naturalHeight||src.height;
-  let k=HM_AI.short/Math.min(sw,sh);if(Math.max(sw,sh)*k>1100)k=1100/Math.max(sw,sh);
-  const W=Math.round(sw*k),H=Math.round(sh*k),cv=document.createElement("canvas");cv.width=W;cv.height=H;
-  const cx=cv.getContext("2d",{willReadFrequently:true});cx.drawImage(src,0,0,W,H);const px=cx.getImageData(0,0,W,H).data,N=W*H,f=new Float32Array(3*N);
-  for(let i=0,j=0;i<N;i++,j+=4){f[i]=px[j+2];f[N+i]=px[j+1];f[2*N+i]=px[j];} // BGR, 0–255, channels first (Detectron2)
-  const out=await sess.run({image:new ort.Tensor("float32",f,[3,H,W])});
-  const B=out.boxes.data,S=out.scores.data,M=out.masks.data,n=S.length,ms=out.masks.dims[2]||28,res=[];
-  for(let i=0;i<n;i++){if(S[i]<.5)continue;res.push({x0:B[i*4]/W,y0:B[i*4+1]/H,x1:B[i*4+2]/W,y1:B[i*4+3]/H,s:S[i],m:M.subarray(i*ms*ms,(i+1)*ms*ms),ms});}
+  const ort=await hmOrt(),Y=await hmModel("yolo"),[sw,sh]=hmImgSize(src),S=1024,k=S/Math.max(sw,sh);
+  const cv=document.createElement("canvas");cv.width=cv.height=S;const cx=cv.getContext("2d",{willReadFrequently:true});cx.fillStyle="rgb(114,114,114)";cx.fillRect(0,0,S,S);cx.drawImage(src,0,0,sw*k,sh*k);
+  const px=cx.getImageData(0,0,S,S).data,N=S*S,f=new Float32Array(3*N);for(let i=0,j=0;i<N;i++,j+=4){f[i]=px[j]/255;f[N+i]=px[j+1]/255;f[2*N+i]=px[j+2]/255;}
+  const o=await Y.run({[Y.inputNames[0]]:new ort.Tensor("float32",f,[1,3,S,S])}),d=o[Y.outputNames[0]].data,n=d.length/6,res=[];
+  for(let i=0;i<n;i++){const s=d[i*6+4];if(s<.25)continue;res.push({x0:d[i*6]/k/sw,y0:d[i*6+1]/k/sh,x1:d[i*6+2]/k/sw,y1:d[i*6+3]/k/sh,s,cls:Math.round(d[i*6+5])});}
   return res.sort((a,b)=>b.s-a.s);
 }
-// paste the model's holds into the picker's grid as pixel masks
+// a quick outline inside each box from colour: the wall is whatever lines the box edge, the hold is what differs from it.
+// Dark holds on dark walls can fail, so a hold that comes out too small falls back to an ellipse (SlimSAM fixes both on save).
+function hmBoxMask(det,b){
+  const {w,h,L,A,B}=det,x0=Math.max(0,Math.floor(b.x0*w)),y0=Math.max(0,Math.floor(b.y0*h)),x1=Math.min(w-1,Math.ceil(b.x1*w)),y1=Math.min(h-1,Math.ceil(b.y1*h));
+  const bw=x1-x0+1,bh=y1-y0+1;if(bw<2||bh<2)return null;
+  const ring=[];for(let x=x0;x<=x1;x++){ring.push(y0*w+x,y1*w+x);}for(let y=y0;y<=y1;y++){ring.push(y*w+x0,y*w+x1);}
+  const med=a=>{const s=a.slice().sort((p,q)=>p-q);return s[s.length>>1];};
+  const wl=med(ring.map(q=>L[q])),wa=med(ring.map(q=>A[q])),wb=med(ring.map(q=>B[q]));
+  const dist=q=>Math.hypot((L[q]-wl)*.6,A[q]-wa,B[q]-wb),rd=ring.map(dist).sort((p,q)=>p-q),thr=Math.max(12,rd[Math.floor(rd.length*.9)]+4);
+  const m=new Uint8Array(bw*bh);for(let y=0;y<bh;y++)for(let x=0;x<bw;x++)if(dist((y0+y)*w+x0+x)>thr)m[y*bw+x]=1;
+  // keep the blob nearest the centre (weighted by size)
+  const lab=new Int32Array(bw*bh).fill(-1),blobs=[];
+  for(let s=0;s<bw*bh;s++){if(!m[s]||lab[s]>=0)continue;const st=[s],pts=[];lab[s]=blobs.length;while(st.length){const i=st.pop();pts.push(i);const x=i%bw,y=(i-x)/bw;
+      for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const X=x+dx,Y=y+dy;if(X<0||Y<0||X>=bw||Y>=bh)continue;const q=Y*bw+X;if(m[q]&&lab[q]<0){lab[q]=blobs.length;st.push(q);}}}
+    let sx=0,sy=0;for(const i of pts){sx+=i%bw;sy+=(i-i%bw)/bw;}blobs.push({pts,cx:sx/pts.length,cy:sy/pts.length});}
+  let best=null,bs=-1;for(const bl of blobs){const sc=bl.pts.length/(1+Math.hypot(bl.cx-bw/2,bl.cy-bh/2)/5);if(sc>bs){bs=sc;best=bl;}}
+  let pts=best?best.pts.map(i=>(y0+(i-i%bw)/bw)*w+x0+i%bw):[];
+  if(pts.length<bw*bh*.18){pts=[];const rx=bw/2,ry=bh/2,cx=x0+rx-.5,cy=y0+ry-.5;for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const u=(x-cx)/rx,v=(y-cy)/ry;if(u*u+v*v<=.9)pts.push(y*w+x);}}
+  return pts;
+}
 function hmAiComps(det,ai){
   const {w,h,L,A,B,C,px,lab}=det;lab.fill(-1);const comps=[];
-  for(const d of ai){const bx0=d.x0*w,by0=d.y0*h,bw=Math.max(1e-3,(d.x1-d.x0)*w),bh=Math.max(1e-3,(d.y1-d.y0)*h),ms=d.ms,pts=[];
-    for(let y=Math.max(0,Math.floor(by0));y<=Math.min(h-1,Math.ceil(by0+bh));y++)for(let x=Math.max(0,Math.floor(bx0));x<=Math.min(w-1,Math.ceil(bx0+bw));x++){
-      const u=(x+.5-bx0)/bw*ms-.5,v=(y+.5-by0)/bh*ms-.5;if(u<-.5||v<-.5||u>ms-.5||v>ms-.5)continue;
-      const u0=Math.max(0,Math.min(ms-1,Math.floor(u))),v0=Math.max(0,Math.min(ms-1,Math.floor(v))),u1=Math.min(ms-1,u0+1),v1=Math.min(ms-1,v0+1),fu=Math.max(0,Math.min(1,u-u0)),fv=Math.max(0,Math.min(1,v-v0));
-      const m=d.m[v0*ms+u0]*(1-fu)*(1-fv)+d.m[v0*ms+u1]*fu*(1-fv)+d.m[v1*ms+u0]*(1-fu)*fv+d.m[v1*ms+u1]*fu*fv;
-      const q=y*w+x;if(m>=.5&&lab[q]===-1)pts.push(q);}
-    if(pts.length<3)continue;const id=comps.length;for(const q of pts)lab[q]=id;
-    // colour from the hold's core: skip chalky highlights and deep shadow so the colour reads true
-    const core=pts.filter(q=>L[q]<90&&L[q]>8);const c=hmComp(core.length>=3?core:pts,w,L,A,B,C,px);
+  for(const d of ai){let pts=hmBoxMask(det,d);if(!pts)continue;pts=pts.filter(q=>lab[q]===-1);if(pts.length<3)continue;
+    const id=comps.length;for(const q of pts)lab[q]=id;
+    const core=pts.filter(q=>L[q]<90&&L[q]>8),c=hmComp(core.length>=3?core:pts,w,L,A,B,C,px);
     if(core.length>=3&&core.length<pts.length){c.pts=pts;c.n=pts.length;let x0=1e9,y0=1e9,x1=-1,y1=-1;for(const q of pts){const X=q%w,Y=(q-X)/w;if(X<x0)x0=X;if(X>x1)x1=X;if(Y<y0)y0=Y;if(Y>y1)y1=Y;}Object.assign(c,{x0,y0,x1,y1});}
-    c.ai=d.s;comps.push(c);}
+    c.ai=d.s;c.box=[d.x0*w,d.y0*h,d.x1*w,d.y1*h];if(d.cls===1)c.vol=true;comps.push(c);}
   det.comps=comps;det.groups=hmGroups(comps);det.ai=true;return det;
+}
+/* SlimSAM: trace exact outlines for the given holds. One image pass (the slow part), then a quick pass per hold,
+   prompted with a point at the hold's centre. Of SAM's three guesses, keep the one that best fills the hold's box
+   without spilling over its edges; if none fits, the colour outline stays. onProg(done,total); stop() ends early. */
+async function hmSamRefine(src,det,ids,onProg,stop){
+  const ort=await hmOrt(),E=await hmModel("enc"),D=await hmModel("dec"),[sw,sh]=hmImgSize(src),S=1024,k=S/Math.max(sw,sh),Wr=Math.round(sw*k),Hr=Math.round(sh*k);
+  const cv=document.createElement("canvas");cv.width=Wr;cv.height=Hr;const cx=cv.getContext("2d",{willReadFrequently:true});cx.drawImage(src,0,0,Wr,Hr);
+  const px=cx.getImageData(0,0,Wr,Hr).data,N=S*S,f=new Float32Array(3*N),mu=[.485,.456,.406],sd=[.229,.224,.225];
+  for(let y=0;y<Hr;y++)for(let x=0;x<Wr;x++){const j=(y*Wr+x)*4,i=y*S+x;for(let ch=0;ch<3;ch++)f[ch*N+i]=(px[j+ch]/255-mu[ch])/sd[ch];}
+  onProg&&onProg(0,ids.length);
+  const emb=await E.run({pixel_values:new ort.Tensor("float32",f,[1,3,S,S])});
+  const {w,h,lab}=det,gx=Wr/w,gy=Hr/h;let done=0,fixed=0;
+  for(let q=0;q<ids.length;q+=8){if(stop&&stop())break;
+    const chunk=ids.slice(q,q+8).filter(i=>det.comps[i]),n=chunk.length;if(!n)continue;
+    const pts=new Float32Array(n*2);chunk.forEach((i,j)=>{const c=det.comps[i],b=c.box||[c.x0,c.y0,c.x1+1,c.y1+1];pts[j*2]=(b[0]+b[2])/2*gx;pts[j*2+1]=(b[1]+b[3])/2*gy;});
+    const o=await D.run({input_points:new ort.Tensor("float32",pts,[1,n,1,2]),input_labels:new ort.Tensor("int64",new BigInt64Array(n).fill(1n),[1,n,1]),image_embeddings:emb.image_embeddings,image_positional_embeddings:emb.image_positional_embeddings});
+    const M=o.pred_masks.data,IoU=o.iou_scores.data,R=256,sc=R/S;
+    chunk.forEach((id,j)=>{const c=det.comps[id],b=c.box||[c.x0,c.y0,c.x1+1,c.y1+1],bw=b[2]-b[0],bh=b[3]-b[1],e=c.box?.12:.3;
+      const X0=Math.max(0,Math.floor(b[0]-bw*e)),Y0=Math.max(0,Math.floor(b[1]-bh*e)),X1=Math.min(w-1,Math.ceil(b[2]+bw*e)),Y1=Math.min(h-1,Math.ceil(b[3]+bh*e));
+      let best=null,bs=.25;
+      for(let m3=0;m3<3;m3++){const base=(j*3+m3)*R*R;
+        const at=(X,Y)=>{const u=X*gx*sc-.5,v=Y*gy*sc-.5,u0=Math.max(0,Math.min(R-1,Math.floor(u))),v0=Math.max(0,Math.min(R-1,Math.floor(v))),u1=Math.min(R-1,u0+1),v1=Math.min(R-1,v0+1),fu=Math.min(1,Math.max(0,u-u0)),fv=Math.min(1,Math.max(0,v-v0));
+          return M[base+v0*R+u0]*(1-fu)*(1-fv)+M[base+v0*R+u1]*fu*(1-fv)+M[base+v1*R+u0]*(1-fu)*fv+M[base+v1*R+u1]*fu*fv;};
+        let tot=0;for(let i=0;i<R*R;i++)if(M[base+i]>0)tot++;const cell=(S/R/gx)*(S/R/gy);tot*=cell; // whole-image mask area in grid pixels
+        const inPts=[];for(let Y=Y0;Y<=Y1;Y++)for(let X=X0;X<=X1;X++)if(at(X+.5,Y+.5)>0)inPts.push(Y*w+X);
+        if(inPts.length<3)continue;
+        let rg=0,rn=0;const bx0=Math.round(b[0]),by0=Math.round(b[1]),bx1=Math.round(b[2]),by1=Math.round(b[3]);
+        for(let X=bx0;X<=bx1;X+=2){for(const Y of [by0,by1]){rn++;if(at(X+.5,Y+.5)>0)rg++;}}for(let Y=by0;Y<=by1;Y+=2){for(const X of [bx0,bx1]){rn++;if(at(X+.5,Y+.5)>0)rg++;}}
+        if(rn&&rg/rn>.55)continue; // the wall around the hold, not the hold
+        const frac=Math.min(1,inPts.length/Math.max(1,tot)),cov=Math.min(1,inPts.length/Math.max(1,bw*bh*.5)),s=frac*cov*(1+.15*IoU[j*3+m3]);
+        if(s>bs){bs=s;best=inPts;}}
+      if(best){for(const q2 of c.pts)if(lab[q2]===id)lab[q2]=-1;const mine=best.filter(q2=>lab[q2]===-1||lab[q2]===id);
+        if(mine.length>=3){for(const q2 of mine)lab[q2]=id;let x0=1e9,y0=1e9,x1=-1,y1=-1,sx=0,sy=0;for(const q2 of mine){const X=q2%w,Y=(q2-X)/w;sx+=X;sy+=Y;if(X<x0)x0=X;if(X>x1)x1=X;if(Y<y0)y0=Y;if(Y>y1)y1=Y;}
+          Object.assign(c,{pts:mine,n:mine.length,x0,y0,x1,y1,cx:sx/mine.length,cy:sy/mine.length,sam:true});fixed++;}
+        else for(const q2 of c.pts)if(lab[q2]===-1)lab[q2]=id;}
+      done++;});
+    onProg&&onProg(done,ids.length);await new Promise(r=>setTimeout(r,0));}
+  return fixed;
+}
+/* MODNet: a soft cutout of the person in a photo (a canvas with the background made transparent), cached per photo */
+const HM_CUT=new Map();
+async function hmCutout(img,onProg){
+  const key=img.src;if(HM_CUT.has(key))return HM_CUT.get(key);
+  const ort=await hmOrt(),Mn=await hmModel("modnet",onProg),[iw,ih]=hmImgSize(img),k=512/Math.min(iw,ih),W=Math.max(32,Math.floor(iw*k/32)*32),H=Math.max(32,Math.floor(ih*k/32)*32);
+  const cv=document.createElement("canvas");cv.width=W;cv.height=H;const cx=cv.getContext("2d",{willReadFrequently:true});cx.drawImage(img,0,0,W,H);
+  const px=cx.getImageData(0,0,W,H).data,N=W*H,f=new Float32Array(3*N);for(let i=0,j=0;i<N;i++,j+=4){f[i]=(px[j]/255-.5)/.5;f[N+i]=(px[j+1]/255-.5)/.5;f[2*N+i]=(px[j+2]/255-.5)/.5;}
+  const o=await Mn.run({input:new ort.Tensor("float32",f,[1,3,H,W])}),m=o[Mn.outputNames[0]].data;
+  const mc=document.createElement("canvas");mc.width=W;mc.height=H;const mx=mc.getContext("2d"),md=mx.createImageData(W,H);
+  for(let i=0;i<N;i++){const a=Math.max(0,Math.min(1,(m[i]-.08)/.84));md.data[i*4+3]=Math.round(a*255);}mx.putImageData(md,0,0);
+  const s=Math.min(1,1600/Math.max(iw,ih)),cw=Math.round(iw*s),ch=Math.round(ih*s),out=document.createElement("canvas");out.width=cw;out.height=ch;const ox=out.getContext("2d");
+  ox.drawImage(img,0,0,cw,ch);ox.globalCompositeOperation="destination-in";ox.imageSmoothingEnabled=true;ox.drawImage(mc,0,0,cw,ch);
+  HM_CUT.set(key,out);return out;
 }
 // every hold the same colour as hold id (for "select all this colour")
 function hmSameColour(det,id){
@@ -7604,14 +7691,22 @@ function openHoldPicker(src,opt={}){
     draw();});
   lay.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{tool=b.dataset.t;lay.querySelectorAll("[data-t]").forEach(z=>z.setAttribute("aria-pressed",z===b));draw();});
   lay.querySelector("#hm-x").onclick=()=>{close();opt.onCancel&&opt.onCancel();};
-  lay.querySelector("#hm-ok").onclick=()=>{if(!sel.size){toast("Pick a colour or tap some holds first");return;}const r=route();close();opt.onSave&&opt.onSave(r);};
+  lay.querySelector("#hm-ok").onclick=async()=>{if(!sel.size){toast("Pick a colour or tap some holds first");return;}
+    const todo=[...sel].filter(i=>det.comps[i]&&!det.comps[i].sam);
+    // trace exact outlines with SlimSAM when the hold finder is on the phone; Skip keeps the quick outlines
+    if(det.ai&&todo.length&&HM_AI.sess.enc&&HM_AI.sess.dec){let skip=false;
+      const show=(d,n)=>{busy(`${SPIN}Tracing exact outlines… ${d} of ${n}<small>So the holds look right on your project</small><button class="btn" id="hm-skip" style="margin-top:14px">Skip</button>`);const sb=lay.querySelector("#hm-skip");if(sb)sb.onclick=()=>{skip=true;sb.textContent="Finishing…";};};
+      show(0,todo.length);await new Promise(r=>setTimeout(r,60));
+      try{await hmSamRefine(src,det,todo,(d,n)=>show(d,n),()=>skip);}catch(e){console.warn("outline AI",e);}
+      unbusy();}
+    const r=route();close();opt.onSave&&opt.onSave(r);};
   const busy=t=>{let b=lay.querySelector("#hm-busy");if(!b){b=document.createElement("div");b.className="hm-busy";b.id="hm-busy";lay.querySelector(".hm-stage").appendChild(b);}b.innerHTML=t;};
   const unbusy=()=>{const b=lay.querySelector("#hm-busy");if(b)b.remove();};
   const setup=d=>{det=d;sel=new Set();roles={start:[],top:[],high:null};lastTap=null;
     // an existing route comes back as its own holds, and detected blobs it already covers are dropped
     if(opt.route&&opt.route.gw===det.w&&opt.route.gh===det.h){const R=opt.route,map={};
       R.holds.forEach((hd,i)=>{const pts=hmUnpack(hd).map(([X,Y])=>Y*det.w+X);for(const q of pts){const o=det.lab[q];if(o>=0&&det.comps[o])det.comps[o].gone=true;}
-        const id=det.comps.length,c=hmComp(pts,det.w,det.L,det.A,det.B,det.C,det.px);det.comps.push(c);for(const q of pts)det.lab[q]=id;map[i]=id;sel.add(id);});
+        const id=det.comps.length,c=hmComp(pts,det.w,det.L,det.A,det.B,det.C,det.px);c.sam=true;det.comps.push(c);for(const q of pts)det.lab[q]=id;map[i]=id;sel.add(id);});
       det.comps.forEach((c,i)=>{if(c.gone){for(const q of c.pts)if(det.lab[q]===i)det.lab[q]=-1;c.cx=-1e4;c.cy=-1e4;c.x1=c.x0-1;}});
       det.groups=hmGroups(det.comps);
       roles={start:(R.start||[]).map(i=>map[i]),top:(R.top||[]).map(i=>map[i]),high:R.high!=null?map[R.high]:null};grp=R.color||null;
@@ -7619,10 +7714,10 @@ function openHoldPicker(src,opt={}){
     fit();cols();draw();aiBar();};
   const SPIN='<span class="hm-spin"></span>';
   const runAI=async()=>{
-    try{const have=HM_AI.sess||await hmAiCached();
+    try{const have=HM_AI.sess.yolo||await hmAiCached();
       busy(SPIN+(have?"Loading the hold finder…":"Downloading the hold finder… 0%"));
       await hmAiLoad(p=>busy(`${SPIN}Downloading the hold finder… ${Math.round(p*100)}%<small>One time only, then it works offline</small>`));
-      busy(`${SPIN}Finding holds with AI…<small>About 10 to 30 seconds on a phone</small>`);
+      busy(`${SPIN}Finding holds with AI…<small>A few seconds</small>`);
       await new Promise(r=>setTimeout(r,80)); // let that paint before the heavy work
       const ai=await hmAiRun(src);if(!lay.isConnected)return;
       const d=hmAiComps(hmDetect(src,{skip:true}),ai);unbusy();setup(d);
@@ -7632,10 +7727,10 @@ function openHoldPicker(src,opt={}){
   const aiBar=()=>{const el=lay.querySelector("#hm-ai");if(!el||!det)return;
     if(det.ai){el.innerHTML=`<span class="hm-aion">✦ Holds found by AI</span>`;return;}
     if(aiFail){el.innerHTML=`<span class="hint">The AI hold finder couldn't load here (offline?). Using colour detection.</span> <button class="hm-same" id="hm-aigo">Try again</button>`;}
-    else el.innerHTML=`<button class="hm-aibtn" id="hm-aigo"><b>✦ Find holds with AI</b><span>Much better at skipping mats and walls. ${Math.round(HM_AI.size)} MB, downloaded once. Wi-Fi recommended.</span></button>`;
+    else el.innerHTML=`<button class="hm-aibtn" id="hm-aigo"><b>✦ Find holds with AI</b><span>Finds holds and volumes, skips mats and walls, and traces exact outlines. ${Math.round(HM_AI.size)} MB, downloaded once.</span></button>`;
     const go=el.querySelector("#hm-aigo");if(go)go.onclick=()=>{aiFail=false;el.innerHTML="";runAI();};};
   setTimeout(async()=>{
-    if(HM_AI.sess||await hmAiCached()){runAI();return;}
+    if(HM_AI.sess.yolo||await hmAiCached()){runAI();return;}
     try{const d=hmDetect(src);unbusy();setup(d);}catch(e){busy("Couldn't read that image.");}},60);
   // pinch to zoom and drag to pan, so small jibs are easy to tap
   const stage=lay.querySelector(".hm-stage"),zb=lay.querySelector("#hm-z");cv.style.transformOrigin="0 0";
