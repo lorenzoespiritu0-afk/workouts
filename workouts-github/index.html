@@ -110,6 +110,7 @@ body.hm-open{overflow:hidden}
 #sopts:not([data-style="classic"]) .conly,#sopts:not([data-bg="photo"]) #o-ptog [data-t="bw"],#sopts:not([data-bg="photo"]):not([data-style="splits"]) #o-ptog [data-t="motion"],#sopts[data-bg="none"] #o-ptog [data-t="grain"],#sopts[data-bg="glass"] #o-ptog [data-t="grain"]{display:none}
 
 #sopts[data-style="splits"] #o-tog [data-t="route"]{display:none}
+#sopts[data-style="trace"] #o-accent,#sopts[data-style="trace"] .plabel:has(+#o-accent),#sopts[data-style="trace"] #o-tog [data-t="route"],#sopts[data-style="trace"] .hdonly,#sopts[data-style="trace"] .sonly,#sopts[data-style="trace"] #o-tog [data-t="prs"],#sopts[data-style="trace"] #o-tog [data-t="trophies"],#sopts[data-style="trace"] #o-tog [data-t="level"]{display:none}
 
 /* v51 food */
 .nu-hero h3{font-size:2.6rem!important;line-height:1}
@@ -5039,13 +5040,13 @@ function toBW(x){
   catch(e){x.save();x.setTransform(1,0,0,1,0,0);x.globalCompositeOperation="saturation";x.fillStyle="#808080";x.fillRect(0,0,cw,ch);x.globalCompositeOperation="multiply";x.fillStyle="rgb(235,235,235)";x.fillRect(0,0,cw,ch);x.restore();}
 }
 function headlineOf(s,o){return o.head==="title"?titleOf(s).toUpperCase():o.head==="type"?(TYPES[s.type]||"Workout").toUpperCase():parseDate(s.date).toLocaleDateString("en-US",{weekday:"long"}).toUpperCase();}
-async function posterBg(x,s,o,W,H){
+async function posterBg(x,s,o,W,H,veil=1){
   let img=null;const u=o.bg==="photo"?(o.upimg||await photoURL(s.id)):null;
   if(u)img=await new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.onerror=()=>r(null);i.src=u;});
   if(img){x.save();const sc=Math.max(W/img.width,H/img.height),iw=img.width*sc,ih=img.height*sc;x.drawImage(img,(W-iw)/2,(H-ih)/2,iw,ih);
     if(o.motion){for(let k=1;k<=8;k++){x.globalAlpha=.11;const d=k*9;x.drawImage(img,(W-iw)/2-d,(H-ih)/2,iw,ih);x.drawImage(img,(W-iw)/2+d,(H-ih)/2,iw,ih);}x.globalAlpha=1;}x.restore();
     if(o.bw)toBW(x);
-    const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,"rgba(0,0,0,.45)");g.addColorStop(.45,"rgba(0,0,0,.18)");g.addColorStop(1,"rgba(0,0,0,.62)");x.fillStyle=g;x.fillRect(0,0,W,H);}
+    const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,`rgba(0,0,0,${.45*veil})`);g.addColorStop(.45,`rgba(0,0,0,${.18*veil})`);g.addColorStop(1,`rgba(0,0,0,${.62*veil})`);x.fillStyle=g;x.fillRect(0,0,W,H);}
   else if(o.bg==="glass"){x.fillStyle="rgba(0,0,0,.58)";x.beginPath();if(x.roundRect)x.roundRect(24,24,W-48,H-48,44);else x.rect(24,24,W-48,H-48);x.fill();}
   else if(o.bg==="dark"){x.fillStyle="#0B0B0C";x.fillRect(0,0,W,H);const g=x.createRadialGradient(W*.22,H*.3,10,W*.22,H*.3,W*.7);g.addColorStop(0,"rgba(255,255,255,.10)");g.addColorStop(1,"rgba(255,255,255,0)");x.fillStyle=g;x.fillRect(0,0,W,H);}
   else if(o.bg==="light"){x.fillStyle="#F4F5F7";x.fillRect(0,0,W,H);}
@@ -5062,7 +5063,85 @@ function trkFill(x,t,X,Y,em,align){const sz=parseFloat(x.font.match(/(\d+(?:\.\d
   if(!em){x.fillText(t,cx,Y);return;}for(const ch of t){x.fillText(ch,cx,Y);cx+=x.measureText(ch).width+em*sz;}}
 function txS(x,t,X,Y,font,sx,sy,align,em){x.save();x.font=font;x.translate(X,Y);x.scale(sx,sy);trkFill(x,t,0,0,em||0,align||"left");x.restore();}
 function fitS(x,t,fontFn,size,maxW,sx,min,em){let sz=size;x.font=fontFn(sz);while(trkW(x,t,em||0)*sx>maxW&&sz>(min||20)){sz-=2;x.font=fontFn(sz);}return sz;}
+/* ---------- "Trace" share style: the route as a thin line filling the frame, a dot and split time at every km or mile,
+   and a small monospace caption. Labels pick the side and leader length that keeps them clear of each other and the line. ---------- */
+function traceMarks(s){
+  const t=s.track;if(!t||t.length<2)return [];
+  const cum=[0];for(let i=1;i<t.length;i++)cum.push(cum[i-1]+hav(t[i-1][0],t[i-1][1],t[i][0],t[i][1]));
+  const gps=cum[cum.length-1];if(gps<50)return [];
+  const k=s.dist?s.dist*1000/gps:1,unit=dU()==="mi"?1609.344:1000,total=gps*k; // scale GPS to the recorded distance, like best efforts
+  let step=unit;for(const m of [1,2,5,10]){step=unit*m;if(total/step<=12)break;}
+  const timed=hasTimes(s),out=[];let prevT=timed?t[0][3]:null;
+  for(let d=step,n=1;d<=total+1;d+=step,n++){
+    const g=d/k;let i=1;while(i<cum.length-1&&cum[i]<g)i++;const a=cum[i-1],b=cum[i],f=b>a?Math.min(1,(g-a)/(b-a)):0;
+    let tm=null;if(timed&&t[i-1][3]!=null&&t[i][3]!=null){const T=t[i-1][3]+(t[i][3]-t[i-1][3])*f;tm=T-prevT;prevT=T;}
+    out.push({i0:i-1,i1:i,f,n:Math.round(d/unit),time:tm});
+  }
+  return out;
+}
+async function drawTrace(s,o){
+  try{await Promise.all([document.fonts.load('40px "WkMono"')]);}catch(e){}
+  const W=1080,H=o.size==="story"?1920:o.size==="poster"?1620:o.size==="square"?1080:1350;
+  const c=document.createElement("canvas");c.width=W;c.height=H;const x=c.getContext("2d");
+  await posterBg(x,s,o,W,H,.4); // a light veil: the line and text are thin, the photo should stay airy
+  const ink=o.color,rc=o.rcolor&&o.rcolor!=="same"?o.rcolor:ink,P=86,u=dU();
+  const lum=h=>{const n=parseInt(h.slice(1),16);return ((n>>16)*0.299+((n>>8)&255)*0.587+(n&255)*0.114)/255;};
+  const shade=lum(ink)>.5?"rgba(0,0,0,.45)":"rgba(255,255,255,.45)";
+  // caption lines
+  const by=Object.fromEntries(allStats(s).map(z=>[z.k,z]));
+  const lines=[];
+  if(o.title)lines.push(titleOf(s));
+  if(o.date||o.place){const d=parseDate(s.date),wd=d.toLocaleDateString("en-US",{weekday:"long"});let l=o.date?wd+(s.time?", "+s.time.slice(0,5):""):"";const pn=o.place?placeName(s):"";if(pn)l=l?l+"  ·  "+pn:pn;if(l)lines.push(l);}
+  const st=o.stats.map(k=>by[k]).filter(Boolean).slice(0,4).map(z=>z.v);if(st.length)lines.push(st.join("   "));
+  if(o.notes&&s.notes){x.font=PF.mono(30);let cur="",nl=0;for(const w of String(s.notes).split(/\s+/)){const t=cur?cur+" "+w:w;if(x.measureText(t).width>W-2*P-40&&cur){lines.push({n:cur});cur=w;if(++nl>=3)break;}else cur=t;}if(cur&&nl<3)lines.push({n:cur});}
+  const LB=logoBand(o),botPad=(o.size==="story"?190:P*.8)+(LB&&!LB.top?LB.h+LB.gap:0),topPad=(o.size==="story"?170:P)+(LB&&LB.top?LB.h+LB.gap:0);
+  const lh=60,capH=lines.length?lines.length*lh:0,capY=H-botPad-capH;
+  // route box
+  const rTop=topPad,rBot=capY-(lines.length?70:0),rh=Math.max(200,rBot-rTop),rw=W;
+  const Pj=projector(s.track,rw,rh,130),pt=i=>{const [a,b]=Pj(i);return [a,rTop+b];};
+  const N=s.track.length,R0=[];for(let i=0;i<N;i++)R0.push(pt(i));
+  // light smoothing so GPS wobble reads as a clean line
+  const R=R0.map((q,i)=>{let sx=0,sy=0,n=0;for(let j=Math.max(0,i-2);j<=Math.min(N-1,i+2);j++){sx+=R0[j][0];sy+=R0[j][1];n++;}return [sx/n,sy/n];});
+  x.save();if(o.shadow){x.shadowColor=shade;x.shadowBlur=14;x.shadowOffsetY=2;}
+  x.lineCap="round";x.lineJoin="round";
+  if(o.outline){x.beginPath();R.forEach(([a,b],i)=>i?x.lineTo(a,b):x.moveTo(a,b));x.strokeStyle=lum(rc)>.5?"rgba(0,0,0,.55)":"rgba(255,255,255,.7)";x.lineWidth=14;x.stroke();}
+  x.beginPath();R.forEach(([a,b],i)=>i?x.lineTo(a,b):x.moveTo(a,b));x.strokeStyle=rc;x.lineWidth=7;x.stroke();x.restore();
+  // markers
+  const M=traceMarks(s),boxes=[],near=(bx)=>{let n=0;for(let i=0;i<N;i+=Math.max(1,Math.floor(N/600))){const [a,b]=R[i];if(a>bx.x-6&&a<bx.x+bx.w+6&&b>bx.y-6&&b<bx.y+bx.h+6)n++;}return n;};
+  const hit=(A,B)=>A.x<B.x+B.w+14&&B.x<A.x+A.w+14&&A.y<B.y+B.h+10&&B.y<A.y+A.h+10;
+  x.save();if(o.shadow){x.shadowColor=shade;x.shadowBlur=10;x.shadowOffsetY=2;}
+  for(const m of M){
+    const [ax,ay]=R[m.i0],[bx2,by2]=R[m.i1],px=ax+(bx2-ax)*m.f,py=ay+(by2-ay)*m.f;
+    const lab=`${u} ${m.n}`,tv=m.time!=null&&m.time>0?clockQ(m.time):"";
+    x.font=PF.mono(30);const w1=x.measureText(lab).width;x.font=PF.mono(52);const w2=tv?x.measureText(tv).width:0;const bw=Math.max(w1,w2),bh=tv?92:40;
+    let best=null;
+    for(const dir of [1,-1])for(const L of [110,170,240,320])for(const dy of [0,-56,56,-112,112]){
+      const lx=px+dir*L,b={x:dir>0?lx+14:lx-14-bw,y:py+dy-40,w:bw,h:bh};
+      if(b.x<30||b.x+b.w>W-30||b.y<rTop-40||b.y+b.h>capY-20)continue;
+      if(boxes.some(z=>hit(z,b)))continue;
+      const sc=near(b)*4+L/60+Math.abs(dy)/40+(dir===(px<W/2?-1:1)?0:1.5);
+      if(!best||sc<best.sc)best={sc,b,dir,L,dy};
+    }
+    x.fillStyle=rc;x.beginPath();x.arc(px,py,10,0,Math.PI*2);x.fill();
+    if(!best)continue;boxes.push(best.b);
+    const ey=py+best.dy,ex=px+best.dir*best.L;
+    x.strokeStyle=ink;x.globalAlpha=.9;x.lineWidth=3;x.beginPath();x.moveTo(px+best.dir*16,py);if(best.dy)x.lineTo(px+best.dir*Math.min(46,best.L*.3),ey);x.lineTo(ex,ey);x.stroke();
+    x.fillStyle=ink;x.textAlign=best.dir>0?"left":"right";const tx=best.dir>0?ex+14:ex-14;
+    x.globalAlpha=.72;x.font=PF.mono(30);x.fillText(lab,tx,ey-12);
+    if(tv){x.globalAlpha=1;x.font=PF.mono(52);x.fillText(tv,tx,ey+46);}
+    x.globalAlpha=1;
+  }
+  x.restore();
+  // caption
+  x.save();if(o.shadow){x.shadowColor=shade;x.shadowBlur=12;x.shadowOffsetY=2;}
+  x.fillStyle=ink;x.textAlign="left";
+  lines.forEach((l,i)=>{const t=typeof l==="string"?l:l.n;let sz=typeof l==="string"?40:30;x.font=PF.mono(sz);while(x.measureText(t).width>W-2*P-40&&sz>22){sz-=2;x.font=PF.mono(sz);}x.globalAlpha=typeof l==="string"?.95:.8;x.fillText(t,P+30,capY+lh*(i+1)-18);});
+  x.restore();
+  if(LB)logoAt(x,o,LB,W,P,LB.top?(o.size==="story"?170:P):H-(o.size==="story"?200:P)-LB.h,TYPE_HEX[s.type]);
+  return c;
+}
 async function drawPoster(s,o){
+  if(o.style==="trace")return drawTrace(s,o);
   if(P3_STYLES.includes(o.style))return drawPoster3(s,o);
   try{await Promise.all([document.fonts.load('100px "WkWide"'),document.fonts.load('100px "WkAnton"'),document.fonts.load('40px "WkMono"'),document.fonts.load('800 150px "Barlow Condensed"'),document.fonts.load('700 60px "Barlow Condensed"'),document.fonts.load('800 100px "Inter"'),document.fonts.load('600 40px "Barlow"'),document.fonts.load('700 40px "Barlow"')]);}catch(e){}
   const W=1080,P=88,ink=o.color,acc=o.accent||"#E8323C",c=document.createElement("canvas"),x=c.getContext("2d");
@@ -5328,7 +5407,7 @@ function openShare(s){
     style:"classic",head:"day",accent:"#E8323C",day:true,splits:true,bw:true,grain:true,motion:false,upimg:null,logo:"none",lcol:"volt",lpos:"bc",accOn:"none"};let motionSet=false;
   /* remember the look you last used (not the stats, which depend on the activity) */
   const SPK="workouts-share-look-v1",LOOK=["style","layout","size","color","font","align","bg","shadow","outline","accent","accOn","logo","lcol","lpos","head","grain","bw","motion","rcolor","trophies","level"];
-  try{const sv=JSON.parse(localStorage.getItem(SPK)||"{}");for(const k of LOOK)if(sv[k]!=null)o[k]=sv[k];if(o.bg==="photo"&&!s.photo)o.bg="dark";if(o.style==="classic"&&o.size==="poster")o.size="fit";}catch(e){}
+  try{const sv=JSON.parse(localStorage.getItem(SPK)||"{}");for(const k of LOOK)if(sv[k]!=null)o[k]=sv[k];if(o.bg==="photo"&&!s.photo)o.bg="dark";if(o.style==="trace"&&!hasRoute)o.style="classic";if(o.style==="classic"&&o.size==="poster")o.size="fit";}catch(e){}
   const saveLook=()=>{try{const sv={};for(const k of LOOK)sv[k]=o[k];localStorage.setItem(SPK,JSON.stringify(sv));}catch(e){}};
   const sameDay=live().filter(z=>z.date===s.date).length>1,canSplit=!!trackSplits(s);
   const accents=[["#E8323C","Red"],["#CDF54A","Volt"],[STRAVA,"Strava orange"],["#FFFFFF","White"],[TYPE_HEX[s.type],"Activity color"]];
@@ -5343,7 +5422,7 @@ function openShare(s){
     <div class="row"><button class="btn primary" id="ssave">Save image</button><button class="btn" id="scopy">Copy image</button></div>
     <p class="hint" id="shint">You can also press and hold the image above and choose "Save to Photos".</p>
     <div class="opts" style="--c:#F5F5F7;--ct:#000" id="sopts" data-style="${o.style}" data-logo="${o.logo}" data-bg="${o.bg}">
-      <div class="plabel">Style</div>${segH("o-style","style",[["classic","Classic"],["week","Weekday"],["splits","Splits"]])}${segH("o-style2","style",[["tick","Ticked"],["bib","Bib"],["bill","Billboard"]])}
+      <div class="plabel">Style</div>${segH("o-style","style",[["classic","Classic"],["week","Weekday"],["splits","Splits"]])}${segH("o-style2","style",[["tick","Ticked"],["bib","Bib"],["bill","Billboard"],...(hasRoute?[["trace","Trace"]]:[])])}
       <div class="oc"><div class="plabel">Layout</div>${segH("o-layout","layout",[["stack","Stacked"],["list","List"],["row","Row"],["grid","Grid"],["hero","Big"]])}</div>
       <div class="op"><div class="hdonly"><div class="plabel">Headline</div>${segH("o-head","head",[["day","Weekday"],["title","Title"],["type","Activity"]])}</div>
         <div class="plabel">Poster</div><div class="tchips" id="o-ptog">${[...(sameDay?[["day","Whole day"]]:[]),...(canSplit?[["splits","Lap table"]]:[]),["bw","Black and white photo"],["motion","Motion blur"],["grain","Film grain"]].map(([k,t])=>`<button class="tchip${k==="day"||k==="splits"?" sonly":""}" data-t="${k}" aria-pressed="${o[k]}">${t}</button>`).join("")}</div>
