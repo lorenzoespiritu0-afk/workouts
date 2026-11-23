@@ -7412,7 +7412,7 @@ async function hmAiLoad(onProg){
       try{if(c)await c.put(HM_AI.model,new Response(blob,{headers:{"content-type":"application/octet-stream"}}));}catch(e){}
     }
     onProg&&onProg(1);
-    HM_AI.sess=await ort.InferenceSession.create(buf,{executionProviders:["wasm"],graphOptimizationLevel:"all"});
+    HM_AI.sess=await ort.InferenceSession.create(buf,{executionProviders:["wasm"],graphOptimizationLevel:"basic"}); // "all" takes ~25 s to set up in the browser and runs no faster
     return HM_AI.sess;
   })();
   try{return await HM_AI.loading;}catch(e){HM_AI.loading=null;throw e;}
