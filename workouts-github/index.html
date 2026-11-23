@@ -72,8 +72,14 @@
 .lgc-i.done .lgc-c{background:#34C759;border-color:#34C759;color:#00170D}.lgc-i.done b{color:var(--muted);text-decoration:line-through;text-decoration-color:rgba(255,255,255,.3)}
 .hm-lay{position:fixed;inset:0;z-index:9999;background:#000;display:flex;flex-direction:column;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
 .hm-top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px}.hm-top b{font-size:1rem;color:#fff;text-align:center;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.hm-top .btn{flex:none;min-height:40px;padding:0 16px}
-.hm-stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}.hm-stage canvas{touch-action:manipulation;border-radius:10px}
-.hm-busy{position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-weight:600}
+.hm-stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;touch-action:none}.hm-stage canvas{touch-action:none;border-radius:10px}
+.hm-z{position:absolute;right:12px;top:12px;background:rgba(0,0,0,.6);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:8px 14px;font-weight:600;font-size:.85rem}
+.hm-spin{width:28px;height:28px;border-radius:50%;border:3px solid rgba(255,255,255,.25);border-top-color:#fff;animation:hmspin .9s linear infinite;margin:0 auto 12px;display:block}@keyframes hmspin{to{transform:rotate(360deg)}}
+.hm-busy{text-align:center;background:rgba(0,0,0,.55)}.hm-busy small{display:block;font-weight:500;color:rgba(255,255,255,.7);margin-top:6px;font-size:.85rem}
+.hm-ai{margin-bottom:8px}.hm-ai:empty{display:none}.hm-aibtn{display:block;width:100%;text-align:left;background:linear-gradient(135deg,rgba(205,245,74,.16),rgba(205,245,74,.05));border:1px solid rgba(205,245,74,.45);border-radius:14px;padding:10px 14px;color:#fff}.hm-aibtn b{display:block;color:#CDF54A;font-size:.98rem}.hm-aibtn span{display:block;color:rgba(255,255,255,.75);font-size:.82rem;margin-top:2px}
+.hm-aion{color:#CDF54A;font-weight:700;font-size:.85rem}
+.hm-same{background:none;border:0;color:#CDF54A;font-weight:700;padding:4px 0;text-decoration:underline;text-underline-offset:3px;font-size:inherit}
+.hm-busy{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-weight:600;z-index:2}
 .hm-bar{padding:10px 14px 14px;background:#0c0c0e}.hm-cols{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none}.hm-cols::-webkit-scrollbar{display:none}
 .hm-col{flex:none;display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;background:#1c1c1e;color:#fff;font-weight:600;font-size:.88rem}.hm-col i{width:16px;height:16px;border-radius:50%;box-shadow:0 0 0 1.5px rgba(255,255,255,.35)}.hm-col small{color:var(--muted);font-weight:500}
 .hm-col[aria-pressed=true]{background:#fff;color:#000}.hm-tools{margin-top:4px}.hm-bar .hint{margin:8px 0 0;min-height:2.6em}
@@ -7381,9 +7387,78 @@ function openPRShare(s){
    "add" tool grows a hold from wherever you tap, for anything the detector missed. Each hold is kept as its own
    pixel mask, so outlines follow its real shape. */
 const HM_MAX=560;
+/* AI hold finder: a Mask R-CNN trained on climbing walls (d12's crux hold segmentation model, MIT, int8/fp16 ONNX
+   by AEYohn/crux-models), run on the phone with ONNX Runtime Web. It outlines each hold and ignores mats, floors,
+   tape and walls far better than colour rules can. 75 MB, downloaded once on request and kept for offline use. */
+const HM_AI={
+  model:/github\.io$/.test(location.hostname)&&/workouts-github/.test(location.pathname)?new URL("models/holds.onnx",location.href).href:"https://lorenzoespiritu0-afk.github.io/workouts/workouts-github/models/holds.onnx",
+  ort:"https://cdnjs.cloudflare.com/ajax/libs/onnxruntime-web/1.29.0/",cache:"models-v1",size:74.5,short:640,sess:null,loading:null
+};
+async function hmAiCached(){try{if(!("caches" in window))return false;const c=await caches.open(HM_AI.cache);return !!(await c.match(HM_AI.model));}catch(e){return false;}}
+function hmLoadScript(src){return new Promise((res,rej)=>{if(document.querySelector(`script[src="${src}"]`)&&window.ort)return res();const s=document.createElement("script");s.src=src;s.async=true;s.onload=res;s.onerror=()=>rej(new Error("script"));document.head.appendChild(s);});}
+async function hmAiLoad(onProg){
+  if(HM_AI.sess)return HM_AI.sess;
+  if(HM_AI.loading)return HM_AI.loading;
+  HM_AI.loading=(async()=>{
+    await hmLoadScript(HM_AI.ort+"ort.min.js");
+    const ort=window.ort;ort.env.wasm.wasmPaths=HM_AI.ort;ort.env.wasm.numThreads=self.crossOriginIsolated?Math.min(4,navigator.hardwareConcurrency||2):1;
+    let buf=null,c=null;try{c=await caches.open(HM_AI.cache);const hit=await c.match(HM_AI.model);if(hit)buf=await hit.arrayBuffer();}catch(e){}
+    if(!buf){
+      const res=await fetch(HM_AI.model);if(!res.ok)throw new Error("model "+res.status);
+      const tot=+res.headers.get("content-length")||HM_AI.size*1e6;let got=0;const parts=[];
+      if(res.body&&res.body.getReader){const rd=res.body.getReader();for(;;){const {done,value}=await rd.read();if(done)break;parts.push(value);got+=value.length;onProg&&onProg(got/tot);}}
+      else{parts.push(new Uint8Array(await res.arrayBuffer()));}
+      const blob=new Blob(parts);buf=await blob.arrayBuffer();
+      try{if(c)await c.put(HM_AI.model,new Response(blob,{headers:{"content-type":"application/octet-stream"}}));}catch(e){}
+    }
+    onProg&&onProg(1);
+    HM_AI.sess=await ort.InferenceSession.create(buf,{executionProviders:["wasm"],graphOptimizationLevel:"all"});
+    return HM_AI.sess;
+  })();
+  try{return await HM_AI.loading;}catch(e){HM_AI.loading=null;throw e;}
+}
+// run the model; returns holds as boxes (0–1 of the image) with a 28×28 soft mask each, best first
+async function hmAiRun(src){
+  const sess=await hmAiLoad(),ort=window.ort;
+  const sw=src.videoWidth||src.naturalWidth||src.width,sh=src.videoHeight||src.naturalHeight||src.height;
+  let k=HM_AI.short/Math.min(sw,sh);if(Math.max(sw,sh)*k>1100)k=1100/Math.max(sw,sh);
+  const W=Math.round(sw*k),H=Math.round(sh*k),cv=document.createElement("canvas");cv.width=W;cv.height=H;
+  const cx=cv.getContext("2d",{willReadFrequently:true});cx.drawImage(src,0,0,W,H);const px=cx.getImageData(0,0,W,H).data,N=W*H,f=new Float32Array(3*N);
+  for(let i=0,j=0;i<N;i++,j+=4){f[i]=px[j+2];f[N+i]=px[j+1];f[2*N+i]=px[j];} // BGR, 0–255, channels first (Detectron2)
+  const out=await sess.run({image:new ort.Tensor("float32",f,[3,H,W])});
+  const B=out.boxes.data,S=out.scores.data,M=out.masks.data,n=S.length,ms=out.masks.dims[2]||28,res=[];
+  for(let i=0;i<n;i++){if(S[i]<.5)continue;res.push({x0:B[i*4]/W,y0:B[i*4+1]/H,x1:B[i*4+2]/W,y1:B[i*4+3]/H,s:S[i],m:M.subarray(i*ms*ms,(i+1)*ms*ms),ms});}
+  return res.sort((a,b)=>b.s-a.s);
+}
+// paste the model's holds into the picker's grid as pixel masks
+function hmAiComps(det,ai){
+  const {w,h,L,A,B,C,px,lab}=det;lab.fill(-1);const comps=[];
+  for(const d of ai){const bx0=d.x0*w,by0=d.y0*h,bw=Math.max(1e-3,(d.x1-d.x0)*w),bh=Math.max(1e-3,(d.y1-d.y0)*h),ms=d.ms,pts=[];
+    for(let y=Math.max(0,Math.floor(by0));y<=Math.min(h-1,Math.ceil(by0+bh));y++)for(let x=Math.max(0,Math.floor(bx0));x<=Math.min(w-1,Math.ceil(bx0+bw));x++){
+      const u=(x+.5-bx0)/bw*ms-.5,v=(y+.5-by0)/bh*ms-.5;if(u<-.5||v<-.5||u>ms-.5||v>ms-.5)continue;
+      const u0=Math.max(0,Math.min(ms-1,Math.floor(u))),v0=Math.max(0,Math.min(ms-1,Math.floor(v))),u1=Math.min(ms-1,u0+1),v1=Math.min(ms-1,v0+1),fu=Math.max(0,Math.min(1,u-u0)),fv=Math.max(0,Math.min(1,v-v0));
+      const m=d.m[v0*ms+u0]*(1-fu)*(1-fv)+d.m[v0*ms+u1]*fu*(1-fv)+d.m[v1*ms+u0]*(1-fu)*fv+d.m[v1*ms+u1]*fu*fv;
+      const q=y*w+x;if(m>=.5&&lab[q]===-1)pts.push(q);}
+    if(pts.length<3)continue;const id=comps.length;for(const q of pts)lab[q]=id;
+    // colour from the hold's core: skip chalky highlights and deep shadow so the colour reads true
+    const core=pts.filter(q=>L[q]<90&&L[q]>8);const c=hmComp(core.length>=3?core:pts,w,L,A,B,C,px);
+    if(core.length>=3&&core.length<pts.length){c.pts=pts;c.n=pts.length;let x0=1e9,y0=1e9,x1=-1,y1=-1;for(const q of pts){const X=q%w,Y=(q-X)/w;if(X<x0)x0=X;if(X>x1)x1=X;if(Y<y0)y0=Y;if(Y>y1)y1=Y;}Object.assign(c,{x0,y0,x1,y1});}
+    c.ai=d.s;comps.push(c);}
+  det.comps=comps;det.groups=hmGroups(comps);det.ai=true;return det;
+}
+// every hold the same colour as hold id (for "select all this colour")
+function hmSameColour(det,id){
+  const c0=det.comps[id];if(!c0)return [];const C0=Math.hypot(c0.a,c0.b),out=[];
+  det.comps.forEach((c,i)=>{if(c.gone)return;const C1=Math.hypot(c.a,c.b);let d;
+    if(C0<16&&C1<16)d=Math.abs(c.L-c0.L)*.9;
+    else if(C0<16||C1<16)d=99;
+    else d=Math.hypot((c.L-c0.L)*.35,c.a-c0.a,c.b-c0.b);
+    if(d<(C0<16?14:16))out.push(i);});
+  return out;
+}
 const HM_LIN=(()=>{const a=new Float32Array(256);for(let i=0;i<256;i++){const c=i/255;a[i]=c<=.04045?c/12.92:Math.pow((c+.055)/1.055,2.4);}return a;})();
 const hmF=t=>t>.008856?Math.cbrt(t):7.787*t+16/116;
-function hmDetect(src){
+function hmDetect(src,o={}){
   const sw=src.videoWidth||src.naturalWidth||src.width,sh=src.videoHeight||src.naturalHeight||src.height,sc=Math.min(1,HM_MAX/Math.max(sw,sh));
   const w=Math.max(8,Math.round(sw*sc)),h=Math.max(8,Math.round(sh*sc)),N=w*h,cv=document.createElement("canvas");cv.width=w;cv.height=h;
   const cx=cv.getContext("2d",{willReadFrequently:true});cx.drawImage(src,0,0,w,h);const px=cx.getImageData(0,0,w,h).data;
@@ -7391,6 +7466,7 @@ function hmDetect(src){
   for(let i=0,j=0;i<N;i++,j+=4){const R=HM_LIN[px[j]],G=HM_LIN[px[j+1]],Bb=HM_LIN[px[j+2]];
     const X=hmF((R*.4124+G*.3576+Bb*.1805)/.95047),Y=hmF(R*.2126+G*.7152+Bb*.0722),Z=hmF((R*.0193+G*.1192+Bb*.9505)/1.08883);
     L[i]=116*Y-16;A[i]=500*(X-Y);B[i]=200*(Y-Z);C[i]=Math.hypot(A[i],B[i]);}
+  if(o.skip)return {w,h,src,img:cv,L,A,B,C,px,lab:new Int32Array(N).fill(-1),comps:[],groups:[]}; // the AI fills the holds in
   // the wall: local average brightness (holds are small next to it) and the typical colourfulness of the whole shot
   const r=Math.max(4,Math.round(Math.max(w,h)*.045)),ii=new Float64Array((w+1)*(h+1));
   for(let y=0;y<h;y++){let s=0;for(let x=0;x<w;x++){s+=L[y*w+x];ii[(y+1)*(w+1)+x+1]=ii[y*(w+1)+x+1]+s;}}
@@ -7407,7 +7483,10 @@ function hmDetect(src){
       for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy)continue;const X=x+dx,Y=y+dy;if(X<0||Y<0||X>=w||Y>=h)continue;const q=Y*w+X;
         if(m[q]&&lab[q]===-1&&Math.hypot((L[q]-L[i])*.5,A[q]-A[i],B[q]-B[i])<15){lab[q]=comps.length;stack[sp++]=q;}}}
     if(pts.length<5||pts.length>maxA){for(const i of pts)lab[i]=-2;continue;}
-    comps.push(hmComp(pts,w,L,A,B,C,px));}
+    {const c=hmComp(pts,w,L,A,B,C,px),bw=c.x1-c.x0+1,bh=c.y1-c.y0+1,fill=c.n/(bw*bh),el=Math.max(bw,bh)/Math.max(1,Math.min(bw,bh));
+      // holds are compact; tape, seams and mat edges are long and thin or sparse
+      if(c.n>30&&(el>6||fill<.18)||(c.n>12&&el>9)){for(const i of pts)lab[i]=-2;continue;}
+      comps.push(c);}}
   // labels of dropped blobs are cleared
   for(let i=0;i<N;i++)if(lab[i]===-2)lab[i]=-1;
   const groups=hmGroups(comps);
@@ -7492,37 +7571,43 @@ function hmProgress(route){
 /* the picker: a full-screen layer over whatever is open, so the tracker or project underneath keeps its state */
 function openHoldPicker(src,opt={}){
   const lay=document.createElement("div");lay.className="hm-lay";lay.innerHTML=`<div class="hm-top"><button class="btn" id="hm-x">Cancel</button><b>${esc(opt.title||"Pick the problem")}</b><button class="btn primary" id="hm-ok">Save</button></div>
-    <div class="hm-stage"><canvas id="hm-cv"></canvas><div class="hm-busy" id="hm-busy">Finding holds…</div></div>
-    <div class="hm-bar"><div class="hm-cols" id="hm-cols"></div>
+    <div class="hm-stage"><canvas id="hm-cv"></canvas><div class="hm-busy" id="hm-busy"><span class="hm-spin"></span>Finding holds…</div><button class="hm-z" id="hm-z" hidden>Reset zoom</button></div>
+    <div class="hm-bar"><div class="hm-ai" id="hm-ai"></div><div class="hm-cols" id="hm-cols"></div>
       <div class="seg hm-tools" id="hm-tools">${[["holds","Holds"],["add","Add"],["start","Start"],["top","Top"],["high","High point"]].filter(([k])=>k!=="high"||opt.high!==false).map(([k,t])=>`<button data-t="${k}" aria-pressed="${k==="holds"}">${t}</button>`).join("")}</div>
       <p class="hint" id="hm-hint"></p></div>`;
   document.body.appendChild(lay);document.body.classList.add("hm-open");
-  const cv=lay.querySelector("#hm-cv"),x=cv.getContext("2d");let det=null,sel=new Set(),roles={start:[],top:[],high:null},tool="holds",grp=null;
+  const cv=lay.querySelector("#hm-cv"),x=cv.getContext("2d");let det=null,sel=new Set(),roles={start:[],top:[],high:null},tool="holds",grp=null,Z={s:1,tx:0,ty:0},moved=false;
+  const applyZ=()=>{cv.style.transform=Z.s===1&&!Z.tx&&!Z.ty?"":`translate(${Z.tx}px,${Z.ty}px) scale(${Z.s})`;const b=lay.querySelector("#hm-z");if(b)b.hidden=Z.s===1;};
   const close=()=>{lay.remove();document.body.classList.remove("hm-open");};
-  const HINT={holds:"Pick a colour above, then tap holds to add or remove them. Small jibs count too.",add:"Tap a hold the app missed and it grows the hold out from there.",start:"Tap the start hold or holds (up to two).",top:"Tap the top hold.",high:"Tap the furthest hold you've reached."};
-  const fit=()=>{const st=lay.querySelector(".hm-stage"),mw=st.clientWidth,mh=st.clientHeight,k=Math.min(mw/det.w,mh/det.h),dpr=Math.min(2,devicePixelRatio||1);
-    cv.style.width=Math.round(det.w*k)+"px";cv.style.height=Math.round(det.h*k)+"px";cv.width=Math.round(det.w*k*dpr);cv.height=Math.round(det.h*k*dpr);};
+  let lastTap=null,aiFail=false;
+  const HINT={holds:"Pick a colour above, or tap one hold of your problem. Tap holds to add or remove them. Pinch to zoom in on small jibs.",add:"Tap a hold the app missed and it grows the hold out from there.",start:"Tap the start hold or holds (up to two).",top:"Tap the top hold.",high:"Tap the furthest hold you've reached."};
+  const fit=()=>{const st=lay.querySelector(".hm-stage"),mw=st.clientWidth,mh=st.clientHeight,k=Math.min(mw/det.w,mh/det.h),sw0=det.src.videoWidth||det.src.naturalWidth||det.src.width,dpr=Math.max(Math.min(2,devicePixelRatio||1),Math.min(3,sw0/(det.w*k))); // extra resolution so pinch-zoom stays sharp
+    cv.style.width=Math.round(det.w*k)+"px";cv.style.height=Math.round(det.h*k)+"px";cv.width=Math.round(det.w*k*dpr);cv.height=Math.round(det.h*k*dpr);Z={s:1,tx:0,ty:0};applyZ();};
   const route=()=>{const ids=[...sel],holds=ids.map(i=>hmPack(det.comps[i],det.w)),ix=i=>ids.indexOf(i);
     return {gw:det.w,gh:det.h,holds,start:roles.start.map(ix).filter(i=>i>=0),top:roles.top.map(ix).filter(i=>i>=0),high:roles.high!=null&&ix(roles.high)>=0?ix(roles.high):null,color:grp,at:Date.now()};};
   const draw=()=>{if(!det)return;const k=cv.width/det.w;x.setTransform(1,0,0,1,0,0);x.drawImage(det.src,0,0,cv.width,cv.height);
     if(sel.size){const r=route();hmDrawRoute(x,r,k,k,0,0,1,{u:cv.width/1080*1.6,col:"#CDF54A"});}
     else{// nothing picked yet: show every hold faintly so you can see what was found
       x.save();x.globalAlpha=.9;x.strokeStyle="rgba(255,255,255,.75)";x.lineWidth=1.5;det.comps.forEach(c=>{x.strokeRect(c.x0*k,c.y0*k,(c.x1-c.x0+1)*k,(c.y1-c.y0+1)*k);});x.restore();}
-    lay.querySelector("#hm-hint").textContent=HINT[tool]+(sel.size?` ${sel.size} hold${sel.size===1?"":"s"} in this problem.`:"");};
+    const hn=lay.querySelector("#hm-hint");hn.textContent=HINT[tool]+(sel.size?` ${sel.size} hold${sel.size===1?"":"s"} in this problem.`:"");
+    if(tool==="holds"&&lastTap!=null&&det.comps[lastTap]&&sel.has(lastTap)){const b=document.createElement("button");b.className="hm-same";b.textContent="Select every hold this colour";
+      b.onclick=()=>{const ids=hmSameColour(det,lastTap);ids.forEach(i=>sel.add(i));grp=det.comps[lastTap].name;toast(`${ids.length} ${grp.toLowerCase()} holds selected. Tap any that aren't part of it.`);lastTap=null;cols();draw();};hn.appendChild(document.createTextNode(" "));hn.appendChild(b);}};
   const cols=()=>{lay.querySelector("#hm-cols").innerHTML=det.groups.length?det.groups.map(g=>`<button class="hm-col" data-g="${g.name}" aria-pressed="${grp===g.name}"><i style="background:${g.sw}"></i>${g.name} <small>${g.ids.length}</small></button>`).join(""):`<span class="hint">No coloured holds found. Use Add to tap them in.</span>`;
     lay.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>{grp=b.dataset.g;const g=det.groups.find(q=>q.name===grp);sel=new Set(g.ids);roles={start:[],top:[],high:null};cols();draw();});};
   const hitAt=(gx,gy)=>{const {w,h,lab,comps}=det;const xi=Math.round(gx),yi=Math.round(gy);if(xi>=0&&yi>=0&&xi<w&&yi<h&&lab[yi*w+xi]>=0)return lab[yi*w+xi];
     let best=-1,bd=(Math.max(w,h)*.025)**2;comps.forEach((c,i)=>{const d=(c.cx-gx)**2+(c.cy-gy)**2;if(d<bd&&(tool==="holds"||tool==="add"||sel.has(i))){bd=d;best=i;}});return best;};
-  cv.addEventListener("click",ev=>{if(!det)return;const R=cv.getBoundingClientRect(),gx=(ev.clientX-R.left)/R.width*det.w,gy=(ev.clientY-R.top)/R.height*det.h;
+  cv.addEventListener("click",ev=>{if(!det)return;if(moved){moved=false;return;}const R=cv.getBoundingClientRect(),gx=(ev.clientX-R.left)/R.width*det.w,gy=(ev.clientY-R.top)/R.height*det.h;
     if(tool==="add"){let id=hitAt(gx,gy);if(id<0||!(det.lab[Math.round(gy)*det.w+Math.round(gx)]>=0))id=hmWand(det,gx,gy);if(id==null){toast("Couldn't find a hold there. Tap closer to its centre.");return;}sel.add(id);}
     else{const id=hitAt(gx,gy);if(id<0)return;
-      if(tool==="holds"){if(sel.has(id)){sel.delete(id);roles.start=roles.start.filter(q=>q!==id);roles.top=roles.top.filter(q=>q!==id);if(roles.high===id)roles.high=null;}else sel.add(id);}
+      if(tool==="holds"){if(sel.has(id)){sel.delete(id);roles.start=roles.start.filter(q=>q!==id);roles.top=roles.top.filter(q=>q!==id);if(roles.high===id)roles.high=null;if(lastTap===id)lastTap=null;}else{sel.add(id);lastTap=id;}}
       else{sel.add(id);if(tool==="start"){roles.start=roles.start.includes(id)?roles.start.filter(q=>q!==id):[...roles.start,id].slice(-2);}else if(tool==="top"){roles.top=roles.top.includes(id)?[]:[id];}else roles.high=roles.high===id?null:id;}}
     draw();});
   lay.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{tool=b.dataset.t;lay.querySelectorAll("[data-t]").forEach(z=>z.setAttribute("aria-pressed",z===b));draw();});
   lay.querySelector("#hm-x").onclick=()=>{close();opt.onCancel&&opt.onCancel();};
   lay.querySelector("#hm-ok").onclick=()=>{if(!sel.size){toast("Pick a colour or tap some holds first");return;}const r=route();close();opt.onSave&&opt.onSave(r);};
-  setTimeout(()=>{try{det=hmDetect(src);}catch(e){lay.querySelector("#hm-busy").textContent="Couldn't read that image.";return;}
+  const busy=t=>{let b=lay.querySelector("#hm-busy");if(!b){b=document.createElement("div");b.className="hm-busy";b.id="hm-busy";lay.querySelector(".hm-stage").appendChild(b);}b.innerHTML=t;};
+  const unbusy=()=>{const b=lay.querySelector("#hm-busy");if(b)b.remove();};
+  const setup=d=>{det=d;sel=new Set();roles={start:[],top:[],high:null};lastTap=null;
     // an existing route comes back as its own holds, and detected blobs it already covers are dropped
     if(opt.route&&opt.route.gw===det.w&&opt.route.gh===det.h){const R=opt.route,map={};
       R.holds.forEach((hd,i)=>{const pts=hmUnpack(hd).map(([X,Y])=>Y*det.w+X);for(const q of pts){const o=det.lab[q];if(o>=0&&det.comps[o])det.comps[o].gone=true;}
@@ -7531,7 +7616,41 @@ function openHoldPicker(src,opt={}){
       det.groups=hmGroups(det.comps);
       roles={start:(R.start||[]).map(i=>map[i]),top:(R.top||[]).map(i=>map[i]),high:R.high!=null?map[R.high]:null};grp=R.color||null;
       if(opt.tool){tool=opt.tool;lay.querySelectorAll("[data-t]").forEach(z=>z.setAttribute("aria-pressed",z.dataset.t===tool));}}
-    lay.querySelector("#hm-busy").remove();fit();cols();draw();},60);
+    fit();cols();draw();aiBar();};
+  const SPIN='<span class="hm-spin"></span>';
+  const runAI=async()=>{
+    try{const have=HM_AI.sess||await hmAiCached();
+      busy(SPIN+(have?"Loading the hold finder…":"Downloading the hold finder… 0%"));
+      await hmAiLoad(p=>busy(`${SPIN}Downloading the hold finder… ${Math.round(p*100)}%<small>One time only, then it works offline</small>`));
+      busy(`${SPIN}Finding holds with AI…<small>About 10 to 30 seconds on a phone</small>`);
+      await new Promise(r=>setTimeout(r,80)); // let that paint before the heavy work
+      const ai=await hmAiRun(src);if(!lay.isConnected)return;
+      const d=hmAiComps(hmDetect(src,{skip:true}),ai);unbusy();setup(d);
+      if(!d.comps.length)toast("No holds found. Try a straighter, closer photo, or tap holds in with Add.");}
+    catch(e){console.warn("hold AI",e);aiFail=true;if(!lay.isConnected)return;unbusy();if(!det){try{setup(hmDetect(src));}catch(_){busy("Couldn't read that image.");return;}}else aiBar();
+      toast("The AI hold finder couldn't run here, so colour detection is used.");}};
+  const aiBar=()=>{const el=lay.querySelector("#hm-ai");if(!el||!det)return;
+    if(det.ai){el.innerHTML=`<span class="hm-aion">✦ Holds found by AI</span>`;return;}
+    if(aiFail){el.innerHTML=`<span class="hint">The AI hold finder couldn't load here (offline?). Using colour detection.</span> <button class="hm-same" id="hm-aigo">Try again</button>`;}
+    else el.innerHTML=`<button class="hm-aibtn" id="hm-aigo"><b>✦ Find holds with AI</b><span>Much better at skipping mats and walls. ${Math.round(HM_AI.size)} MB, downloaded once. Wi-Fi recommended.</span></button>`;
+    const go=el.querySelector("#hm-aigo");if(go)go.onclick=()=>{aiFail=false;el.innerHTML="";runAI();};};
+  setTimeout(async()=>{
+    if(HM_AI.sess||await hmAiCached()){runAI();return;}
+    try{const d=hmDetect(src);unbusy();setup(d);}catch(e){busy("Couldn't read that image.");}},60);
+  // pinch to zoom and drag to pan, so small jibs are easy to tap
+  const stage=lay.querySelector(".hm-stage"),zb=lay.querySelector("#hm-z");cv.style.transformOrigin="0 0";
+  const ptrs=new Map();let g0=null;
+  stage.addEventListener("pointerdown",e=>{if(e.target===zb)return;ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    const R=cv.getBoundingClientRect(),base={l:R.left-Z.tx,t:R.top-Z.ty};
+    if(ptrs.size===2){const [a,b]=[...ptrs.values()];g0={d:Math.hypot(a.x-b.x,a.y-b.y),mx:(a.x+b.x)/2,my:(a.y+b.y)/2,s:Z.s,tx:Z.tx,ty:Z.ty,base};moved=true;}
+    else if(ptrs.size===1){g0={x:e.clientX,y:e.clientY,s:Z.s,tx:Z.tx,ty:Z.ty,base};moved=false;}});
+  stage.addEventListener("pointermove",e=>{if(!ptrs.has(e.pointerId)||!g0)return;ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(ptrs.size>=2&&g0.d){const [a,b]=[...ptrs.values()],d=Math.hypot(a.x-b.x,a.y-b.y),mx=(a.x+b.x)/2,my=(a.y+b.y)/2,s=Math.max(1,Math.min(6,g0.s*d/g0.d));
+      const qx=(g0.mx-g0.base.l-g0.tx)/g0.s,qy=(g0.my-g0.base.t-g0.ty)/g0.s;Z={s,tx:mx-g0.base.l-qx*s,ty:my-g0.base.t-qy*s};if(s===1)Z={s:1,tx:0,ty:0};applyZ();}
+    else if(ptrs.size===1&&!g0.d&&Z.s>1){const dx=e.clientX-g0.x,dy=e.clientY-g0.y;if(!moved&&Math.hypot(dx,dy)>8)moved=true;if(moved){Z={s:Z.s,tx:g0.tx+dx,ty:g0.ty+dy};applyZ();}}});
+  const up=e=>{ptrs.delete(e.pointerId);if(ptrs.size===1){const [a]=[...ptrs.values()],R=cv.getBoundingClientRect();g0={x:a.x,y:a.y,s:Z.s,tx:Z.tx,ty:Z.ty,base:{l:R.left-Z.tx,t:R.top-Z.ty}};}else if(!ptrs.size)g0=null;};
+  stage.addEventListener("pointerup",up);stage.addEventListener("pointercancel",up);
+  zb.onclick=()=>{Z={s:1,tx:0,ty:0};applyZ();};
   addEventListener("resize",()=>{if(det&&lay.isConnected){fit();draw();}});
 }
 // a still of a route over its photo, for the project page
