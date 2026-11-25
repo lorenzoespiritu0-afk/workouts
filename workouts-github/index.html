@@ -241,6 +241,17 @@ h2.sec i{width:12px;height:12px;border-radius:3px;background:var(--c)}
 .lfing{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:10px;border-top:1px solid var(--line);font-size:.9rem;color:var(--muted)}.lfing b{font-variant-numeric:tabular-nums;font-size:1rem}
 .lwk{display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted);margin-top:4px}
 .lweeks{display:flex;align-items:flex-end;gap:5px;height:44px;margin-top:14px}.lweeks i{flex:1;border-radius:3px 3px 1px 1px;min-height:3px}
+.mt-pill{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 8px);transform:translateX(-50%);z-index:9000;width:min(92vw,380px);background:rgba(28,28,30,.94);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:10px 14px 12px;color:#fff;box-shadow:0 8px 28px rgba(0,0,0,.45);overflow:hidden;cursor:pointer;display:flex;align-items:center;gap:10px;font-size:.9rem;animation:mtpin .3s cubic-bezier(.2,.8,.2,1)}
+.mt-pill[hidden]{display:none}.mt-pill-t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mt-pill-t span{color:rgba(255,255,255,.7);font-variant-numeric:tabular-nums}
+.mt-pill-bar{position:absolute;left:0;bottom:0;height:3px;width:100%;background:#CDF54A;transform-origin:0 50%;transition:transform .4s linear}
+.mt-pill[data-state="done"] b{color:#CDF54A}.mt-pill[data-state="error"] b{color:#FF6B6B}
+.mt-pill-x{background:rgba(255,255,255,.12);border:0;color:#fff;width:28px;height:28px;border-radius:50%;font-size:1.1rem;line-height:1;flex:none}
+@keyframes mtpin{from{opacity:0;transform:translate(-50%,-8px)}}
+@media (prefers-reduced-motion:reduce){.mt-pill{animation:none}.mt-pill-bar{transition:none}}
+.mt-recent{margin:16px 0 4px}.mt-rec{display:flex;align-items:center;gap:12px;width:100%;background:var(--card2,#2C2C2E);border:0;border-radius:14px;padding:8px;margin-top:8px;color:inherit;text-align:left}
+.mt-rec img,.mt-rec .mt-rph{width:44px;height:58px;border-radius:8px;object-fit:cover;flex:none;background:#111}.mt-rec .mt-rt{flex:1;min-width:0}.mt-rec .mt-rt b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mt-rec .mt-rt span{color:var(--muted);font-size:.85rem}
+.mt-rdel{background:none;border:0;color:var(--muted);font-size:1.3rem;width:36px;height:36px;flex:none}
+.mt-jobbar{display:block;width:100%;text-align:left;border:1px solid rgba(205,245,74,.4);background:rgba(205,245,74,.08);border-radius:14px;padding:10px 14px;color:inherit;margin:0 0 12px}.mt-jobbar b{color:#CDF54A}
 .xpbar{height:10px;border-radius:5px;background:var(--chip);overflow:hidden;margin:10px 0 6px}
 .xpbar span{display:block;height:100%;background:var(--xp);border-radius:5px;transition:width .9s cubic-bezier(.2,.8,.2,1)}
 .xpinfo{font-size:.85rem;color:var(--muted)}
@@ -6562,7 +6573,10 @@ async function analyzePose(url,kind,onProg,cancel,stage,retried){
     let ok=false;
     if("requestVideoFrameCallback" in HTMLVideoElement.prototype){
       // play slowed down and take frames as they're shown; slower phones get a slower pass so few frames are missed
-      ok=await new Promise((res,rej)=>{let done=false,got=false;const fin=r=>{if(!done){done=true;res(r);}};
+      ok=await new Promise((res,rej)=>{let done=false,got=false;
+        // phones pause the video while the app is in the background; carry on when it comes back
+        const vis=()=>{if(!document.hidden&&!done&&!cancel.on&&v.paused&&!v.ended)v.play().catch(()=>{});};document.addEventListener("visibilitychange",vis);
+        const fin=r=>{if(!done){done=true;document.removeEventListener("visibilitychange",vis);res(r);}};
         const step=async(now,md)=>{if(done)return;got=true;if(cancel.on){v.pause();fin(true);return;}
           if(!busy){busy=1;try{await take(md.mediaTime);}catch(e){done=true;rej(e);return;}busy=0;v.playbackRate=Math.max(.2,Math.min(.5,.066/avg));onProg(Math.min(1,md.mediaTime/dur));}
           if(!done)v.requestVideoFrameCallback(step);};
@@ -7165,7 +7179,66 @@ async function exportPoseVideo(url,tr,o,extra,onProg,cancel){
   }finally{v.pause();v.remove();if(actx)try{actx.close();}catch(e){}}
 }
 /* ---------- the sheet ---------- */
-function openTracker(link,back){
+/* ---------- saved tracks: every tracked climb is kept on the phone (pose data, the video and the picked holds)
+   so it can be reopened and re-edited without tracking again. The newest 8 are kept. ---------- */
+let trkDBP=null;
+function trkDB(){if(trkDBP)return trkDBP;trkDBP=new Promise((res,rej)=>{try{const r=indexedDB.open("workouts-tracks",1);r.onupgradeneeded=()=>r.result.createObjectStore("t");r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);}catch(e){rej(e);}});return trkDBP;}
+const trkTx=async(mode,fn)=>{const db=await trkDB();return new Promise((res,rej)=>{const t=db.transaction("t",mode),s=t.objectStore("t");let out;const r=fn(s);if(r)r.onsuccess=()=>{out=r.result;};t.oncomplete=()=>res(out);t.onerror=()=>rej(t.error);t.onabort=()=>rej(t.error);});};
+const TRK_META="workouts-tracks-v1",TRK_MAX=8;
+const trkList=()=>{try{return JSON.parse(localStorage.getItem(TRK_META)||"[]");}catch(e){return [];}};
+const trkSetList=L=>{try{localStorage.setItem(TRK_META,JSON.stringify(L));}catch(e){}};
+function trkPack(A){const n=A.samples.length,T=new Float32Array(n),P=new Float32Array(n*99),M=new Uint8Array(n);
+  A.samples.forEach((s,i)=>{T[i]=s.t;if(s.p){P.set(s.p,i*99);M[i]=1;}});return {dur:A.dur,w:A.w,h:A.h,T,P,M};}
+function trkUnpack(r){const n=r.T.length,samples=[];for(let i=0;i<n;i++)samples.push({t:r.T[i],p:r.M[i]?r.P.slice(i*99,i*99+99):null});return {dur:r.dur,w:r.w,h:r.h,samples};}
+async function trkSave({id,name,q,link,A,file}){
+  const base={id,at:Date.now(),name:name||"Climb",q,link,pose:trkPack(A),route:null};let hasVideo=false;
+  try{await trkTx("readwrite",s=>s.put({...base,video:file||null},id));hasVideo=!!file;}
+  catch(e){console.warn("track video not stored",e);try{await trkTx("readwrite",s=>s.put({...base,video:null},id));}catch(e2){return null;}}
+  const meta={id,at:base.at,name:base.name,dur:A.dur,link,hasVideo,mb:file?Math.round(file.size/1048576*10)/10:0,thumb:null};
+  const L=[meta,...trkList().filter(m=>m.id!==id)];for(const old of L.splice(TRK_MAX))trkDel(old.id,true);trkSetList(L);
+  try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist();}catch(e){}
+  return meta;}
+async function trkGet(id){try{return await trkTx("readonly",s=>s.get(id));}catch(e){return null;}}
+async function trkDel(id,keepMeta){try{await trkTx("readwrite",s=>s.delete(id));}catch(e){}if(!keepMeta)trkSetList(trkList().filter(m=>m.id!==id));}
+async function trkUpdate(id,patch){if(!id)return;try{const r=await trkGet(id);if(!r)return;await trkTx("readwrite",s=>s.put({...r,...patch},id));}catch(e){}}
+const trkMeta=(id,patch)=>{const L=trkList();const m=L.find(z=>z.id===id);if(m){Object.assign(m,patch);trkSetList(L);}};
+const trkForSend=(s,i)=>trkList().find(m=>m.link&&m.link.sid===s.id&&m.link.i===i);
+
+/* ---------- tracking runs as a background job: it keeps going while you use the rest of the app, with a progress pill
+   on every screen. (Phones pause it if you leave the app; it picks up again when you come back.) ---------- */
+const MT_JOB={cur:null,subs:new Set()};
+function mtErrText(e){return e&&e.message==="track"?`Tracking stopped partway through the video (${e.detail}). Try again, or switch to Faster.`:e&&e.message==="decode"?"That video couldn't be opened here. Try exporting it from Photos as a normal (not HDR or Cinematic) video.":`Motion tracking couldn't start: the tracking files didn't load (${String((e&&(e.detail||e.message))||"unknown").slice(0,160)}). They download about 9 MB the first time, so check your connection and try again.${window.STANDALONE?"":" If this keeps happening here, open the app from your home screen, where it can load them."}`;}
+function mtNotify(){const j=MT_JOB.cur;for(const f of [...MT_JOB.subs])try{f(j);}catch(e){}mtPill();}
+const mtEta=s=>s==null?"":s<10?"a few seconds left":s<60?`about ${Math.round(s/5)*5} s left`:`about ${Math.round(s/60)} min left`;
+async function mtStart({file,url,name,q,link}){
+  const prev=MT_JOB.cur;if(prev&&prev.state==="run")prev.cancel.on=true;
+  const j={id:"trk"+Date.now().toString(36),state:"run",p:0,msg:"Loading the pose model…",t0:Date.now(),tP:null,p0:0,eta:null,cancel:{on:false},file,url,name,q,link,viewing:false};
+  MT_JOB.cur=j;mtNotify();
+  try{
+    const A=await analyzePose(url,q,p=>{const now=Date.now();if(j.tP==null){j.tP=now;j.p0=p;}j.p=p;j.msg=`Finding your movement, ${Math.round(p*100)}%`;
+      const el=(now-j.tP)/1000;if(p>j.p0+.03&&el>2)j.eta=el*(1-p)/(p-j.p0);mtNotify();},j.cancel,m=>{j.msg=m;mtNotify();});
+    if(j.cancel.on||!A){if(MT_JOB.cur===j)MT_JOB.cur=null;mtNotify();return;}
+    const tr=buildTrack(A);
+    if(!tr||tr.found<.15){j.state="error";j.err="Couldn't find a climber in that video. Try a clip where your whole body is in frame.";mtNotify();return;}
+    j.A=A;j.p=1;j.msg="Saving your track…";mtNotify();
+    j.meta=await trkSave({id:j.id,name,q,link:link?{sid:link.s.id,i:link.i}:null,A,file});
+    j.state="done";mtNotify();
+    if(!j.viewing){haptic("success");toast("Your climb is tracked. Tap the bar at the top to open it.");}
+  }catch(e){if(j.cancel.on){if(MT_JOB.cur===j)MT_JOB.cur=null;mtNotify();return;}j.state="error";j.err=mtErrText(e);mtNotify();}
+}
+function mtPill(){
+  let el=document.getElementById("mt-pill");const j=MT_JOB.cur;
+  if(!j||j.viewing){if(el)el.hidden=true;return;}
+  if(!el){el=document.createElement("div");el.id="mt-pill";el.className="mt-pill";el.setAttribute("role","status");el.setAttribute("aria-live","polite");document.body.appendChild(el);
+    el.addEventListener("click",ev=>{const c=MT_JOB.cur;if(!c)return;if(ev.target.closest(".mt-pill-x")){if(c.state==="run")return;MT_JOB.cur=null;mtNotify();return;}
+      openTracker(c.link,null,{job:c});});}
+  el.hidden=false;el.dataset.state=j.state;
+  const pct=Math.round(j.p*100);
+  el.innerHTML=j.state==="run"?`<span class="mt-pill-t"><b>Tracking your climb</b> <span>${j.tP==null?esc(j.msg.replace(/…$/,"")):`${pct}%${j.eta!=null?" · "+mtEta(j.eta):""}`}</span></span><i class="mt-pill-bar" style="transform:scaleX(${j.tP==null?.02:j.p})"></i>`
+    :j.state==="done"?`<span class="mt-pill-t"><b>✓ Climb tracked</b> <span>Tap to open</span></span><button class="mt-pill-x" aria-label="Dismiss">×</button>`
+    :`<span class="mt-pill-t"><b>Tracking stopped</b> <span>Tap to see why</span></span><button class="mt-pill-x" aria-label="Dismiss">×</button>`;
+}
+function openTracker(link,back,init){
   const st={url:null,A:null,tr:null,stats:null,sticker:null,cam:null,label:"TRACKING"};
   const f=link?sendFacts(link.s,link.i):null,gc=f&&f.p.gc;
   const o={skel:"neon",trail:"hips",trailLen:"fade",color:gc?"grade":"#CDF54A",dim:false,timer:false,sound:true,sticker:link?"top":"off",intro:link?"title":"off",introLen:"auto",q:"full",cam:"follow",zoom:"medium",shape:"9:16",box:"off",push:false,preview:false,look:"natural",bars:false,vign:false,meter:false,endStats:false,speed:"off"};
@@ -7177,16 +7250,25 @@ function openTracker(link,back){
   const goBack=()=>{stopPreview();if(st.url)URL.revokeObjectURL(st.url);(back||closeSheet)();};
   const pick=()=>{
     stopPreview();
-    openSheet(`<h3>Motion tracking</h3><p class="sub">Pick a send video and the app finds you in every frame. It can reframe the shot to follow and zoom in on you like an editor's motion tracking, and add a skeleton, tracers and a tracking box. It all runs on this phone; the video isn't uploaded.</p>
+    const jb=MT_JOB.cur&&MT_JOB.cur.state==="run"?MT_JOB.cur:null;
+    openSheet(`<h3>Motion tracking</h3>${jb?`<button class="mt-jobbar" id="mt-jobbar"><b>Tracking in progress, ${Math.round(jb.p*100)}%</b><br><span class="hint">Tap to watch it. Picking another video stops it.</span></button>`:""}<p class="sub">Pick a send video and the app finds you in every frame. It can reframe the shot to follow and zoom in on you like an editor's motion tracking, and add a skeleton, tracers and a tracking box. It all runs on this phone; the video isn't uploaded.</p>
       ${link?`<div class="banner" style="margin:4px 0 12px"><b>${esc(f.p.gl)}, ${esc(f.result)}</b>${f.gym?` at ${esc(f.gym)}`:""}. Your send sticker can go on the video too.</div>`:""}
       <button type="button" class="btn primary mt-pickl" id="mt-pick">${icon("climb")} Choose a video</button>
       <label>Tracking</label><div class="seg" id="mt-q"><button data-v="full" aria-pressed="${o.q==="full"}">Accurate</button><button data-v="lite" aria-pressed="${o.q==="lite"}">Faster</button></div>
       <ul class="mt-tips"><li>Tripod or propped phone, so the wall stays still.</li><li>Your whole body in frame for the whole climb.</li><li>Clips under a minute track fastest. Tracking runs at half speed, so a 40 second clip takes about 80 seconds.</li><li>The first time, about ${o.q==="full"?"9":"6"} MB of tracking files download. After that it works offline.</li></ul>
       <p class="err" id="mt-err"></p>
+      <div id="mt-recent"></div>
       <label class="link mt-alt" id="mt-alt" for="mt-file-in">Video not loading? Try the other picker</label><input type="file" accept="video/*" id="mt-file-in" class="vh-file">
       <p class="hint mt-diag" id="mt-diag" aria-live="polite">Motion tracking ${MT_VER}</p>
       <div class="row"><button class="btn" id="mt-back">${back?"Back":"Close"}</button></div>`);
     $("mt-back").onclick=goBack;
+    if($("mt-jobbar"))$("mt-jobbar").onclick=()=>showJob(MT_JOB.cur);
+    // recently tracked climbs: open one to edit it again without re-tracking
+    const recent=()=>{const el=$("mt-recent");if(!el)return;const L=trkList();if(!L.length){el.innerHTML="";return;}
+      el.innerHTML=`<div class="plabel mt-recent">Recent tracked climbs</div>`+L.map(m=>`<div style="display:flex;align-items:center;gap:4px"><button class="mt-rec" data-trk="${m.id}">${m.thumb?`<img src="${m.thumb}" alt="">`:`<span class="mt-rph"></span>`}<span class="mt-rt"><b>${esc(m.name)}</b><span>${new Date(m.at).toLocaleDateString("en-US",{month:"short",day:"numeric"})} · ${fmtClock(Math.round(m.dur||0))}${m.hasVideo?"":" · pick the video again to open"}</span></span></button><button class="mt-rdel" data-trkdel="${m.id}" aria-label="Delete ${esc(m.name)}">×</button></div>`).join("");
+      el.querySelectorAll("[data-trk]").forEach(b=>b.onclick=()=>openRec(b.dataset.trk));
+      el.querySelectorAll("[data-trkdel]").forEach(b=>b.onclick=async()=>{await trkDel(b.dataset.trkdel);recent();toast("Tracked climb deleted");});};
+    recent();
     document.querySelectorAll("#mt-q button").forEach(b=>b.onclick=()=>{o.q=b.dataset.v;saveO();document.querySelectorAll("#mt-q button").forEach(z=>z.setAttribute("aria-pressed",z===b));});
     // a real file input under a label: iPhones are more reliable with a direct tap than a scripted click
     const fi=$("mt-file-in");let taken=false;
@@ -7195,7 +7277,8 @@ function openTracker(link,back){
       if(!fl){if(why)diag(why);return;}
       taken=true;st.file=fl;diag(`Got ${fl.name||"a video"}, ${(fl.size/1048576).toFixed(1)} MB, ${fl.type||"unknown type"}`);
       try{if(st.url)URL.revokeObjectURL(st.url);st.url=URL.createObjectURL(fl);st.name=(fl.name||"send").replace(/\.[^.]+$/,"");}catch(e){taken=false;diag("Couldn't read the video: "+(e&&e.message||e));return;}
-      setTimeout(()=>analyze().catch(e=>{pick();const er=$("mt-err");if(er)er.textContent="Tracking hit an error: "+(e&&e.message||e);}),30);};
+      if(st.pendingA){const A=st.pendingA;st.pendingA=null;setTimeout(()=>finish(A),30);return;}
+      setTimeout(startJob,30);};
     const watch=inp=>{inp.addEventListener("change",()=>take(inp,"The picker closed without a video."));inp.addEventListener("input",()=>take(inp));
       // if the change event never arrives, look again when the picker closes
       const recheck=()=>{setTimeout(()=>take(inp),700);setTimeout(()=>take(inp,"No video came back from the picker yet. If it's an iCloud video, wait for it to download, or try the other picker."),2500);};
@@ -7209,27 +7292,33 @@ function openTracker(link,back){
     $("mt-alt").addEventListener("click",()=>diag("Opening the other picker…"));
     st.openPicker=openPicker;
   };
-  const analyze=async()=>{
-    const cancel={on:false};let msg="Loading the pose model…";const t0=Date.now();
-    openSheet(`<h3>Tracking your climb</h3><p class="sub" id="mt-msg">${msg}</p><div class="mt-prog" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="mt-pb"><i id="mt-bar"></i></div><p class="hint" id="mt-wait">Keep the app open while it works.</p><div class="row"><button class="btn" id="mt-cancel">Cancel</button></div>`);
-    $("mt-cancel").onclick=()=>{cancel.on=true;clearInterval(tick);pick();};
-    const setMsg=m=>{msg=m;const el=$("mt-msg");if(el)el.textContent=m;};
-    let last=Date.now(),lastMsg=msg;
-    const tick=setInterval(()=>{const el=$("mt-wait");if(!el){clearInterval(tick);return;}if(msg!==lastMsg){lastMsg=msg;last=Date.now();}const s0=Math.round((Date.now()-last)/1000);
-      el.textContent=s0>=12?`Still working on this step (${s0}s). A slow connection makes the first run take longer.`:"Keep the app open while it works.";},1000);
-    try{
-      const A=await analyzePose(st.url,o.q,p=>{const b=$("mt-bar");if(!b)return;b.style.transform=`scaleX(${p})`;$("mt-pb").setAttribute("aria-valuenow",Math.round(p*100));setMsg(`Finding your movement, ${Math.round(p*100)}%`);},cancel,setMsg);
-      clearInterval(tick);
-      if(cancel.on||!A)return;
-      const tr=buildTrack(A);
-      if(!tr||tr.found<.15){pick();$("mt-err").textContent="Couldn't find a climber in that video. Try a clip where your whole body is in frame.";return;}
-      st.A=A;st.tr=tr;st.stats=poseStats(tr);st.cam=camPath(tr);st.climbT=climbStart(tr);if(link){st.label=`${f.p.gl} · ${f.result}`.toUpperCase();st.I=introInfo(f);}ready();
-    }catch(e){
-      clearInterval(tick);
-      if(cancel.on)return;pick();
-      $("mt-err").textContent=e&&e.message==="track"?`Tracking stopped partway through the video (${e.detail}). Try again, or switch to Faster.`:e&&e.message==="decode"?"That video couldn't be opened here. Try exporting it from Photos as a normal (not HDR or Cinematic) video.":`Motion tracking couldn't start: the tracking files didn't load (${String((e&&(e.detail||e.message))||"unknown").slice(0,160)}). They download about 9 MB the first time, so check your connection and try again.${window.STANDALONE?"":" If this keeps happening here, open the app from your home screen, where it can load them."}`;
-    }
-  };
+  // tracking runs as a background job (see mtStart); this sheet just watches it
+  const startJob=()=>{mtStart({file:st.file,url:st.url,name:link?`${f.p.gl} · ${f.result}`:st.name,q:o.q,link});showJob(MT_JOB.cur);};
+  const finish=(A)=>{const tr=buildTrack(A);if(!tr||tr.found<.15){pick();$("mt-err").textContent="Couldn't find a climber in that video. Try a clip where your whole body is in frame.";return;}
+    st.A=A;st.tr=tr;st.stats=poseStats(tr);st.cam=camPath(tr);st.climbT=climbStart(tr);if(link){st.label=`${f.p.gl} · ${f.result}`.toUpperCase();st.I=introInfo(f);}ready();};
+  const showJob=j=>{
+    if(!j){pick();return;}
+    if(j.state==="done"){MT_JOB.cur=null;mtNotify();st.file=j.file;st.url=j.url;st.recId=j.meta&&j.meta.id;finish(j.A);return;}
+    if(j.state==="error"){MT_JOB.cur=null;mtNotify();pick();const er=$("mt-err");if(er)er.textContent=j.err;return;}
+    openSheet(`<h3>Tracking your climb</h3><p class="sub" id="mt-msg">${esc(j.msg)}</p><div class="mt-prog" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="mt-pb"><i id="mt-bar"></i></div><p class="hint" id="mt-wait" style="font-variant-numeric:tabular-nums"></p>
+      <p class="hint">You can use the rest of the app while this runs: a bar at the top shows how it's going, and you can tap it to come back. Keep the app open, though: phones pause it when you switch apps or lock the screen, and it carries on when you return.</p>
+      <div class="row"><button class="btn primary" id="mt-away">Keep using the app</button></div><div class="row" style="margin-top:10px"><button class="btn" id="mt-cancel">Cancel</button></div>`);
+    j.viewing=true;mtPill();let lastMsg=j.msg,lastT=Date.now();
+    const upd=c=>{if(c!==j||!$("mt-pb")){j.viewing=false;MT_JOB.subs.delete(upd);clearInterval(tk);mtPill();return;}
+      if(c.state!=="run"){j.viewing=false;MT_JOB.subs.delete(upd);clearInterval(tk);showJob(c);return;}
+      if(c.msg!==lastMsg){lastMsg=c.msg;lastT=Date.now();}
+      $("mt-msg").textContent=c.msg;$("mt-bar").style.transform=`scaleX(${c.tP==null?0:c.p})`;$("mt-pb").setAttribute("aria-valuenow",Math.round(c.p*100));
+      const s0=Math.round((Date.now()-lastT)/1000),el=Math.round((Date.now()-c.t0)/1000);
+      $("mt-wait").textContent=c.tP==null?(s0>=12?`Still working on this step (${s0}s). A slow connection makes the first run take longer.`:"Getting the tracker ready…"):`${fmtClock(el)} so far${c.eta!=null?" · "+mtEta(c.eta):""}`;};
+    MT_JOB.subs.add(upd);const tk=setInterval(()=>upd(MT_JOB.cur===j?j:null),1000);upd(j);
+    $("mt-away").onclick=()=>{j.viewing=false;MT_JOB.subs.delete(upd);clearInterval(tk);closeSheet();mtPill();};
+    $("mt-cancel").onclick=()=>{j.cancel.on=true;j.viewing=false;MT_JOB.subs.delete(upd);clearInterval(tk);if(MT_JOB.cur===j)MT_JOB.cur=null;mtNotify();pick();};};
+  // reopen a saved track: no tracking needed
+  const openRec=async id=>{const r=await trkGet(id);if(!r){trkDel(id);toast("That tracked climb is no longer on this phone");pick();return;}
+    st.recId=id;st.route=r.route||null;st.name=r.name;if(r.route)o.holds=true;const A=trkUnpack(r.pose);
+    if(r.video){st.file=r.video;if(st.url)URL.revokeObjectURL(st.url);st.url=URL.createObjectURL(r.video);finish(A);return;}
+    // stored without its video (the phone was short of space): pick the same video again, and the tracking is reused
+    st.pendingA=A;pick();const er=$("mt-err");if(er)er.textContent=`Pick the video of “${r.name}” again to open it. The tracking is saved, so it opens straight away.`;st.openPicker&&st.openPicker();};
   const ready=()=>{
     const tr=st.tr,S=st.stats,ar=tr.w/tr.h;
     const seg=(label,key,opts)=>`<div class="plabel">${label}</div><div class="seg" data-mk="${key}">${opts.map(([v,t])=>`<button data-v="${v}" aria-pressed="${String(o[key])===String(v)}">${t}</button>`).join("")}</div>`;
@@ -7271,9 +7360,9 @@ function openTracker(link,back){
     setTimeout(spdHint,0);
     const frame=()=>{if(!document.body.contains(cv)){stopPreview();return;}o.col=colOf();
       {const m=o.speed!=="off"?speedMap(tr,st.cam,o,st,tr.dur||pv.duration||0):null,r=m&&m.rate?m.stepAt(pv.currentTime):1,now=performance.now();
-        if(Math.abs(pv.playbackRate-r)>.01&&(!st._rateT||now-st._rateT>220)){st._rateT=now;try{pv.playbackRate=r;}catch(e){}}}if(pv.readyState>=2)drawPoseFrame(x,pv,tr,pv.currentTime,cv.width,cv.height,o,st);const sk=$("mt-seek");if(sk&&!sk.matches(":active")&&pv.duration)sk.value=Math.round(pv.currentTime/pv.duration*1000);loop=requestAnimationFrame(frame);};
+        if(Math.abs(pv.playbackRate-r)>.01&&(!st._rateT||now-st._rateT>220)){st._rateT=now;try{pv.playbackRate=r;}catch(e){}}}if(pv.readyState>=2){drawPoseFrame(x,pv,tr,pv.currentTime,cv.width,cv.height,o,st);if(st.recId&&!st._thumb&&pv.currentTime>Math.min(1.5,(pv.duration||2)/2)){st._thumb=1;try{const t=document.createElement("canvas"),k=120/cv.height;t.width=Math.round(cv.width*k);t.height=120;t.getContext("2d").drawImage(cv,0,0,t.width,t.height);trkMeta(st.recId,{thumb:t.toDataURL("image/jpeg",.7)});}catch(e){}}}const sk=$("mt-seek");if(sk&&!sk.matches(":active")&&pv.duration)sk.value=Math.round(pv.currentTime/pv.duration*1000);loop=requestAnimationFrame(frame);};
     vidReady(pv).then(()=>{pv.play().catch(()=>{});frame();});
-    const setPlay=()=>{const b=$("mt-play");if(!b)return;const pl=!pv.paused;b.innerHTML=icon(pl?"pause":"play");b.setAttribute("aria-label",pl?"Pause":"Play");b.classList.toggle("off",!pl);};
+    const setPlay=()=>{const b=$("mt-play");if(!b||!pv)return;const pl=!pv.paused;b.innerHTML=icon(pl?"pause":"play");b.setAttribute("aria-label",pl?"Pause":"Play");b.classList.toggle("off",!pl);};
     pv.addEventListener("play",setPlay);pv.addEventListener("pause",setPlay);
     const tog=()=>{if(pv.paused)pv.play().catch(()=>{});else pv.pause();};
     $("mt-play").onclick=tog;cv.onclick=tog;
@@ -7285,7 +7374,7 @@ function openTracker(link,back){
     $("mt-holds").onclick=async()=>{if(!pv)return;pv.pause();const t0=Math.max(0,Math.min((st.climbT||0)-1,.3));
       await new Promise(r=>{let done=false;const fin=()=>{if(!done){done=true;r();}};pv.addEventListener("seeked",fin,{once:true});pv.currentTime=t0;setTimeout(fin,1500);});
       const fr=document.createElement("canvas");fr.width=pv.videoWidth;fr.height=pv.videoHeight;fr.getContext("2d").drawImage(pv,0,0);
-      openHoldPicker(fr,{title:"Pick the problem",high:false,route:st.route,onSave:r=>{st.route=r;o.holds=true;stopPreview();ready();},onCancel:()=>pv&&pv.play().catch(()=>{})});};
+      openHoldPicker(fr,{title:"Pick the problem",high:false,route:st.route,onSave:r=>{st.route=r;o.holds=true;trkUpdate(st.recId,{route:r});stopPreview();ready();},onCancel:()=>pv&&pv.play().catch(()=>{})});};
     $("mt-back").onclick=goBack;
     $("mt-save").onclick=()=>render_();
   };
@@ -7313,7 +7402,11 @@ function openTracker(link,back){
       $("mt-done").onclick=()=>{URL.revokeObjectURL(url);goBack();};
     }catch(e){ready();toast(e&&e.message==="norec"?"This browser can't record video":"Couldn't make the video, try again");}
   };
-  pick();
+  if(init&&init.job)showJob(init.job);
+  else if(init&&init.recId)openRec(init.recId);
+  else if(MT_JOB.cur&&MT_JOB.cur.state==="run"&&link&&MT_JOB.cur.link&&MT_JOB.cur.link.s===link.s&&MT_JOB.cur.link.i===link.i)showJob(MT_JOB.cur);
+  else if(link&&trkForSend(link.s,link.i))openRec(trkForSend(link.s,link.i).id);
+  else pick();
 }
 
 function openSendShare(s,i,back){
