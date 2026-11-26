@@ -1963,18 +1963,21 @@ function compute(){
     const r={xp:0,parts:[],medals:[],ymedals:[],acc:[],goals:[],projects:[],chal:[],perfect:[],targets:[]};
     const add=(n,label)=>{n=Math.round(n);if(n>0){r.xp+=n;r.parts.push([label,n]);}};
     add(20,"Workout logged");
-    // time counts for more when it was hard, less when it was easy (your effort rating, 1–10)
-    if(s.dur){const f=s.rpe?Math.min(1.2,Math.max(.7,.55+s.rpe*.065)):1;add(Math.min(s.dur/60,180)*f,s.rpe?`Time, effort ${s.rpe}/10`:"Time");}
-    if(s.type!=="lift"&&s.type!=="climb"&&s.dist)add(s.dist*({run:10,walk:6,hike:8,ride:3,other:4}[s.type]||4),"Distance");
+    // effort is the base for every sport: minutes × effort rating (1–10), the way coaches compare training load across sports.
+    // Without a rating, a typical effort for the sport stands in. Performance bonuses below sit on top, kept smaller than the base.
+    if(s.dur){const RD={run:6,walk:3,hike:5,ride:5,lift:6,climb:6,hang:7,pickle:5,stair:7,other:4},e=s.rpe||RD[s.type]||5,m=Math.min(s.dur/60,240);
+      add(m*e*.28,s.rpe?`Effort, ${Math.round(m)} min at ${s.rpe}/10`:`Time, ${Math.round(m)} min`);}
+    if(s.type!=="lift"&&s.type!=="climb"&&s.dist)add(s.dist*({run:4,walk:2,hike:3,ride:1,other:1.5}[s.type]||1.5),"Distance");
     // speed pays: every km run faster than 7:30 /km earns more, and quick runs of 3 km or more get a tier bonus
-    if(s.type==="run"&&s.dist>=1&&s.dur){const pace=s.dur/60/s.dist;if(pace>2.5&&pace<7.5){add(s.dist*(7.5-pace)*6,`Pace, ${fmtPace(pace*60)}`);
+    if(s.type==="run"&&s.dist>=1&&s.dur){const pace=s.dur/60/s.dist;if(pace>2.5&&pace<7.5){add(s.dist*(7.5-pace)*5,`Pace, ${fmtPace(pace*60)}`);
       const tier=[[3.5,90,"Sub-3:30"],[4,60,"Sub-4:00"],[4.5,40,"Sub-4:30"],[5,25,"Sub-5:00"],[6,10,"Sub-6:00"]].find(t=>pace<t[0]);if(tier&&s.dist>=3)add(tier[1],`${tier[2]} run`);}}
-    if(s.type==="ride"&&s.dist>=5&&s.dur){const sp=s.dist/(s.dur/3600);if(sp>18&&sp<60)add(s.dist*(sp-18)*.2,`Speed, ${sp.toFixed(1)} km/h`);}
-    if(s.type==="lift"){const v=volume(s);if(v)add(Math.min(v/200,150),"Volume");}
+    if(s.type==="ride"&&s.dist>=5&&s.dur){const sp=s.dist/(s.dur/3600);if(sp>18&&sp<60)add(s.dist*(sp-18)*.15,`Speed, ${sp.toFixed(1)} km/h`);}
+    if(s.type==="lift"){const v=volume(s);if(v)add(Math.min(v/250,100),"Volume");}
     if(s.type!=="lift"&&s.type!=="climb"&&s.elev)add(s.elev/10,"Elevation");
     if(s.type==="hike"&&s.summit)add(25,"Summit");
-    if(s.type==="hang")add(hangTime(s)/6,"Hang time");
-    if(s.type==="climb"){const len=gradeList(s.gs||"v",s.placeId).length;add(sends(s).reduce((a,p)=>a+5+40*diffOf(s.gs,p.g,len)+(p.res==="flash"?5:0),0),"Sends");}
+    if(s.type==="hang")add(hangTime(s)/10,"Hang time");
+    // sends pay by real difficulty: the grade's V equivalent (so a V5 is worth the same at every gym), plus a little for a flash
+    if(s.type==="climb"){const len=gradeList(s.gs||"v",s.placeId).length;add(sends(s).reduce((a,p)=>{const v=nomV(s,p.g),V=v!=null?Math.max(0,v):diffOf(s.gs,p.g,len)*8;return a+3+3*V+(p.res==="flash"?3:0);},0),"Sends");}
     const year=s.date.slice(0,4);
     let mxp=0;
     for(const c of cats(s)){
