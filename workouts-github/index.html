@@ -425,6 +425,9 @@ select{-webkit-appearance:none;appearance:none;background-image:linear-gradient(
 .atplace{display:block;font-size:.8rem;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .plc{display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:14px;align-items:center;background:var(--surface);border-radius:14px;padding:14px;margin-bottom:10px;width:100%;text-align:left}
 .plc .pic{width:48px;height:48px;border-radius:12px;display:grid;place-items:center;font-size:1.4rem;background:var(--chip)}
+.pic.haslogo,.tico.haslogo{background:#fff;overflow:hidden;padding:3px}
+.plimg{width:100%;height:100%;object-fit:contain;display:block;border-radius:inherit}
+.plogo{display:flex;align-items:center;gap:10px}.plogo .btn{flex:none}.plogo .pic{width:56px;height:56px;flex:none}.plimg{max-width:100%}
 .plc b{display:block;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .plc span{font-size:.82rem;color:var(--muted)}
 .plc .cn{font-family:var(--num);font-weight:800;font-size:1.6rem;text-align:right;line-height:1}
@@ -1278,6 +1281,11 @@ const TERRAIN={flat:["Flat","Track, road or flat park"],rolling:["Rolling","Gent
 const TERRAIN_SLOW={flat:1,rolling:1.06,hilly:1.16,steep:1.32};
 const runPlaces=()=>places().filter(p=>!["climbgym","gym","pool","court"].includes(p.kind));
 const CLIMB_KINDS=["climbgym","crag","other"];
+// which kinds of place make sense for each activity ("other" places always show)
+const PLACE_FOR={climb:["climbgym","crag"],hang:["climbgym","gym","home"],lift:["gym","climbgym","home"],run:["track","park","trail","road","mountain","gym"],walk:["park","trail","road","track","mountain","gym"],hike:["mountain","trail","park","crag"],ride:["road","trail","park","mountain","gym","home"],pickle:["court"],stair:["gym","home","park"]};
+const placeFits=(p,type)=>!p||p.kind==="other"||!PLACE_FOR[type]||PLACE_FOR[type].includes(p.kind);
+const placesFor=(type,keep)=>places().filter(p=>placeFits(p,type)||(keep&&p.id===keep));
+const placeLogo=(p,cls)=>p&&p.logo?`<img class="${cls||"plimg"}" src="${p.logo}" alt="" loading="lazy" decoding="async">`:"";
 const PLACE_KINDS={climbgym:["Climbing gym","🧗"],mountain:["Mountain","⛰️"],gym:["Gym","🏋️"],crag:["Crag or boulders","🪨"],track:["Track","🏟️"],park:["Park","🌳"],trail:["Trail","🥾"],road:["Road route","🛣️"],pool:["Pool","🏊"],court:["Court","🏓"],home:["Home","🏠"],other:["Other","📍"]};
 const places=()=>settings.places||[];
 const placeById=id=>id?places().find(p=>p.id===id):null;
@@ -1288,7 +1296,7 @@ const sysKey=s=>boardOf(s)?"board:"+s.board.id+":"+s.board.angle:(s.gs||"v")==="
 function sysName(s){if(boardOf(s))return boardLabel(s);const gs=s.gs||"v";if(gs!=="color")return GSYS[gs];const n=placeName(s);return n&&placeOf(s)&&placeOf(s).circuit?n+" circuit":n?"Color circuit at "+n:"Color circuit";}
 function defaultPlaceFor(type){
   const d=settings.defPlace&&settings.defPlace[type];if(d&&placeById(d))return d;
-  const last=live().filter(s=>s.type===type&&s.placeId&&placeById(s.placeId)).sort(chrono).pop();
+  const last=live().filter(s=>s.type===type&&s.placeId&&placeById(s.placeId)&&placeFits(placeById(s.placeId),type)).sort(chrono).pop();
   return last?last.placeId:"";
 }
 function gradeList(gs,placeId){
@@ -2837,7 +2845,7 @@ function renderLog(){
     if(m!==month){html+=pfPlaced||!pfHTML?`<h2 class="month">${m}</h2>`:`<div class="mrow"><h2 class="month">${m}</h2>${pfHTML}</div>`;pfPlaced=true;month=m;}
     const rt=s.track&&s.track.length>1;
     html+=`<button class="card feed" style="--c:${col(s.type)}" data-open="${s.id}">
-      <div class="fh"><i class="tico">${icon(s.type)}</i><div class="fm"><b>${esc(titleOf(s))}</b><span>${fmtDate(s.date,{weekday:"short",month:"short",day:"numeric"})}${s.time?" · "+fmtTime(s.time):""}${placeName(s)?" · "+esc(placeName(s)):""}</span></div></div>
+      <div class="fh"><i class="tico${placeOf(s)&&placeOf(s).logo?" haslogo":""}">${placeLogo(placeOf(s))||icon(s.type)}</i><div class="fm"><b>${esc(titleOf(s))}</b><span>${fmtDate(s.date,{weekday:"short",month:"short",day:"numeric"})}${s.time?" · "+fmtTime(s.time):""}${placeName(s)?" · "+esc(placeName(s)):""}</span></div></div>
       <div class="nums">${cardNums(s).slice(0,3).map(([l,v])=>`<div class="n"><span>${l}</span><b>${esc(v)}</b></div>`).join("")}</div>
       ${rt?`<div class="fmap">${routeSVG(s.track,{w:600,h:220,pad:26,sw:5})}</div>`:""}
       ${medalSummary(c.by[s.id])}</button>`;
@@ -4171,7 +4179,7 @@ function openForm(existing,preset){
       :`<div class="gpx"><button class="btn primary" id="importgpx">Import GPX</button><p>Adds your route, elevation, and best efforts automatically. TCX files work too.</p></div>`;
     }
     body+=`<label>Type</label><div class="typepick">${Object.entries(TYPES).map(([k,t])=>`<button style="--c:${col(k)}" data-type="${k}" aria-pressed="${d.type===k}">${t}</button>`).join("")}</div>
-    <label for="f-place">Place</label><select id="f-place"><option value="">No place</option>${places().map(p=>`<option value="${p.id}"${d.placeId===p.id?" selected":""}>${esc(p.name)}</option>`).join("")}<option value="__new"${addingPlace?" selected":""}>+ Add a new place</option></select>
+    <label for="f-place">Place</label><select id="f-place"><option value="">No place</option>${placesFor(d.type,d.placeId).map(p=>`<option value="${p.id}"${d.placeId===p.id?" selected":""}>${esc(p.name)}</option>`).join("")}<option value="__new"${addingPlace?" selected":""}>+ Add a new place</option></select>
     ${addingPlace?`<div class="newplace"><input id="np-name" type="text" maxlength="40" placeholder="Place name, e.g. Boulder Hub Makati"><select id="np-kind" style="margin-top:8px">${Object.entries(PLACE_KINDS).map(([k,[n]])=>`<option value="${k}"${k===(d.type==="climb"?"climbgym":d.type==="lift"?"gym":d.type==="run"?"park":d.type==="ride"?"road":"other")?" selected":""}>${n}</option>`).join("")}</select><div class="row" style="margin-top:8px"><button class="btn" id="np-cancel">Cancel</button><button class="btn primary" id="np-save">Add place</button></div>${d.type==="climb"?`<p class="hint">You can give this gym its own color circuit from the Places tab.</p>`:""}</div>`
     :d.placeId?`<div class="tchips" style="margin-top:8px;--c:#F5F5F7;--ct:#000"><button class="tchip" id="f-defplace" aria-pressed="${makeDefault}">Default for future ${TYPES[d.type].toLowerCase()} sessions</button></div>`:""}`;
     const sinceMin=(()=>{if(existing||!d.time||d.date!==keyOf(new Date()))return 0;const [hh,mm]=d.time.split(":").map(Number),st=new Date();st.setHours(hh,mm,0,0);const mn=Math.round((Date.now()-st)/60000);return mn>=5&&mn<=720?mn:0;})();
@@ -4344,7 +4352,7 @@ function openForm(existing,preset){
       const e=fl?{floors:fl}:stairEstimate({steps:g("f-steps"),sdist:sd?fromDispDist(sd):null,lvl:g("f-lvl"),dur});
       $("stest").textContent=e.floors?`${fl?"":"≈ "}${Math.round(e.floors)} floors, about ${fmtElev(e.floors*STAIR_FLOOR_M)} climbed${e.from?`, estimated from ${e.from}`:""}${g("f-lvl")?`. Level ${g("f-lvl")} is about ${stairSpm(g("f-lvl"))} steps a minute.`:"."}`:"";};
       ["f-sd","f-fl","f-lvl","f-steps","f-h","f-m","f-s"].forEach(id=>{if($(id))$(id).addEventListener("input",upd);});upd();}
-    $("sheet").querySelectorAll("[data-type]").forEach(b=>b.onclick=()=>{read();d.type=b.dataset.type;if(!placeTouched){d.placeId=defaultPlaceFor(d.type);}if(!gearTouched)d.gearId=defaultGearFor(d.type);if(d.type==="lift"&&!d.ex.length)d.ex=[{name:"",sets:null,reps:null,w:null}];if(d.type==="climb"&&!d.probs.length)d.probs=[newProb()];draw();});
+    $("sheet").querySelectorAll("[data-type]").forEach(b=>b.onclick=()=>{read();d.type=b.dataset.type;if(!placeTouched){d.placeId=defaultPlaceFor(d.type);}else if(d.placeId&&!placeFits(placeById(d.placeId),d.type)){d.placeId=defaultPlaceFor(d.type);}if(!gearTouched)d.gearId=defaultGearFor(d.type);if(d.type==="lift"&&!d.ex.length)d.ex=[{name:"",sets:null,reps:null,w:null}];if(d.type==="climb"&&!d.probs.length)d.probs=[newProb()];draw();});
     if($("f-now"))$("f-now").onclick=e=>{read();d.dur=(+e.currentTarget.dataset.min||0)*60;draw();};
     ["f-h","f-m","f-s","f-dist"].forEach(id=>{const el=$(id);if(el)el.oninput=updPace;});updPace();
     const rpeUpd=()=>{const r=+$("f-rpe").value;$("rpev").textContent=r?r+"/10":"—";$("rpew").textContent=r?RPE_WORDS[r]:"Slide to rate your effort";};
@@ -5711,7 +5719,7 @@ function renderPlaces(){
   const withStats=ps.map(p=>{const ss=placeSessions(p);return {p,ss,last:ss[0]};}).sort((a,b)=>(b.last?b.last.date:"").localeCompare(a.last?a.last.date:""));
   for(const {p,ss,last} of withStats){
     const k=PLACE_KINDS[p.kind]||PLACE_KINDS.other;
-    html+=`<button class="plc" data-place="${p.id}"><div class="pic">${k[1]}</div><div style="min-width:0"><b>${esc(p.name)}</b><span>${k[0]}${p.terrain&&TERRAIN[p.terrain]?", "+TERRAIN[p.terrain][0].toLowerCase():""}${last?`, last visit ${fmtDate(last.date,{month:"short",day:"numeric"})}`:""}</span>
+    html+=`<button class="plc" data-place="${p.id}"><div class="pic${p.logo?" haslogo":""}">${placeLogo(p)||k[1]}</div><div style="min-width:0"><b>${esc(p.name)}</b><span>${k[0]}${p.terrain&&TERRAIN[p.terrain]?", "+TERRAIN[p.terrain][0].toLowerCase():""}${last?`, last visit ${fmtDate(last.date,{month:"short",day:"numeric"})}`:""}</span>
       ${p.circuit&&p.circuit.length?`<div class="cdots">${p.circuit.map(c=>gm(c.name,c.color,"gm-xs")).join("")}</div>`:""}</div>
       ${ss.length?`<div class="cn">${ss.length}<small>${ss.length===1?"visit":"visits"}</small></div>`:`<div class="cn none"><small>Not yet</small></div>`}</button>`;
   }
@@ -5753,6 +5761,16 @@ function openPlace(p){
   $("sheet").querySelectorAll("[data-o]").forEach(b=>b.onclick=()=>openDetail(sessions[b.dataset.o]));
   $("pclose").onclick=closeSheet;$("pedit").onclick=()=>openPlaceEditor(p,()=>openPlace(placeById(p.id)));
 }
+async function logoFromFile(f){
+  const url=URL.createObjectURL(f);
+  try{
+    const img=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=url;});
+    const M=160,sc=Math.min(1,M/Math.max(img.naturalWidth,img.naturalHeight)),w=Math.max(1,Math.round(img.naturalWidth*sc)),h=Math.max(1,Math.round(img.naturalHeight*sc));
+    const c=document.createElement("canvas");c.width=w;c.height=h;const x=c.getContext("2d");x.imageSmoothingQuality="high";x.drawImage(img,0,0,w,h);
+    let out=c.toDataURL("image/webp",.9);if(!out.startsWith("data:image/webp"))out=c.toDataURL("image/png");
+    return out;
+  }finally{URL.revokeObjectURL(url);}
+}
 function openPlaceEditor(p,after){
   const isNew=!p;
   const d=p?JSON.parse(JSON.stringify(p)):{id:uid(),name:"",kind:"climbgym",circuit:null};
@@ -5762,12 +5780,13 @@ function openPlaceEditor(p,after){
   const draw=()=>{
     openSheet(`<h3>${isNew?"Add place":"Edit place"}</h3><p class="sub">Gyms, crags, parks, tracks, or routes you train at.</p>
       <label for="pl-name">Name</label><input id="pl-name" type="text" maxlength="40" value="${esc(d.name)}" placeholder="e.g. Boulder Hub Makati">
+      <label>Logo</label><div class="plogo"><div class="pic${d.logo?" haslogo":""}">${placeLogo(d)||(PLACE_KINDS[d.kind]||PLACE_KINDS.other)[1]}</div><button class="btn" id="pl-logo">${d.logo?"Change logo":"Add logo"}</button>${d.logo?`<button class="btn" id="pl-nologo">Remove</button>`:""}<input type="file" id="pl-logof" accept="image/*" hidden></div>
       <label for="pl-kind">Kind of place</label><select id="pl-kind">${Object.entries(PLACE_KINDS).map(([k,[n,i]])=>`<option value="${k}"${d.kind===k?" selected":""}>${i} ${n}</option>`).join("")}</select>
       ${CLIMB_KINDS.includes(d.kind)||circ?`<label>Color circuit</label>
       ${circ?`<div id="pcirc">${cHTML()}</div><button class="addex" id="pl-addc">+ Add color</button><p class="hint">Easiest first. Tap a swatch to change its color. Grades already logged here keep the colors they were saved with.</p><button class="link" id="pl-nocirc">Use my default circuit instead</button>`
         :`<p class="hint" style="margin-top:0">This place uses your default circuit from Settings.</p><button class="addex" id="pl-circ">Give this place its own circuit</button>`}`:""}
       ${["climbgym","gym","pool","court"].includes(d.kind)?"":`<label>Terrain</label><div class="seg seg-wrap" id="pl-ter">${Object.entries(TERRAIN).map(([k,[n]])=>`<button data-v="${k}" aria-pressed="${(d.terrain||"")===k}">${n}</button>`).join("")}</div><p class="hint">${d.terrain?esc(TERRAIN[d.terrain][1])+". ":""}Runs planned here adjust their targets to the grade.</p>`}
-      <label>Default place for</label><div class="tchips" id="pl-defs" style="--c:#F5F5F7;--ct:#000">${Object.entries(TYPES).map(([t,n])=>`<button class="tchip" data-t="${t}" aria-pressed="${defs[t]===d.id}">${n}</button>`).join("")}</div>
+      <label>Default place for</label><div class="tchips" id="pl-defs" style="--c:#F5F5F7;--ct:#000">${Object.entries(TYPES).filter(([t])=>placeFits(d,t)||defs[t]===d.id).map(([t,n])=>`<button class="tchip" data-t="${t}" aria-pressed="${defs[t]===d.id}">${n}</button>`).join("")}</div>
       <p class="hint">New workouts of these types start with this place selected. Otherwise it remembers the last place you used.</p>
       <div class="err" id="pl-err"></div>
       <div class="row"><button class="btn" id="pl-cancel">Cancel</button><button class="btn primary" id="pl-save">${isNew?"Add place":"Save changes"}</button></div>
@@ -5779,6 +5798,10 @@ function openPlaceEditor(p,after){
   const wire=()=>{
     document.querySelectorAll("#pl-defs [data-t]").forEach(b=>{b.setAttribute("aria-pressed",dsel.has(b.dataset.t));b.onclick=()=>{const t=b.dataset.t;if(dsel.has(t))dsel.delete(t);else dsel.add(t);b.setAttribute("aria-pressed",dsel.has(t));};});
     $("pl-kind").onchange=()=>{readAll();draw();};
+    $("pl-logo").onclick=()=>$("pl-logof").click();
+    if($("pl-nologo"))$("pl-nologo").onclick=()=>{readAll();delete d.logo;draw();};
+    $("pl-logof").onchange=async e=>{const f=e.target.files&&e.target.files[0];if(!f)return;readAll();
+      try{d.logo=await logoFromFile(f);haptic("light");}catch(err){toast("Couldn't read that image");}draw();};
     document.querySelectorAll("#pl-ter button").forEach(b=>b.onclick=()=>{document.querySelectorAll("#pl-ter button").forEach(z=>z.setAttribute("aria-pressed",z===b));readAll();haptic("light");const t=$("sheet").scrollTop;draw();$("sheet").scrollTop=t;});
     if($("pl-circ"))$("pl-circ").onclick=()=>{readAll();circ=JSON.parse(JSON.stringify(circuitFor(null)));draw();};
     if($("pl-nocirc"))$("pl-nocirc").onclick=()=>{readAll();circ=null;draw();};
@@ -7975,7 +7998,7 @@ function openProject(p){
   $("pj-del").onclick=()=>{const b=$("pj-del");if(!b.dataset.armed){b.dataset.armed="1";b.textContent="Tap to confirm";return;}settings.projects=projects().filter(x=>x.id!==p.id);settings.updatedAt=Date.now();invalidate();saveLocal();pushSettings();render();closeSheet();toast("Project deleted");};
 }
 function openProjectEditor(){
-  const cg=places();const d={name:"",placeId:defaultPlaceFor("climb"),gs:"v",g:4,notes:""};
+  const cg=placesFor("climb");const d={name:"",placeId:defaultPlaceFor("climb"),gs:"v",g:4,notes:""};
   const draw=()=>{
     const L=gradeList(d.gs,d.placeId);if(d.g>=L.length)d.g=L.length-1;
     openSheet(`<h3>New project</h3><p class="sub">A problem you're working on across sessions.</p>
@@ -8046,11 +8069,11 @@ function openWizard(mode){
         const d=st.d[k]||(st.d[k]=mk(k)),K=LT_KINDS[k];
         h+=`<div class="ins" style="background:var(--bg)"><h3 style="font-size:1.25rem">${K.icon} ${K.name}</h3>`;
         if(k==="race")h+=`<label>Distance</label><div class="seg" data-f="${k}:dist">${Object.entries(RACE_D).map(([v,[n]])=>`<button data-v="${v}" aria-pressed="${d.dist===v}">${n}</button>`).join("")}</div><label>Target time (optional)</label><input data-i="${k}:time" type="text" inputmode="numeric" placeholder="e.g. 25:00 or 1:55:00" value="${esc(d.time)}">${(()=>{const pt=predictTime(RACE_D[d.dist][1]);return pt?`<p class="hint">Based on your recent runs, you could do about ${fmtClock(pt)} today.</p>`:"";})()}`;
-        if(k==="grade"){const L=gradeList(d.gs,d.placeId);h+=`<label>Grade system</label><div class="seg" data-f="${k}:gs">${Object.entries(GSYS).map(([v,n])=>`<button data-v="${v}" aria-pressed="${d.gs===v}">${n}</button>`).join("")}</div>${d.gs==="color"?`<label>Gym</label><select data-i="${k}:placeId"><option value="">Default circuit</option>${places().map(p=>`<option value="${p.id}"${d.placeId===p.id?" selected":""}>${esc(p.name)}</option>`).join("")}</select>`:""}<label>Target grade</label><div class="gchips">${L.map((g,i)=>g.color?`<button class="cdot" style="background:${g.color}" data-gg="${k}:${i}" aria-pressed="${d.g===i}" aria-label="${esc(g.label)}"></button>`:`<button class="gchip" data-gg="${k}:${i}" aria-pressed="${d.g===i}">${esc(g.label)}</button>`).join("")}</div>${hardestIn(d.gs,d.placeId)>=0?`<p class="hint">Your hardest send so far: ${esc(L[hardestIn(d.gs,d.placeId)].label)}.</p>`:""}`;}
+        if(k==="grade"){const L=gradeList(d.gs,d.placeId);h+=`<label>Grade system</label><div class="seg" data-f="${k}:gs">${Object.entries(GSYS).map(([v,n])=>`<button data-v="${v}" aria-pressed="${d.gs===v}">${n}</button>`).join("")}</div>${d.gs==="color"?`<label>Gym</label><select data-i="${k}:placeId"><option value="">Default circuit</option>${places().filter(p=>CLIMB_KINDS.includes(p.kind)||p.circuit||p.id===d.placeId).map(p=>`<option value="${p.id}"${d.placeId===p.id?" selected":""}>${esc(p.name)}</option>`).join("")}</select>`:""}<label>Target grade</label><div class="gchips">${L.map((g,i)=>g.color?`<button class="cdot" style="background:${g.color}" data-gg="${k}:${i}" aria-pressed="${d.g===i}" aria-label="${esc(g.label)}"></button>`:`<button class="gchip" data-gg="${k}:${i}" aria-pressed="${d.g===i}">${esc(g.label)}</button>`).join("")}</div>${hardestIn(d.gs,d.placeId)>=0?`<p class="hint">Your hardest send so far: ${esc(L[hardestIn(d.gs,d.placeId)].label)}.</p>`:""}`;}
         if(k==="lift"){const cur=bestE1rm(d.ex);h+=`<label>Exercise</label><input data-i="${k}:ex" type="text" list="exlist-dl" value="${esc(d.ex)}"><datalist id="exlist-dl">${["Bench press","Barbell back squat","Deadlift","Overhead press","Weighted pull-up","Hip thrust"].map(x=>`<option value="${x}">`).join("")}</datalist><label>Target 1-rep max (${wU()})</label><input data-i="${k}:target" type="number" inputmode="decimal" value="${d.target!==""?round(toDispWt(d.target),1):""}" placeholder="${cur?round(toDispWt(cur*1.1),0):""}">${cur?`<p class="hint">Your current estimated 1RM: ${fmtWt(cur)}.</p>`:""}`;}
         if(k==="ftp")h+=`<label>Target FTP (watts)</label><input data-i="${k}:target" type="number" inputmode="numeric" value="${d.target}">${currentFTP()?`<p class="hint">Current: ${currentFTP()} W${bio().weight?`, ${(currentFTP()/bio().weight).toFixed(2)} W/kg`:""}.</p>`:`<p class="hint">Add your FTP in Settings or log a ride with 20-minute power so progress can be tracked.</p>`}`;
         if(k==="ride")h+=`<label>Distance (${dU()})</label><input data-i="${k}:target" type="number" inputmode="decimal" value="${d.target!==""?round(toDispDist(d.target),0):""}">`;
-        if(k==="summit")h+=`<label>Mountain</label><input data-i="${k}:name" type="text" placeholder="e.g. Mt. Pulag" value="${esc(d.name)}"><label>Linked place (optional)</label><select data-i="${k}:placeId"><option value="">None</option>${places().map(p=>`<option value="${p.id}"${d.placeId===p.id?" selected":""}>${esc(p.name)}</option>`).join("")}</select><label>Summit elevation (${elevU()}, optional)</label><input data-i="${k}:elev" type="number" inputmode="numeric" value="${d.elev!==""?Math.round(toDispElev(d.elev)):""}">`;
+        if(k==="summit")h+=`<label>Mountain</label><input data-i="${k}:name" type="text" placeholder="e.g. Mt. Pulag" value="${esc(d.name)}"><label>Linked place (optional)</label><select data-i="${k}:placeId"><option value="">None</option>${places().filter(p=>["mountain","trail","other"].includes(p.kind)||p.id===d.placeId).map(p=>`<option value="${p.id}"${d.placeId===p.id?" selected":""}>${esc(p.name)}</option>`).join("")}</select><label>Summit elevation (${elevU()}, optional)</label><input data-i="${k}:elev" type="number" inputmode="numeric" value="${d.elev!==""?Math.round(toDispElev(d.elev)):""}">`;
         if(k==="weight"){const w=weights();const cur=w.length?w[w.length-1].kg:bio().weight;h+=`<label>Target weight (${wU()})</label><input data-i="${k}:target" type="number" inputmode="decimal" value="${d.target!==""?round(toDispWt(d.target),1):""}">${cur?`<p class="hint">Currently ${fmtWt(cur)}. A safe pace is about 0.5% of body weight per week.</p>`:`<p class="hint">Log your weight in Coach, Stats so progress can be tracked.</p>`}`;}
         if(k==="habit")h+=`<label>Workouts per week</label><div class="seg" data-f="${k}:per">${[2,3,4,5,6].map(v=>`<button data-v="${v}" aria-pressed="${d.per==v}">${v}</button>`).join("")}</div><label>For how many weeks in a row</label><div class="seg" data-f="${k}:weeks">${[4,8,12,26].map(v=>`<button data-v="${v}" aria-pressed="${d.weeks==v}">${v}</button>`).join("")}</div>`;
         if(k==="vo2")h+=`<label>Target VO2max</label><input data-i="${k}:target" type="number" inputmode="numeric" value="${d.target}">`;
@@ -9849,7 +9872,7 @@ function openTargetBuilder(pre){
     if(d.type==="lift")h+=`<label>Exercise</label><input data-ti="ex" type="text" list="tg-ex" value="${esc(d.ex)}" placeholder="e.g. Bench press"><datalist id="tg-ex">${exNames.map(n=>`<option value="${esc(n)}">`).join("")}</datalist>
       <div class="grid2" style="margin-top:14px"><div><label>Weight (${wU()})</label><input data-ti="w" type="number" inputmode="decimal" step="any" value="${esc(d.w)}"></div><div><label>Reps</label><input data-ti="reps" type="number" inputmode="numeric" min="1" value="${esc(d.reps)}"></div></div>`;
     if(d.type==="climb"){const L=gradeList(d.gs,d.placeId);if(d.g>=L.length)d.g=L.length-1;
-      h+=`<label>Grade system</label>${seg("gs",Object.entries(GSYS))}${d.gs==="color"?`<label>Gym</label><select data-ts="placeId"><option value="">Default circuit</option>${places().map(p=>`<option value="${p.id}"${d.placeId===p.id?" selected":""}>${esc(p.name)}</option>`).join("")}</select>`:""}
+      h+=`<label>Grade system</label>${seg("gs",Object.entries(GSYS))}${d.gs==="color"?`<label>Gym</label><select data-ts="placeId"><option value="">Default circuit</option>${places().filter(p=>CLIMB_KINDS.includes(p.kind)||p.circuit||p.id===d.placeId).map(p=>`<option value="${p.id}"${d.placeId===p.id?" selected":""}>${esc(p.name)}</option>`).join("")}</select>`:""}
         <label>Grade to send</label><div class="gchips">${L.map((g,i)=>g.color?`<button class="cdot gmk" data-tg="${i}" aria-pressed="${d.g===i}" aria-label="${esc(g.label)}" title="${esc(g.label)}">${gm(g.label,g.color)}</button>`:`<button class="gchip" data-tg="${i}" aria-pressed="${d.g===i}">${esc(g.label)}</button>`).join("")}</div>`;}
     if(d.type==="hang")h+=`<label>Grip</label><select data-ts="grip">${GRIPS.map(g=>`<option${d.grip===g?" selected":""}>${g}</option>`).join("")}</select>
       <div class="grid3" style="margin-top:14px"><div><label>Edge (mm)</label><input data-ti="edge" type="number" inputmode="numeric" value="${esc(d.edge)}"></div><div><label>Added (${wU()})</label><input data-ti="add" type="number" inputmode="decimal" step="any" value="${esc(d.add)}"></div><div><label>Seconds</label><input data-ti="hang" type="number" inputmode="numeric" value="${esc(d.hang)}"></div></div>`;
