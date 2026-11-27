@@ -1958,7 +1958,7 @@ function compute(){
   const ALLT={types:new Set(list.map(x=>x.type))};
   const weekLists={},projDone=new Set(),G=goals(),chCache=new Map(),perLists={},FROZEN=new Set(settings.freezes||[]);
   ctx.chalDone=0;ctx.perfWeeks=0;ctx.perfMonths=0;ctx.monthBadges=[];ctx.perfWeekStreak=0;ctx.perfWeekBest=0;ctx.weekMin={};ctx.monthMin={};ctx.dayStreak=0;ctx.dayStreakBest=0;ctx.lastDay=null;ctx.perfWeekSet={};
-  let xp=0;
+  let xp=0;const liftBest=new Map();
   for(const s of list){
     const r={xp:0,parts:[],medals:[],ymedals:[],acc:[],goals:[],projects:[],chal:[],perfect:[],targets:[]};
     const add=(n,label)=>{n=Math.round(n);if(n>0){r.xp+=n;r.parts.push([label,n]);}};
@@ -1966,13 +1966,21 @@ function compute(){
     // effort is the base for every sport: minutes × effort rating (1–10), the way coaches compare training load across sports.
     // Without a rating, a typical effort for the sport stands in. Performance bonuses below sit on top, kept smaller than the base.
     if(s.dur){const RD={run:6,walk:3,hike:5,ride:5,lift:6,climb:6,hang:7,pickle:5,stair:7,other:4},e=s.rpe||RD[s.type]||5,m=Math.min(s.dur/60,240);
-      add(m*e*.28,s.rpe?`Effort, ${Math.round(m)} min at ${s.rpe}/10`:`Time, ${Math.round(m)} min`);}
+      add(m*e*(s.type==="lift"?.21:.28),s.rpe?`Effort, ${Math.round(m)} min at ${s.rpe}/10`:`Time, ${Math.round(m)} min`);}
     if(s.type!=="lift"&&s.type!=="climb"&&s.dist)add(s.dist*({run:4,walk:2,hike:3,ride:1,other:1.5}[s.type]||1.5),"Distance");
     // speed pays: every km run faster than 7:30 /km earns more, and quick runs of 3 km or more get a tier bonus
     if(s.type==="run"&&s.dist>=1&&s.dur){const pace=s.dur/60/s.dist;if(pace>2.5&&pace<7.5){add(s.dist*(7.5-pace)*5,`Pace, ${fmtPace(pace*60)}`);
       const tier=[[3.5,90,"Sub-3:30"],[4,60,"Sub-4:00"],[4.5,40,"Sub-4:30"],[5,25,"Sub-5:00"],[6,10,"Sub-6:00"]].find(t=>pace<t[0]);if(tier&&s.dist>=3)add(tier[1],`${tier[2]} run`);}}
     if(s.type==="ride"&&s.dist>=5&&s.dur){const sp=s.dist/(s.dur/3600);if(sp>18&&sp<60)add(s.dist*(sp-18)*.15,`Speed, ${sp.toFixed(1)} km/h`);}
-    if(s.type==="lift"){const v=volume(s);if(v)add(Math.min(v/250,100),"Volume");}
+    // lifting: the weight you moved counts as much as the time, and heavy sets (85%+ of your best for that lift so far) earn extra,
+    // so a short heavy session isn't beaten by a long easy one or by lots of light reps
+    if(s.type==="lift"){const v=volume(s);if(v)add(Math.min(v/120,150),`Volume, ${fmtVol(v)}`);
+      let heavy=0;const top={};
+      for(const e of s.ex||[]){if(isHoldEx(e)||!e.sets||!e.reps)continue;const k=(e.name||"").trim().toLowerCase();for(let i=0;i<e.sets;i++){const w=setW(e,i);const r=e1rm({w,reps:e.reps,name:e.name});if(r&&r>(top[k]||0))top[k]=r;}}
+      for(const e of s.ex||[]){if(isHoldEx(e)||!e.sets||!e.reps)continue;const k=(e.name||"").trim().toLowerCase(),ref=liftBest.get(k)||0;if(!ref||e.reps>6)continue; // strength sets only: 6 reps or fewer, against your best before today
+        for(let i=0;i<e.sets;i++){const r=e1rm({w:setW(e,i),reps:e.reps,name:e.name});if(r&&r>=ref*.85)heavy++;}}
+      for(const k in top)if(top[k]>(liftBest.get(k)||0))liftBest.set(k,top[k]);
+      if(heavy)add(Math.min(heavy*4,40),`Heavy sets, ${heavy}`);}
     if(s.type!=="lift"&&s.type!=="climb"&&s.elev)add(s.elev/10,"Elevation");
     if(s.type==="hike"&&s.summit)add(25,"Summit");
     if(s.type==="hang")add(hangTime(s)/10,"Hang time");
