@@ -1233,10 +1233,10 @@ const liveSegs=()=>Object.values(segments).filter(g=>!g.deleted);
 /* moves logged as seconds held, not reps: they count as time, never as volume */
 function isHoldEx(e){return !!e&&(e.hold===true||(e.hold!==false&&/plank|\bholds?\b|wall sit|dead hang|towel hang|l-sit|hollow|isometric|lock-?off|front lever|rice bucket|farmer/i.test(e.name||"")));}
 /* two-dumbbell moves: weight is logged per dumbbell, volume counts both */
-const DB_SINGLE=/one[- ]?arm|single[- ]arm|single[- ]leg|goblet|pullover|concentration|side bend|suitcase|renegade|kettlebell/i;
+const DB_SINGLE=/one[- ]?arm|single[- ]arm|single[- ]leg|goblet|pullover|concentration|side bend|suitcase|kettlebell|woodchop|dumbbell snatch|dumbbell sumo squat|dumbbell hip thrust|dumbbell glute bridge|weighted (plank|dead bug)|cossack/i;
 function isPairDB(e){if(!e||e.pair===false)return false;if(e.pair===true)return true;const x=exByName(e.name);if(DB_SINGLE.test(e.name||""))return false;return x?x.eq==="db":/dumbbell|\bdb\b/i.test(e.name||"");}
 /* one side at a time: sets are logged per arm or leg, so volume (and the hold timer) count both sides */
-const UNI_RE=/one[- ]?(arm|leg|hand)|single[- ]?(arm|leg|hand)|unilateral|bulgarian|split squat|pistol|step[- ]?ups?\b|lunges?\b|concentration|side plank|offset|archer|cossack|copenhagen|cable kickback|\b(each|per) (arm|leg|side)\b/i;
+const UNI_RE=/one[- ]?(arm|leg|hand)|single[- ]?(arm|leg|hand)|unilateral|bulgarian|split squat|pistol|step[- ]?ups?\b|lunges?\b|concentration|side plank|offset|archer|cossack|copenhagen|cable kickback|staggered[- ]stance|dumbbell snatch|suitcase|\b(each|per) (arm|leg|side)\b/i;
 function isUni(e){if(!e)return false;if(e.uni!=null)return !!e.uni;return UNI_RE.test(e.name||"");}
 const sidesOf=e=>isUni(e)?2:1;
 function canPairDB(e){const x=e&&exByName(e.name);return !!e&&(e.pair!=null||(x?x.eq==="db":/dumbbell|\bdb\b/i.test(e.name||"")));}
@@ -8245,15 +8245,15 @@ function goalBars(g,pr){
 
 /* ================= workout planner ================= */
 const LIB={
-  Chest:{gym:["Barbell bench press","Incline dumbbell press","Machine chest press","Cable fly"],db:["Dumbbell bench press","Incline dumbbell press","Dumbbell fly"],bw:["Push-ups","Decline push-ups","Wide push-ups"]},
-  Back:{gym:["Barbell row","Lat pulldown","Seated cable row","Pull-ups"],db:["One-arm dumbbell row","Chest-supported dumbbell row","Dumbbell pullover"],bw:["Pull-ups","Inverted rows","Superman holds"]},
-  Shoulders:{gym:["Overhead press","Lateral raise","Face pull","Rear delt fly"],db:["Seated dumbbell press","Lateral raise","Rear delt fly"],bw:["Pike push-ups","Y-T-W raises","Wall slides"]},
-  Legs:{gym:["Barbell back squat","Leg press","Walking lunges","Leg curl"],db:["Goblet squat","Bulgarian split squat","Dumbbell step-ups"],bw:["Bodyweight squats","Bulgarian split squats","Wall sit"]},
-  Glutes:{gym:["Romanian deadlift","Hip thrust","Deadlift"],db:["Dumbbell Romanian deadlift","Single-leg hip thrust","Dumbbell sumo squat"],bw:["Glute bridges","Single-leg Romanian deadlift","Frog pumps"]},
-  Biceps:{gym:["Barbell curl","Cable curl"],db:["Dumbbell curl","Hammer curl"],bw:["Chin-ups","Towel curls"]},
-  Triceps:{gym:["Triceps pushdown","Close-grip bench press"],db:["Overhead dumbbell extension","Dumbbell kickbacks"],bw:["Bench dips","Diamond push-ups"]},
-  Core:{gym:["Hanging leg raise","Cable crunch","Pallof press"],db:["Weighted plank","Dumbbell side bend","Russian twist"],bw:["Plank","Dead bug","Hollow hold"]},
-  Calves:{gym:["Standing calf raise","Seated calf raise"],db:["Dumbbell calf raise"],bw:["Single-leg calf raise"]},
+  Chest:{gym:["Barbell bench press","Incline dumbbell press","Machine chest press","Cable fly"],db:["Dumbbell bench press","Incline dumbbell press","Dumbbell squeeze press","Dumbbell fly","Dumbbell floor press"],bw:["Push-ups","Decline push-ups","Wide push-ups"]},
+  Back:{gym:["Barbell row","Lat pulldown","Seated cable row","Pull-ups"],db:["One-arm dumbbell row","Chest-supported dumbbell row","Dumbbell bent-over row","Dumbbell pullover","Renegade row"],bw:["Pull-ups","Inverted rows","Superman holds"]},
+  Shoulders:{gym:["Overhead press","Lateral raise","Face pull","Rear delt fly"],db:["Seated dumbbell press","Lateral raise","Rear delt fly","Arnold press","Dumbbell Y-raise"],bw:["Pike push-ups","Y-T-W raises","Wall slides"]},
+  Legs:{gym:["Barbell back squat","Leg press","Walking lunges","Leg curl"],db:["Goblet squat","Bulgarian split squat","Dumbbell front squat","Dumbbell step-ups","Dumbbell lateral lunge"],bw:["Bodyweight squats","Bulgarian split squats","Wall sit"]},
+  Glutes:{gym:["Romanian deadlift","Hip thrust","Deadlift"],db:["Dumbbell Romanian deadlift","Dumbbell hip thrust","Single-leg hip thrust","Dumbbell sumo squat","Staggered-stance dumbbell RDL"],bw:["Glute bridges","Single-leg Romanian deadlift","Frog pumps"]},
+  Biceps:{gym:["Barbell curl","Cable curl"],db:["Dumbbell curl","Hammer curl","Incline dumbbell curl","Zottman curl"],bw:["Chin-ups","Towel curls"]},
+  Triceps:{gym:["Triceps pushdown","Close-grip bench press"],db:["Overhead dumbbell extension","Dumbbell skull crusher","Tate press","Close-grip dumbbell press"],bw:["Bench dips","Diamond push-ups"]},
+  Core:{gym:["Hanging leg raise","Cable crunch","Pallof press"],db:["Weighted plank","Dumbbell woodchop","Dumbbell side bend","Russian twist","Suitcase carry"],bw:["Plank","Dead bug","Hollow hold"]},
+  Calves:{gym:["Standing calf raise","Seated calf raise"],db:["Dumbbell calf raise","Single-leg dumbbell calf raise"],bw:["Single-leg calf raise"]},
   Forearms:{gym:["Reverse wrist curl","Plate pinch hold","Wrist curl","Wrist roller","Reverse barbell curl"],db:["Dumbbell reverse wrist curl","Dumbbell wrist curl","Pronation and supination","Farmer's carry"],bw:["Dead hang","Finger extensor band","Towel hang","Rice bucket"]}
 };
 /* climbing day: pull strength, core tension, antagonist push, shoulder health, forearm balance */
@@ -8266,7 +8266,7 @@ const CLIMB_LIB={
 };
 /* moves done for time, not reps: [seconds, cue] */
 const HOLD_SECS=[[/dead hang|towel hang/i,20,"Hang on open hands with shoulders engaged."],[/lock-off/i,10,"Hold at the top, then at 90 degrees, then 120 degrees, each for the time."],[/front lever/i,10,"Tuck tight, push the bar down, keep your hips level with your shoulders."],
-  [/plate pinch|pinch block/i,20,"Squeeze with thumb and fingers, don't let it touch your body."],[/rice bucket/i,60,"Dig, open and close, and twist your hands in the bucket."],[/hollow hold|plank/i,30,"Lower back pressed down the whole time."],[/farmer/i,40,"Walk tall, about 40 seconds per carry."]];
+  [/suitcase carry/i,30,"Walk tall, don't lean toward the weight. 30 seconds per side."],[/plate pinch|pinch block/i,20,"Squeeze with thumb and fingers, don't let it touch your body."],[/rice bucket/i,60,"Dig, open and close, and twist your hands in the bucket."],[/hollow hold|plank/i,30,"Lower back pressed down the whole time."],[/farmer/i,40,"Walk tall, about 40 seconds per carry."]];
 const holdOf=n=>HOLD_SECS.find(([re])=>re.test(n||""));
 const BANNED={Knees:/lunge|split squat|step-up|jump|back squat|wall sit/i,Shoulders:/overhead|pike|dip|wall walk|upright/i,"Lower back":/deadlift|barbell row|good morning|superman|back squat/i,Elbows:/skull|close-grip|dip|diamond/i,Ankles:/lunge|jump|step-up|calf raise/i};
 const SAFE_SWAP={Legs:"Leg press",Glutes:"Glute bridges",Back:"Chest-supported dumbbell row",Shoulders:"Lateral raise",Triceps:"Triceps pushdown",Calves:"Seated calf raise"};
@@ -10120,36 +10120,38 @@ const EXLIB=[
  // name, group, muscles, equipment
  ["Barbell bench press","Chest",["Chest","Triceps","Shoulders"],"bb"],["Incline barbell bench press","Chest",["Chest","Shoulders","Triceps"],"bb"],["Decline bench press","Chest",["Chest","Triceps"],"bb"],
  ["Dumbbell bench press","Chest",["Chest","Triceps","Shoulders"],"db"],["Incline dumbbell press","Chest",["Chest","Shoulders","Triceps"],"db"],["Dumbbell fly","Chest",["Chest"],"db"],
+ ["Incline dumbbell fly","Chest",["Chest","Shoulders"],"db"],["Decline dumbbell press","Chest",["Chest","Triceps"],"db"],["Dumbbell squeeze press","Chest",["Chest","Triceps"],"db"],["Dumbbell floor press","Chest",["Chest","Triceps"],"db"],
  ["Machine chest press","Chest",["Chest","Triceps"],"mc"],["Pec deck","Chest",["Chest"],"mc"],["Cable fly","Chest",["Chest"],"cb"],["Low-to-high cable fly","Chest",["Chest","Shoulders"],"cb"],
  ["Push-ups","Chest",["Chest","Triceps","Shoulders"],"bw"],["Wide push-ups","Chest",["Chest","Shoulders"],"bw"],["Decline push-ups","Chest",["Chest","Shoulders"],"bw"],["Chest dips","Chest",["Chest","Triceps"],"bw"],
  ["Deadlift","Back",["Back","Glutes","Legs"],"bb"],["Barbell row","Back",["Back","Biceps"],"bb"],["Pendlay row","Back",["Back","Biceps"],"bb"],["Rack pull","Back",["Back","Glutes"],"bb"],
- ["T-bar row","Back",["Back","Biceps"],"mc"],["One-arm dumbbell row","Back",["Back","Biceps"],"db"],["Chest-supported dumbbell row","Back",["Back","Biceps"],"db"],
+ ["T-bar row","Back",["Back","Biceps"],"mc"],["One-arm dumbbell row","Back",["Back","Biceps"],"db"],["Chest-supported dumbbell row","Back",["Back","Biceps"],"db"],["Dumbbell bent-over row","Back",["Back","Biceps"],"db"],["Dumbbell pullover","Back",["Back","Chest"],"db"],["Renegade row","Back",["Back","Core","Biceps"],"db"],["Dumbbell deadlift","Back",["Back","Glutes","Legs"],"db"],
  ["Lat pulldown","Back",["Back","Biceps"],"cb"],["Close-grip lat pulldown","Back",["Back","Biceps"],"cb"],["Seated cable row","Back",["Back","Biceps"],"cb"],["Straight-arm pulldown","Back",["Back"],"cb"],["Machine row","Back",["Back","Biceps"],"mc"],
  ["Pull-ups","Back",["Back","Biceps"],"bw"],["Chin-ups","Back",["Back","Biceps"],"bw"],["Weighted pull-ups","Back",["Back","Biceps"],"bw"],["Inverted rows","Back",["Back","Biceps"],"bw"],["Back extension","Back",["Back","Glutes"],"bw"],["Superman hold","Back",["Back"],"bw"],
  ["Overhead press","Shoulders",["Shoulders","Triceps"],"bb"],["Push press","Shoulders",["Shoulders","Triceps","Legs"],"bb"],["Upright row","Shoulders",["Shoulders","Back"],"bb"],
- ["Seated dumbbell press","Shoulders",["Shoulders","Triceps"],"db"],["Arnold press","Shoulders",["Shoulders","Triceps"],"db"],["Lateral raise","Shoulders",["Shoulders"],"db"],["Front raise","Shoulders",["Shoulders"],"db"],["Rear delt fly","Shoulders",["Shoulders","Back"],"db"],["Dumbbell shrugs","Shoulders",["Back"],"db"],
+ ["Seated dumbbell press","Shoulders",["Shoulders","Triceps"],"db"],["Arnold press","Shoulders",["Shoulders","Triceps"],"db"],["Lateral raise","Shoulders",["Shoulders"],"db"],["Front raise","Shoulders",["Shoulders"],"db"],["Rear delt fly","Shoulders",["Shoulders","Back"],"db"],["Dumbbell shrugs","Shoulders",["Back"],"db"],["Standing dumbbell press","Shoulders",["Shoulders","Triceps","Core"],"db"],["Single-arm dumbbell press","Shoulders",["Shoulders","Triceps","Core"],"db"],["Dumbbell Y-raise","Shoulders",["Shoulders","Back"],"db"],["Dumbbell upright row","Shoulders",["Shoulders","Back"],"db"],["Lu raise","Shoulders",["Shoulders"],"db"],
  ["Machine shoulder press","Shoulders",["Shoulders","Triceps"],"mc"],["Reverse pec deck","Shoulders",["Shoulders","Back"],"mc"],["Cable lateral raise","Shoulders",["Shoulders"],"cb"],["Face pull","Shoulders",["Shoulders","Back"],"cb"],
  ["Pike push-ups","Shoulders",["Shoulders","Triceps"],"bw"],["Handstand push-ups","Shoulders",["Shoulders","Triceps"],"bw"],["Y-T-W raises","Shoulders",["Shoulders","Back"],"bw"],
- ["Barbell curl","Biceps",["Biceps"],"bb"],["EZ-bar curl","Biceps",["Biceps"],"bb"],["Dumbbell curl","Biceps",["Biceps"],"db"],["Hammer curl","Biceps",["Biceps"],"db"],["Incline dumbbell curl","Biceps",["Biceps"],"db"],["Concentration curl","Biceps",["Biceps"],"db"],
+ ["Barbell curl","Biceps",["Biceps"],"bb"],["EZ-bar curl","Biceps",["Biceps"],"bb"],["Dumbbell curl","Biceps",["Biceps"],"db"],["Hammer curl","Biceps",["Biceps"],"db"],["Incline dumbbell curl","Biceps",["Biceps"],"db"],["Concentration curl","Biceps",["Biceps"],"db"],["Cross-body hammer curl","Biceps",["Biceps","Forearms"],"db"],["Zottman curl","Biceps",["Biceps","Forearms"],"db"],["Spider curl","Biceps",["Biceps"],"db"],["Dumbbell preacher curl","Biceps",["Biceps"],"db"],
  ["Preacher curl","Biceps",["Biceps"],"mc"],["Cable curl","Biceps",["Biceps"],"cb"],["Towel curls","Biceps",["Biceps"],"bw"],
- ["Close-grip bench press","Triceps",["Triceps","Chest"],"bb"],["Skull crushers","Triceps",["Triceps"],"bb"],["Overhead dumbbell extension","Triceps",["Triceps"],"db"],["Dumbbell kickbacks","Triceps",["Triceps"],"db"],
+ ["Close-grip bench press","Triceps",["Triceps","Chest"],"bb"],["Skull crushers","Triceps",["Triceps"],"bb"],["Overhead dumbbell extension","Triceps",["Triceps"],"db"],["Single-arm overhead extension","Triceps",["Triceps"],"db"],["Dumbbell skull crusher","Triceps",["Triceps"],"db"],["Tate press","Triceps",["Triceps","Chest"],"db"],["Close-grip dumbbell press","Triceps",["Triceps","Chest"],"db"],
  ["Triceps pushdown","Triceps",["Triceps"],"cb"],["Rope pushdown","Triceps",["Triceps"],"cb"],["Cable overhead extension","Triceps",["Triceps"],"cb"],
  ["Triceps dips","Triceps",["Triceps","Chest"],"bw"],["Bench dips","Triceps",["Triceps"],"bw"],["Diamond push-ups","Triceps",["Triceps","Chest"],"bw"],
  ["Barbell back squat","Legs",["Legs","Glutes"],"bb"],["Front squat","Legs",["Legs","Glutes","Core"],"bb"],["Goblet squat","Legs",["Legs","Glutes"],"db"],["Bulgarian split squat","Legs",["Legs","Glutes"],"db"],
- ["Walking lunges","Legs",["Legs","Glutes"],"db"],["Reverse lunges","Legs",["Legs","Glutes"],"db"],["Dumbbell step-ups","Legs",["Legs","Glutes"],"db"],
+ ["Walking lunges","Legs",["Legs","Glutes"],"db"],["Reverse lunges","Legs",["Legs","Glutes"],"db"],["Dumbbell step-ups","Legs",["Legs","Glutes"],"db"],["Dumbbell front squat","Legs",["Legs","Glutes","Core"],"db"],["Heel-elevated goblet squat","Legs",["Legs"],"db"],["Dumbbell split squat","Legs",["Legs","Glutes"],"db"],["Dumbbell lateral lunge","Legs",["Legs","Glutes"],"db"],["Dumbbell Cossack squat","Legs",["Legs","Glutes"],"db"],
  ["Leg press","Legs",["Legs","Glutes"],"mc"],["Hack squat","Legs",["Legs","Glutes"],"mc"],["Leg extension","Legs",["Legs"],"mc"],["Lying leg curl","Legs",["Legs"],"mc"],["Seated leg curl","Legs",["Legs"],"mc"],
  ["Bodyweight squats","Legs",["Legs","Glutes"],"bw"],["Jump squats","Legs",["Legs","Glutes"],"bw"],["Pistol squats","Legs",["Legs","Glutes"],"bw"],["Nordic curls","Legs",["Legs"],"bw"],["Wall sit","Legs",["Legs"],"bw"],["Box jumps","Legs",["Legs","Glutes"],"bw"],
  ["Romanian deadlift","Glutes",["Glutes","Legs","Back"],"bb"],["Hip thrust","Glutes",["Glutes","Legs"],"bb"],["Sumo deadlift","Glutes",["Glutes","Legs","Back"],"bb"],["Good morning","Glutes",["Glutes","Back","Legs"],"bb"],
- ["Dumbbell Romanian deadlift","Glutes",["Glutes","Legs"],"db"],["Single-leg Romanian deadlift","Glutes",["Glutes","Legs"],"db"],["Kettlebell swing","Glutes",["Glutes","Legs","Core"],"kb"],
+ ["Dumbbell Romanian deadlift","Glutes",["Glutes","Legs"],"db"],["Single-leg Romanian deadlift","Glutes",["Glutes","Legs"],"db"],["Dumbbell hip thrust","Glutes",["Glutes","Legs"],"db"],["Single-leg hip thrust","Glutes",["Glutes","Legs"],"db"],["Dumbbell sumo squat","Glutes",["Glutes","Legs"],"db"],["Staggered-stance dumbbell RDL","Glutes",["Glutes","Legs"],"db"],["Dumbbell glute bridge","Glutes",["Glutes"],"db"],["Kettlebell swing","Glutes",["Glutes","Legs","Core"],"kb"],
  ["Cable kickback","Glutes",["Glutes"],"cb"],["Hip abduction machine","Glutes",["Glutes"],"mc"],
  ["Glute bridges","Glutes",["Glutes"],"bw"],["Single-leg glute bridge","Glutes",["Glutes"],"bw"],["Frog pumps","Glutes",["Glutes"],"bw"],
+ ["Dumbbell side bend","Core",["Core"],"db"],["Dumbbell woodchop","Core",["Core","Shoulders"],"db"],["Weighted plank","Core",["Core"],"db"],["Suitcase carry","Core",["Core","Forearms"],"db"],["Weighted dead bug","Core",["Core"],"db"],
  ["Cable crunch","Core",["Core"],"cb"],["Pallof press","Core",["Core"],"cb"],["Hanging leg raise","Core",["Core"],"bw"],["Hanging knee raise","Core",["Core"],"bw"],["Toes-to-bar","Core",["Core","Back"],"bw"],
  ["Ab wheel rollout","Core",["Core"],"bw"],["Plank","Core",["Core"],"bw"],["Side plank","Core",["Core"],"bw"],["Hollow hold","Core",["Core"],"bw"],["Dead bug","Core",["Core"],"bw"],
  ["Crunches","Core",["Core"],"bw"],["Sit-ups","Core",["Core"],"bw"],["Bicycle crunch","Core",["Core"],"bw"],["Russian twist","Core",["Core"],"bw"],["Leg raises","Core",["Core"],"bw"],["V-ups","Core",["Core"],"bw"],
  ["Mountain climbers","Core",["Core","Shoulders"],"bw"],["L-sit","Core",["Core","Triceps"],"bw"],["Dragon flag","Core",["Core"],"bw"],
- ["Standing calf raise","Calves",["Calves"],"mc"],["Seated calf raise","Calves",["Calves"],"mc"],["Dumbbell calf raise","Calves",["Calves"],"db"],["Single-leg calf raise","Calves",["Calves"],"bw"],
+ ["Standing calf raise","Calves",["Calves"],"mc"],["Seated calf raise","Calves",["Calves"],"mc"],["Dumbbell calf raise","Calves",["Calves"],"db"],["Single-leg dumbbell calf raise","Calves",["Calves"],"db"],["Single-leg calf raise","Calves",["Calves"],"bw"],
  ["Power clean","Full body",["Full body","Legs","Back"],"bb"],["Clean and jerk","Full body",["Full body","Legs","Shoulders"],"bb"],["Snatch","Full body",["Full body","Legs","Shoulders"],"bb"],["Thrusters","Full body",["Full body","Legs","Shoulders"],"bb"],
- ["Farmer's carry","Full body",["Full body","Core","Back"],"db"],["Dumbbell man makers","Full body",["Full body","Chest","Shoulders"],"db"],["Turkish get-up","Full body",["Full body","Core","Shoulders"],"kb"],
+ ["Farmer's carry","Full body",["Full body","Core","Back"],"db"],["Dumbbell man makers","Full body",["Full body","Chest","Shoulders"],"db"],["Dumbbell thrusters","Full body",["Full body","Legs","Shoulders"],"db"],["Dumbbell snatch","Full body",["Full body","Legs","Shoulders"],"db"],["Dumbbell clean and press","Full body",["Full body","Legs","Shoulders"],"db"],["Devil press","Full body",["Full body","Chest","Shoulders"],"db"],["Turkish get-up","Full body",["Full body","Core","Shoulders"],"kb"],
  ["Wrist curl","Forearms",["Forearms"],"bb"],["Reverse wrist curl","Forearms",["Forearms"],"bb"],["Reverse barbell curl","Forearms",["Forearms","Biceps"],"bb"],
  ["Dumbbell wrist curl","Forearms",["Forearms"],"db"],["Dumbbell reverse wrist curl","Forearms",["Forearms"],"db"],["Pronation and supination","Forearms",["Forearms"],"db"],["Wrist roller","Forearms",["Forearms","Shoulders"],"mc"],
  ["Plate pinch hold","Forearms",["Forearms"],"mc"],["Pinch block hold","Forearms",["Forearms"],"mc"],["Gripper squeezes","Forearms",["Forearms"],"mc"],["Cable reverse curl","Forearms",["Forearms","Biceps"],"cb"],
