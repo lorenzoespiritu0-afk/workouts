@@ -339,6 +339,17 @@ details input{background:var(--surface)}
 .btn.primary{background:var(--ink);color:var(--surface)}
 .btn.danger{color:#D13B4F}
 .dstats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 10px;margin:6px 0 16px}
+.ztab{background:var(--surface);border-radius:14px;padding:2px 14px;margin-top:8px}
+.zr{display:grid;grid-template-columns:38px minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}
+.zr:last-child{border-bottom:0}
+.zr>b{font-size:.78rem;font-weight:700;color:#fff;background:var(--zc);border-radius:7px;text-align:center;padding:3px 0;font-variant-numeric:tabular-nums}
+.zr span{display:block;font-weight:600;font-size:.9rem}
+.zr small{display:block;color:var(--muted);font-size:.78rem;line-height:1.3}
+.zr em{font-style:normal;font-weight:600;font-variant-numeric:tabular-nums;font-size:.9rem;white-space:nowrap}
+.wload{display:flex;align-items:center;gap:10px;font-size:.78rem;color:var(--muted);margin:2px 0 0}
+.wload i{flex:1;height:5px;border-radius:3px;background:var(--chip);overflow:hidden;max-width:140px}
+.wload b{display:block;height:100%;border-radius:3px}
+.ztest{margin-top:14px}.ztest summary{font-weight:600;cursor:pointer;padding:6px 0}
 .dstats .n b{font-size:clamp(1.3rem,6.4vw,1.9rem);overflow:hidden;text-overflow:ellipsis}
 table{width:100%;border-collapse:collapse;font-size:.92rem}
 td,th{padding:8px 4px;border-bottom:1px solid var(--line);text-align:right}
@@ -3134,6 +3145,8 @@ $("app").addEventListener("click",e=>{
   else if(d.act==="checkin2")openCheckin();
   else if(d.act==="freeze")useFreeze();
   else if(d.act==="fuelcalc")openFuelCalc();
+  else if(d.act==="zones")openZones();
+  else if(d.act==="raceplan")openRaceDay(activePlanEvent());
   else if(d.act==="allrecs"){coachAllRecs=!coachAllRecs;render();}
   else if(d.act==="backupfile")saveBackupFile();
   else if(d.act==="tfilter"){trophyFilter=t.dataset.f;render();}
@@ -4029,6 +4042,7 @@ function renderInsights(){
     ${lw.histW>=4?`<div class="lweeks" role="img" aria-label="Weekly load, last 8 weeks">${lw.W.slice().reverse().map((w,i,A)=>{const mx=Math.max(1,...A.map(x=>x.all));return `<i style="height:${Math.max(3,Math.round(w.all/mx*100))}%;background:${w.r!=null&&w.r>1.5?"var(--red)":w.r!=null&&w.r>1.3?PMC_C.neg:i===A.length-1?"var(--xp)":"var(--line)"}"></i>`;}).join("")}</div><div class="lwk"><span>8 weeks ago</span><span>This week</span></div>`:""}
     <p class="hint">Load is your effort rating (1 to 10) multiplied by minutes. A ratio between 0.8 and 1.3 is the sweet spot for getting fitter without overdoing it.</p></div>`;
   html+=formCard();
+  html+=`<button class="ins" data-act="zones" style="width:100%;text-align:left;display:block"><div class="row2"><div><h3>❤️ Training zones</h3><div class="xpinfo">${(()=>{const z=zones(),a=[];if(z.lthr)a.push("Threshold "+z.lthr+" bpm");if(z.tp)a.push(fmtPace(z.tp));if(z.ftp)a.push("FTP "+z.ftp+" W");return a.join(", ")||"Heart rate, pace and power zones";})()}</div></div><span class="chip">Open</span></div></button>`;
   html+=`<button class="ins" data-act="fuelcalc" style="width:100%;text-align:left;display:block"><div class="row2"><div><h3>💧 Fuel calculator</h3><div class="xpinfo">Fluid, sodium, and gels for any session, tuned for heat and humidity</div></div><span class="chip">Open</span></div></button>`;
   html+=weightCard();
   {const yy=new Date().getFullYear();html+=`<div class="ins"><h3>Year in review</h3><p class="hint" style="margin-top:2px">Your year as shareable story cards: totals, top activities, PRs, highlights, and levels.</p><div class="row" style="margin-top:10px">${live().some(s=>s.date.startsWith(String(yy-1)))?`<button class="btn" data-act="wrapped" data-year="${yy-1}">${yy-1}</button>`:""}<button class="btn primary" data-act="wrapped" data-year="${yy}">${yy} so far</button></div></div>`;}
@@ -5646,7 +5660,7 @@ function openSettings(){
   $("ssv").onclick=()=>{
     readCirc();
     const wv=num($("b-w").value),hv=num($("b-h").value);
-    const nb={name:$("b-name").value.trim(),sex,age:num($("b-age").value),rhr:num($("b-rhr").value),mhr:num($("b-mhr").value),ftp:num($("b-ftp").value)};
+    const nb={...b,name:$("b-name").value.trim(),sex,age:num($("b-age").value),rhr:num($("b-rhr").value),mhr:num($("b-mhr").value),ftp:num($("b-ftp").value)};
     nb.weight=wv?(units.wt==="lb"?wv/KG_LB:wv):null;
     nb.height=hv?(imp?hv*2.54:hv):null;
     if(nb.rhr&&nb.mhr&&nb.rhr>=nb.mhr){$("serr").textContent="Resting heart rate should be lower than max heart rate.";return;}
@@ -8235,6 +8249,7 @@ function genLift(o){
       {n:"Cool-down",items:[{text:`5 minutes of stretching: ${sp.m.slice(0,3).join(", ").toLowerCase()}`}]}].concat(o.mins-est>25?[{n:"With the extra time",items:[{text:`About ${Math.round(o.mins-est)} minutes left: easy cardio, mobility, or core. Lifting much past 90 minutes adds fatigue faster than it adds strength.`}]}]:[])};
 }
 function runBase(){
+  if(bio().tpace)return bio().tpace/1.07;
   const since=keyOf(addDays(new Date(),-120));let b=null;
   for(const [d] of EFFORTS.run){if(d<1000)continue;const t=bestEffortSince(d,since);if(t){const p5=t*Math.pow(5000/d,1.06)/5;if(b==null||p5<b)b=p5;}}
   if(b)return b;
@@ -8783,7 +8798,7 @@ function eventICS(ev){
   const add=(date,sum,desc)=>{L.push("BEGIN:VEVENT","UID:"+ev.id+"-"+d8(date)+"@workouts.app","DTSTAMP:"+stamp,"DTSTART;VALUE=DATE:"+d8(date),"DTEND;VALUE=DATE:"+d8(keyOf(addDays(parseDate(date),1))),"SUMMARY:"+icsEsc(sum),"DESCRIPTION:"+icsEsc(desc),"TRANSP:TRANSPARENT","END:VEVENT");};
   let n=0;
   if(ev.plan)for(const x of planView(ev)){if(x.status==="moved"||x.date<today||x.race)continue;add(x.date,`${TYPES[x.type]||"Workout"}: ${x.title}`,planDayText(x));n++;}
-  add(ev.date,`${EVENT_TYPES[ev.type][0]}: ${ev.name}`,[ev.dist?`Distance ${fmtDist(+ev.dist)}`:"",ev.time?`Goal ${fmtClock(ev.time)}`:""].filter(Boolean).join("\n")||"Event day");n++;
+  add(ev.date,`${EVENT_TYPES[ev.type][0]}: ${ev.name}`,[ev.dist?`Distance ${fmtDist(+ev.dist)}`:"",ev.time?`Goal ${fmtClock(ev.time)}`:"",raceDayText(ev)].filter(Boolean).join("\n")||"Event day");n++;
   L.push("END:VCALENDAR");
   return {text:L.map(icsFold).join("\r\n")+"\r\n",n};
 }
@@ -8791,6 +8806,170 @@ async function exportEventICS(ev){
   const {text,n}=eventICS(ev),slug=(ev.name||"event").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"event";
   const ok=await saveBlob(new Blob([text],{type:"text/calendar"}),slug+"-plan.ics","Calendar file");
   if(ok)toast(`${n} day${n===1?"":"s"} ready for your calendar`);
+}
+
+/* ================= coach: training zones, race-day plan, plan editing (ideas from claude-coach, MIT) ================= */
+// Friel heart-rate zones as a share of threshold heart rate (LTHR), Coggan-style power zones of FTP, Daniels-style pace zones around threshold pace
+const HRZ=[["1","Recovery",0,.81,"Warm-ups, cool-downs, recovery"],["2","Aerobic",.81,.89,"Easy, full conversations. Most of your running"],["3","Tempo",.9,.93,"Moderate, sentences only"],["4","Sub-threshold",.94,.99,"Hard, a few words at a time"],["5a","Threshold",1,1.02,"About your 1-hour race effort"],["5b","VO2max",1.03,1.06,"Very hard, 3 to 8 minute reps"],["5c","Anaerobic",1.06,0,"All out, under 2 minutes"]];
+const PWZ=[["1","Recovery",0,.55],["2","Endurance",.56,.75],["3","Tempo",.76,.9],["4","Sub-threshold",.91,.99],["5a","Threshold",1,1.05],["5b","VO2max",1.06,1.2],["5c","Anaerobic",1.2,0]];
+const PACEZ=[["E","Easy",50,75,"Daily runs and long runs"],["M","Marathon",15,25,"Marathon race pace"],["T","Threshold",-3,5,"Tempo runs, cruise intervals"],["I","Interval",-20,-12,"3 to 5 minute reps"],["R","Repetition",-35,-25,"Short, fast reps with full recovery"]];
+function zones(){
+  const b=bio(),mh=maxHR();let lthr=b.lthr||null,hs=lthr?"you":null;
+  if(!lthr){
+    // the average heart rate of a hard 20-75 minute run sits close to threshold
+    const since=keyOf(addDays(new Date(),-120));let h=0;
+    for(const s of live())if(s.type==="run"&&s.hr&&s.dur>=1200&&s.dur<=4500&&s.date>=since&&(s.rpe?s.rpe>=7:!!mh)&&s.hr>h)h=s.hr;
+    if(h){lthr=mh?Math.max(mh*.85,Math.min(mh*.95,h)):h;hs="runs";}
+    else if(mh){lthr=mh*.88;hs=b.mhr?"max":"age";}
+    if(lthr)lthr=Math.round(lthr);
+  }
+  const base=runBase(),tp=base?Math.round(base*1.07):null,ftp=currentFTP()||null;
+  return {lthr,hs,mh,tp,ts:b.tpace?"you":tp?"runs":null,ftp,fs:b.ftp?"you":ftp?"rides":null};
+}
+const hrIn=(a,c)=>{const z=zones();return z.lthr?`${Math.round(z.lthr*a)}–${Math.round(z.lthr*c)} bpm`:null;};
+const fdk=km=>round(toDispDist(km),1)+" "+dU();
+const zRange=(lo,hi,lab)=>!lo?`under ${lab(hi)}`:!hi?`over ${lab(lo)}`:`${lab(lo)}–${lab(hi)}`;
+function paceZ(tp,lo,hi){const k=Math.max(.8,Math.min(1.4,tp/300));return `${fmtPace(tp+lo*k).replace(/ \/.*/,"")}–${fmtPace(tp+hi*k)}`;}
+function openZones(){
+  const Z=zones(),b=bio(),imp=dU()==="mi";
+  const src={you:"set by you",runs:"estimated from your hardest recent runs",max:"estimated as 88% of your max heart rate",age:"estimated from your age, so treat it as a rough guide",rides:"estimated from your best 20-minute power"};
+  const tbl=(rows)=>`<div class="ztab">${rows.map(r=>`<div class="zr"><b style="--zc:${r.c}">${r.z}</b><div><span>${r.n}</span>${r.d?`<small>${r.d}</small>`:""}</div><em>${r.v}</em></div>`).join("")}</div>`;
+  const ZC=["#8E8E93","#4F8DFF","#279A6B","#E0A100","#C9772A","#E0457A","#B4257A"];
+  let html=`<h3>❤️ Training zones</h3><p class="sub">Your plan workouts use these for heart rate, pace and power targets.</p>`;
+  html+=`<h4>Heart rate</h4>`;
+  html+=Z.lthr?`<p class="hint" style="margin-top:0">Threshold heart rate ${Z.lthr} bpm, ${src[Z.hs]}.</p>`+tbl(HRZ.map(([z,n,a,c,d],i)=>({z:"Z"+z,n,d,c:ZC[i],v:zRange(a&&Math.round(Z.lthr*a),c&&Math.round(Z.lthr*c),x=>x)}))):`<p class="hint">Add your age or max heart rate in Settings, or log a hard run with heart rate, to see heart rate zones.</p>`;
+  html+=`<h4>Running pace</h4>`;
+  html+=Z.tp?`<p class="hint" style="margin-top:0">Threshold pace ${fmtPace(Z.tp)}, ${Z.ts==="you"?"set by you":"estimated from your recent runs"}.</p>`+tbl(PACEZ.map(([z,n,lo,hi,d],i)=>({z,n,d,c:ZC[[1,2,4,5,6][i]],v:paceZ(Z.tp,lo,hi)}))):`<p class="hint">Log a few runs with distance and time to see pace zones.</p>`;
+  html+=`<h4>Cycling power</h4>`;
+  html+=Z.ftp?`<p class="hint" style="margin-top:0">FTP ${Z.ftp} W, ${src[Z.fs]}.</p>`+tbl(PWZ.map(([z,n,a,c],i)=>({z:"Z"+z,n,c:ZC[i],v:zRange(a&&Math.round(Z.ftp*a),c&&Math.round(Z.ftp*c),x=>x+" W")}))):`<p class="hint">Add your FTP, or log a ride with 20-minute power, to see power zones.</p>`;
+  html+=`<h4>Set your numbers</h4><div class="grid2">
+    <div><label for="z-l">Threshold heart rate</label><input id="z-l" type="number" inputmode="numeric" value="${b.lthr||""}" placeholder="${Z.lthr&&Z.hs!=="you"?"About "+Z.lthr:"bpm"}"></div>
+    <div><label for="z-p">Threshold pace (per ${imp?"mi":"km"})</label><input id="z-p" type="text" inputmode="numeric" value="${b.tpace?fmtPace(b.tpace).replace(/ \/.*/,""):""}" placeholder="${Z.tp&&Z.ts!=="you"?"About "+fmtPace(Z.tp).replace(/ \/.*/,""):"m:ss"}"></div>
+    <div><label for="z-f">FTP (watts)</label><input id="z-f" type="number" inputmode="numeric" value="${b.ftp||""}" placeholder="${Z.ftp&&Z.fs!=="you"?"About "+Z.ftp:"W"}"></div>
+    <div><label for="z-m">Max heart rate</label><input id="z-m" type="number" inputmode="numeric" value="${b.mhr||""}" placeholder="${Z.mh&&!b.mhr?"About "+Z.mh:"bpm"}"></div></div>
+    <p class="hint">Leave a box empty to keep using the estimate.</p><div class="err" id="z-e"></div>
+    <details class="ztest"><summary>How to test your threshold</summary><div class="fb">
+      <p><b>Run, 30 minutes:</b> warm up 15 minutes easy. Then run 30 minutes as hard as you can hold evenly, like a race, on a flat route. Your average heart rate for the last 20 minutes is your threshold heart rate, and your average pace is your threshold pace.</p>
+      <p><b>Ride, 20 minutes:</b> warm up 20 minutes with a few short spin-ups. Ride 20 minutes at the highest power you can hold. Multiply the average by 0.95 for your FTP.</p>
+      <p><b>When to retest:</b> every 6 to 8 weeks, right after an easy week so you're fresh, or when your effort stops matching the targets. Training plans include a test for you.</p></div></details>
+    <div class="row"><button class="btn" id="z-c">Close</button><button class="btn primary" id="z-s">Save</button></div>`;
+  openSheet(html);
+  $("z-c").onclick=closeSheet;
+  $("z-s").onclick=()=>{
+    const l=num($("z-l").value),pv=$("z-p").value.trim(),pc=pv?parseClock(pv):null,f=num($("z-f").value),m=num($("z-m").value);
+    if(pv&&!pc){$("z-e").textContent="Write the pace as minutes and seconds, like 5:10.";return;}
+    const tpace=pc?Math.round(imp?pc*KM_MI:pc):null;
+    if(l&&(l<100||l>215)){$("z-e").textContent="Threshold heart rate is usually between 140 and 190 bpm.";return;}
+    if(l&&m&&l>=m){$("z-e").textContent="Threshold heart rate should be below your max heart rate.";return;}
+    if(tpace&&(tpace<150||tpace>600)){$("z-e").textContent="That pace looks off. Threshold pace is what you could race for about an hour.";return;}
+    settings.bio={...bio(),lthr:l||null,tpace,ftp:f||null,mhr:m||null};settings.updatedAt=Date.now();
+    planCache.clear();invalidate();saveLocal();pushSettings();render();closeSheet();toast("Zones saved. Your plan targets are updated");
+  };
+}
+
+/* ---------- race-day plan: pacing, heart rate or power ceiling, fuel, caffeine, carb loading, checklist ---------- */
+function raceMinutes(ev){
+  const d=+ev.dist||0;
+  if(ev.type==="run"&&d){const t=ev.time||predictTime(d*1000);return t?t/60:null;}
+  if(ev.type==="ride"&&d){const rs=live().filter(s=>s.type==="ride"&&s.dist>=20&&s.dur).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,10);const sp=rs.length?rs.reduce((a,s)=>a+s.dist/(s.dur/3600),0)/rs.length:25;return d/sp*60;}
+  if(ev.type==="hike"&&d)return (d/3.5+(+ev.elev||0)/600)*60;
+  return null;
+}
+function raceStrategy(m){
+  if(m<60)return {n:"Negative split",p:f=>f<.5?1.01:.99,x:"Run the first half about 1% slower than goal pace, then pick it up. Going out too fast is the classic mistake."};
+  if(m<100)return {n:"Even pace, controlled start",p:f=>f<.1?1.02:.998,x:"Ease into the first 10%, then hold goal pace. Don't chase people in the opening kilometers."};
+  if(m<240)return {n:"Even pace, patient first hour",p:f=>f<.15?1.025:f<.8?1:.995,x:"Take the first 15% a little easy, settle at goal pace, and only push in the last 20%. Respect the first hour."};
+  return {n:"Conservative start",p:f=>f<.2?1.05:f<.8?1:.97,x:"Start well under goal pace, run by feel through the middle, and push the final 20% only if you have it. Early speed costs double later."};
+}
+function raceSplits(km,T,prof){
+  const N=Math.max(1,Math.round(km*10)),len=km/N,raw=[];let tot=0;
+  for(let i=0;i<N;i++){const r=prof((i+.5)/N)*len;raw.push(r);tot+=r;}
+  const k=T/tot,step=km<=10.5?1:5,marks=[];for(let m=step;m<km-0.05;m+=step)marks.push(m);marks.push(km);
+  const cum=[0];for(let i=0;i<N;i++)cum.push(cum[i]+raw[i]*k);
+  const out=[];let pT=0,pK=0;
+  for(const mk of marks){const t=cum[Math.min(N,Math.round(mk/len))];out.push({km:mk,clock:t,pace:(t-pT)/(mk-pK)});pT=t;pK=mk;}
+  return out;
+}
+function raceCeil(type,m){
+  if(type==="ride")return {pw:m<=70?[.95,1]:m<=150?[.85,.9]:m<=200?[.8,.85]:m<=360?[.7,.77]:[.65,.72],hr:m<=70?null:m<=150?[.9,.95]:m<=300?[.83,.88]:[.75,.82]};
+  if(type==="hike")return {hr:[.7,.8]};
+  return {hr:m<60?null:m<150?[.92,.97]:m<300?[.85,.88]:[.75,.8]};
+}
+function raceDayHTML(ev){
+  const m=raceMinutes(ev),d=+ev.dist||0,Z=zones(),W=weightOn(keyOf(new Date()))||bio().weight||null,hot=(LT().climate||"hot")==="hot";
+  if(!m)return `<p class="hint">Add a distance${ev.type==="run"?" and a goal time":""} to this event to get pacing and fuel targets.</p>`;
+  let h=`<div class="dstats"><div class="n"><b>${fmtClock(m*60)}</b><span>${ev.time?"Goal time":"Expected time"}</span></div>${ev.type==="run"?`<div class="n"><b>${fmtPace(m*60/d).replace(/ \/.*/,"")}</b><span>Average /${dU()}</span></div>`:ev.type==="ride"?`<div class="n"><b>${round(toDispDist(d/(m/60)),1)}</b><span>${dU()==="mi"?"mph":"km/h"}</span></div>`:""}<div class="n"><b>${fmtDist(d)}</b><span>Distance</span></div></div>`;
+  if(ev.type==="run"){
+    const st=raceStrategy(m),sp=raceSplits(d,m*60,st.p);
+    h+=`<h4>🏃 Pacing: ${st.n.toLowerCase()}</h4><p class="fx">${st.x}</p><div class="ztab">${sp.map(s=>`<div class="zr"><b style="--zc:${col("run")}">${s.km===d?"🏁":round(toDispDist(s.km),1)}</b><div><span>${s.km===d?"Finish":fdk(s.km)}</span><small>${fmtPace(s.pace)}</small></div><em>${fmtClock(s.clock)}</em></div>`).join("")}</div>`;
+    if(!ev.time)h+=`<p class="hint">No goal time set, so this uses your predicted time from recent runs. Add a goal in Edit to plan around it.</p>`;
+    if(hot)h+=`<p class="hint">In heat and humidity above about 25°C, expect to be 2 to 5% slower. Adjust the target, not the effort.</p>`;
+  }else if(ev.type==="ride"){
+    h+=`<h4>🚴 Pacing</h4><p class="fx">Hold steady power, not steady speed: ease off on descents and don't spike on climbs. For the first 30 minutes ride a little below target while you warm up.</p>`;
+  }else{
+    h+=`<h4>🥾 Pacing</h4><p class="fx">Start slower than feels right. On climbs, keep a pace where you can still talk in short sentences, and take short planned breaks every hour instead of long stops.</p>`;
+  }
+  const c=raceCeil(ev.type,m),items=[];
+  if(c.pw&&Z.ftp)items.push(`<b>Power:</b> ${Math.round(Z.ftp*c.pw[0])}–${Math.round(Z.ftp*c.pw[1])} W (${Math.round(c.pw[0]*100)}–${Math.round(c.pw[1]*100)}% of your FTP).`);
+  if(c.hr&&Z.lthr)items.push(`<b>Heart rate ceiling:</b> ${Math.round(Z.lthr*c.hr[0])}–${Math.round(Z.lthr*c.hr[1])} bpm for most of the ${ev.type==="run"?"race":"day"}. Going above it early leads to a big fade later.`);
+  else if(!c.hr&&ev.type==="run")items.push(`<b>Heart rate:</b> in a race this short, heart rate lags behind. Go by pace and feel.`);
+  if(ev.type==="run"&&m>=120)items.push(`<b>Red flags:</b> heart rate 10 or more beats above normal for your pace, or burning quads before halfway, means slow down now. Stomach trouble usually means you need water, not more gels.`);
+  if(items.length)h+=`<h4>🎯 Targets</h4><div class="fb">${items.map(t=>`<p>${t}</p>`).join("")}</div>`;
+  if(ev.type==="run"&&!Z.lthr)h+=`<p class="hint">Add your heart rate details in Training zones for a heart rate ceiling.</p>`;
+  const fp=fuelPlan(ev.type==="hike"?"hike":ev.type==="ride"?"ride":"run",Math.round(m),ev.type==="hike"?6:8);
+  if(fp){
+    h+=fuelHTML(fp);
+    if(fp.cho[1]>0&&ev.type!=="hike"&&m>=60){
+      const gap=ev.type==="ride"?30:m>=240?40:45,at=[],ft=t=>t<60?t+" min":Math.floor(t/60)+":"+pad(t%60);for(let t=45;t<m-15;t+=gap)at.push(t);
+      if(at.length)h+=`<div class="fb"><p><b>Gel times:</b> ${at.map(t=>`${ft(t)}${ev.type==="run"?` (about ${fdk(t/m*d)})`:""}`).join(", ")}. Take each with water${fp.cho[1]>=60?", and top up the rest of your carbs with sports drink at aid stations":""}. Practice this on your long ${ev.type==="ride"?"rides":"runs"}.</p></div>`;
+    }
+  }
+  const L=[];
+  if(W&&m>=40){const mg=Math.round(W*3/10)*10;L.push(`<b>Caffeine, only if you've tried it in training:</b> about ${mg} mg (3 mg per kg) 30 to 60 minutes before the start. A strong coffee is 100 to 150 mg.${m>=120?` In the second half, another ${Math.round(W/10)*10}–${Math.round(W*2/10)*10} mg from caffeinated gels or cola helps.`:""}`);}
+  if(m>=90){const g=W?`${Math.round(W*8/10)*10}–${Math.round(W*10/10)*10} g`:"8 to 10 g per kg of body weight";L.push(`<b>Carb loading:</b> for the 36 to 48 hours before, eat about ${g} of carbs a day: rice at every meal, pandesal, saba, pancit, sports drink. Cut back on fiber and fatty food the day before.`);}
+  L.push(`<b>Warm-up:</b> ${m<45?"10 to 15 minutes easy plus 4 strides, finishing about 10 minutes before the start.":m<150?"5 to 10 minutes of easy jogging and a few strides.":"walk and loosen up, then use the first kilometers as your warm-up."}`);
+  L.push(`<b>Nothing new on race day:</b> shoes, kit, breakfast and gels should all be things you used on long training sessions.`);
+  L.push(`<b>Night before:</b> lay out your kit and pin your bib. The sleep two nights before matters most, so don't worry about nerves the last night. Arrive about an hour early, because toilet lines get long.`);
+  h+=`<h4>✅ Race week</h4><div class="fb">${L.map(t=>`<p>${t}</p>`).join("")}</div>`;
+  return h;
+}
+function raceDayText(ev){
+  const m=raceMinutes(ev),d=+ev.dist||0;if(!m)return "";
+  const L=[`Expected time ${fmtClock(m*60)}.`];
+  if(ev.type==="run"){const st=raceStrategy(m),sp=raceSplits(d,m*60,st.p),half=sp.find(s=>s.km>=d/2-.01);L.push(`Pacing: ${st.n}. ${st.x}`);if(half&&half.km<d)L.push(`Split at ${fdk(half.km)}: ${fmtClock(half.clock)}.`);}
+  const fp=fuelPlan(ev.type==="hike"?"hike":ev.type==="ride"?"ride":"run",Math.round(m),8);
+  if(fp)L.push(`Each hour: ${fp.lo}-${fp.hi} ml fluid${fp.cho[1]?`, ${fp.cho[0]}-${fp.cho[1]} g carbs`:""}${fp.needNa?`, ${fp.na[0]}-${fp.na[1]} mg sodium`:""}.`);
+  return L.join("\n");
+}
+function openRaceDay(ev){
+  if(!ev)return;
+  openSheet(`<h3>🏁 Race-day plan</h3><p class="sub">${esc(ev.name)}, ${fmtDate(ev.date,{weekday:"long",month:"long",day:"numeric"})}</p>${raceDayHTML(ev)}
+    <p class="hint">General guidance to rehearse in training, not medical advice.</p>
+    <div class="row"><button class="btn" id="rd-b">Back to plan</button><button class="btn primary" id="rd-c">Close</button></div>`);
+  $("rd-c").onclick=closeSheet;$("rd-b").onclick=()=>openEvent(ev);
+}
+
+/* ---------- planned versus actual load per week ---------- */
+const PH_C={Base:"#4F8DFF",Build:"#C9772A",Peak:"#E0457A",Recovery:"#8E8E93",Taper:"#279A6B"};
+function planWeeks(P){
+  const today=keyOf(new Date()),wk=weekKey(today),W={};
+  for(const x of P){if(x.race)continue;const k=weekKey(x.date);const w=W[k]=W[k]||{k,p:0,ph:null,n:0};if(!x.userMoved&&!w.ph)w.ph=x.phase;if(x.status!=="skipped"&&x.status!=="moved")w.p+=(x.est||0)*(x.rpe||0);}
+  const out=Object.values(W).sort((a,b)=>a.k.localeCompare(b.k));
+  for(const w of out){w.ph=w.ph||"Base";if(w.k<=wk){const e=keyOf(addDays(parseDate(w.k),7));w.a=live().filter(s=>s.date>=w.k&&s.date<e).reduce((a,s)=>a+loadOf(s),0);}w.now=w.k===wk;}
+  return out;
+}
+function planLoadChart(PW){
+  if(PW.length<2)return "";
+  const W=340,H=96,top=8,bot=16,n=PW.length,bw=(W-8)/n,mx=Math.max(1,...PW.map(w=>Math.max(w.p,w.a||0)))*1.08,Y=v=>top+(H-top-bot)*(1-v/mx);
+  let s="";PW.forEach((w,i)=>{const x=4+bw*i,bwid=Math.max(2,bw*.72),y=Y(w.p),c=PH_C[w.ph]||"#8E8E93";
+    s+=`<rect x="${(x+(bw-bwid)/2).toFixed(1)}" y="${y.toFixed(1)}" width="${bwid.toFixed(1)}" height="${(H-bot-y).toFixed(1)}" rx="2" fill="${c}" opacity="${w.a!=null?.32:.85}"/>`;
+    if(w.a!=null){const ya=Y(w.a),iw=Math.max(1.5,bwid*.5);s+=`<rect x="${(x+(bw-iw)/2).toFixed(1)}" y="${ya.toFixed(1)}" width="${iw.toFixed(1)}" height="${Math.max(0,H-bot-ya).toFixed(1)}" rx="1.5" fill="${c}"/>`;}
+    if(w.now)s+=`<text x="${(x+bw/2).toFixed(1)}" y="${H-3}" text-anchor="middle" font-size="10" font-weight="700" fill="var(--ink)">Now</text>`;
+    else if(i===0||i===n-1)s+=`<text x="${(x+bw/2).toFixed(1)}" y="${H-3}" text-anchor="middle" font-size="10" fill="var(--muted)">${i===0?"Wk 1":"Wk "+n}</text>`;});
+  const used=[...new Set(PW.map(w=>w.ph))];
+  return `<div class="ins" style="padding:12px 14px"><div class="row2"><h4 style="margin:0">Weekly load</h4><span class="hint" style="margin:0">wide bar planned, narrow bar done</span></div>
+    <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;margin-top:6px" role="img" aria-label="Planned and completed training load for each of ${n} weeks">${s}</svg>
+    <div class="pmc-leg" style="margin-top:4px">${used.map(p=>`<span><i style="background:${PH_C[p]}"></i>${p}</span>`).join("")}</div></div>`;
 }
 
 /* ================= events & training plans ================= */
@@ -8808,8 +8987,9 @@ function phaseList(N,taper){
 const PHASE_NOTE={Base:"Base: building the aerobic engine with mostly easy work",Build:"Build: adding race-specific quality",Peak:"Peak: the hardest, most specific weeks",Recovery:"Recovery week: lighter so your body absorbs the training",Taper:"Taper: cutting volume so you arrive fresh"};
 function runPlanSession(kind,o){
   const b=o.b,P=f=>b?fmtPace(b*f):null,rp=o.rp;
-  const easy=b?`at ${fmtPace(b*1.24).replace(/ \/.*/,"")}–${fmtPace(b*1.34)}, conversational`:"at a conversational pace";
-  const thr=b?`at ${P(1.07)}`:"comfortably hard";const intp=b?`at ${P(0.98)}`:"hard";const race=rp?`at race pace, ${fmtPace(rp)}`:"at goal race effort";
+  const z2=hrIn(.81,.89),z4=hrIn(.94,1);
+  const easy=(b?`at ${fmtPace(b*1.24).replace(/ \/.*/,"")}–${fmtPace(b*1.34)}, conversational`:"at a conversational pace")+(z2?`, heart rate ${z2} (zone 2)`:"");
+  const thr=(b?`at ${P(1.07)}`:"comfortably hard")+(z4?`, heart rate ${z4} by the end of each rep`:"");const intp=b?`at ${P(0.98)}`:"hard";const race=rp?`at race pace, ${fmtPace(rp)}`:"at goal race effort";
   const wu={n:"Warm-up",items:[{text:`10–12 minutes easy ${easy}`},{text:"4 × 20-second strides"}]},cd={n:"Cool-down",items:[{text:"8–10 minutes easy jog"}]};
   switch(kind){
     case "easy":return {title:"Easy run",rpe:4,est:o.mins,key:false,blocks:[{n:"Run",items:[{text:`${o.mins} minutes ${easy}`}]}]};
@@ -8822,12 +9002,13 @@ function runPlanSession(kind,o){
     case "km":return {title:`${o.n} × 1 km`,rpe:8,est:o.n*6+24,key:true,blocks:[wu,{n:"Main set",items:[{text:`${o.n} × 1 km ${intp}${b?` (${fmtClock(b*0.98)} each)`:""}, 2.5 minutes jog between`}]},cd]};
     case "racepace":return {title:`Race pace ${o.n} × ${o.rk} km`,rpe:7,est:Math.round(o.n*o.rk*(rp||300)/60+o.n*3+22),key:true,blocks:[wu,{n:"Main set",items:[{text:`${o.n} × ${o.rk} km ${race}, 3 minutes jog between`}]},cd]};
     case "sharpen":return {title:"Race sharpener",rpe:6,est:35,key:true,blocks:[wu,{n:"Main set",items:[{text:`4 × 1 km ${race}, 2 minutes jog between. Smooth, not straining`}]},cd]};
+    case "test":return {title:"30-minute threshold test",rpe:8,est:60,key:true,test:true,blocks:[{n:"Warm-up",items:[{text:`15 minutes easy ${easy}`},{text:"3 × 20-second strides"}]},{n:"Test",items:[{text:"30 minutes as hard as you can hold evenly, like a race, on a flat route or track"},{text:"Note your average heart rate and pace for the last 20 minutes"}]},{n:"Cool-down",items:[{text:"10 minutes easy jog"}]},{n:"Afterwards",items:[{text:"Enter your numbers on this plan day so every workout's targets update"}]}]};
     case "shakeout":return {title:"Shakeout run",rpe:3,est:20,key:false,blocks:[{n:"Run",items:[{text:`15–20 minutes very easy ${easy}`},{text:"4 × 15-second strides. Lay out your race kit tonight"}]}]};
   }
 }
 function planFor(ev){
   const lt=LT(),days=ev.days||lt.days||4;
-  const ck=[ev.id,ev.date,ev.created,days,ev.dist,ev.time,ev.type,ev.elev].join("|");if(planCache.has(ck))return planCache.get(ck);
+  const ck=[ev.id,ev.date,ev.created,days,ev.dist,ev.time,ev.type,ev.elev,bio().lthr,bio().tpace,maxHR(),dU()].join("|");if(planCache.has(ck))return planCache.get(ck);
   const act=EVENT_TYPES[ev.type][2];
   const w0=weekKey(ev.created),wN=weekKey(ev.date);const weeks=[];for(let d=parseDate(w0);keyOf(d)<=wN;d=addDays(d,7))weeks.push(keyOf(d));
   const N=weeks.length,dist=+ev.dist||0;
@@ -8855,6 +9036,7 @@ function planFor(ev){
         const dayBefore=keyOf(addDays(parseDate(ev.date),-1));
         if(date===dayBefore)se=runPlanSession("shakeout",{b});
         else if(raceWeek){se=isQ?runPlanSession("sharpen",{b,rp}):runPlanSession("easy",{b,mins:25});}
+        else if(isQ&&((wi===1&&ph==="Base"&&N>=8)||(wi>=8&&wi%8===0&&phases[wi-1]==="Recovery"&&(ph==="Base"||ph==="Build"))))se=runPlanSession("test",{b});
         else if(isLong){let km;if(ph==="Taper")km=peakLong*(taperIdx===2?0.75:0.6);else if(ph==="Recovery")km=lastLong*0.75;else{km=Math.min(L0+(Lp-L0)*prog,lastLong*1.12+1.5);lastLong=km;peakLong=Math.max(peakLong,km);}km=Math.max(5,Math.round(km));const mp=dist>=20&&ph==="Peak"?Math.round(km*0.35):null;se=runPlanSession("long",{b,rp,km,mp});}
         else if(isQ){
           if(ph==="Base")se=runPlanSession(wi%2?"fartlek":"strides",{b,mins:40});
@@ -8907,9 +9089,11 @@ function planFor(ev){
   planCache.set(ck,out);return out;
 }
 function planView(ev){
-  const today=keyOf(new Date()),P=planFor(ev).map(x=>({...x}));
+  const today=keyOf(new Date()),P=planFor(ev).map(x=>({...x})),E=ev.edits||{},w0=parseDate(weekKey(ev.created));
   const doneOn=(d,t)=>live().some(s=>s.date===d&&(t==="other"||s.type===t));
-  for(const x of P){x.status=x.race?(x.date<today?"past":"event"):doneOn(x.date,x.type)?"done":x.date<today?"missed":"todo";}
+  for(const x of P){x.orig=x.date;const e=!x.race&&E[x.date];if(!e)continue;if(e.to&&e.to<ev.date){x.date=e.to;x.userMoved=x.orig;x.week=Math.round((parseDate(weekKey(e.to))-w0)/(7*864e5))+1;}if(e.skip)x.skip=1;if(e.done)x.mark=1;}
+  P.sort((a,b)=>(!!a.race)-(!!b.race)||a.date.localeCompare(b.date));
+  for(const x of P){x.status=x.race?(x.date<today?"past":"event"):x.skip?"skipped":x.mark||doneOn(x.date,x.type)?"done":x.date<today?"missed":"todo";}
   const wk=weekKey(today),end=keyOf(addDays(parseDate(wk),7));
   for(const m of P.filter(x=>x.status==="missed"&&x.key&&x.date>=wk&&!x.race)){
     const slot=P.find(x=>x.date>=today&&x.date<end&&x.status==="todo"&&!x.key&&!x.race);
@@ -8918,21 +9102,44 @@ function planView(ev){
   return P;
 }
 function planToActive(x){return {type:x.type,title:x.title,why:[PHASE_NOTE[x.phase]||""].filter(Boolean),rpe:x.rpe,est:x.est,blocks:x.blocks,gs:x.gs,placeId:x.placeId};}
-function plannedOn(date){const ev=activePlanEvent();if(!ev)return null;return planView(ev).find(x=>x.date===date&&x.status!=="moved")||null;}
+function plannedOn(date,ev){ev=ev||activePlanEvent();if(!ev)return null;return planView(ev).find(x=>x.date===date&&x.status!=="moved")||null;}
 function todayPlanCard(){
   const ev=activePlanEvent();if(!ev)return "";
   const today=keyOf(new Date()),P=planView(ev),x=P.find(y=>y.date===today&&y.status!=="moved"),next=P.find(y=>y.date>today&&y.status!=="moved");
   const dl=Math.ceil((parseDate(ev.date)-parseDate(today))/864e5),cur=P.find(y=>y.date>=today)||P[P.length-1];
   return `<div class="ins" style="border:2px solid ${col(EVENT_TYPES[ev.type][2]||"other")}"><div class="row2"><div><h3>${EVENT_TYPES[ev.type][1]} ${esc(ev.name)}</h3><div class="xpinfo">${dl===0?"Today!":dl+" day"+(dl===1?"":"s")+" to go"}, week ${cur.week} of ${cur.weeks}, ${cur.phase.toLowerCase()} phase</div></div><button class="chip" data-ev="${ev.id}">Plan</button></div>
-    ${x?`<div class="trow" style="margin-top:6px"><span class="mdot" style="background:${col(x.type)}">${x.status==="done"?"✓":"▶"}</span><div class="tx"><b>Today: ${esc(x.title)}${x.moved?" (moved)":""}</b><span>${x.status==="done"?"Done. Nice work!":`About ${x.est} min, effort ${x.rpe}/10`}</span></div></div>${x.status==="todo"&&!x.race?`<div class="row" style="margin-top:8px"><button class="btn" data-pday="${today}">See details</button><button class="btn go" data-pstart="${today}">Start</button></div>`:""}`
-      :`<p class="hint" style="margin-top:6px">Rest day today.${next?` Next: ${esc(next.title)} on ${fmtDate(next.date,{weekday:"long"})}.`:""}</p>`}</div>`;
+    ${x?`<div class="trow" style="margin-top:6px"><span class="mdot" style="background:${col(x.type)}">${x.status==="done"?"✓":"▶"}</span><div class="tx"><b>Today: ${esc(x.title)}${x.moved?" (moved)":""}</b><span>${x.status==="done"?"Done. Nice work!":x.status==="skipped"?"Skipped. Rest up.":`About ${x.est} min, effort ${x.rpe}/10`}</span></div></div>${x.status==="todo"&&!x.race?`<div class="row" style="margin-top:8px"><button class="btn" data-pday="${today}">See details</button><button class="btn go" data-pstart="${today}">Start</button></div>`:""}`
+      :`<p class="hint" style="margin-top:6px">Rest day today.${next?` Next: ${esc(next.title)} on ${fmtDate(next.date,{weekday:"long"})}.`:""}</p>`}${dl<=14&&raceMinutes(ev)?`<button class="btn" data-act="raceplan" style="width:100%;margin-top:10px">🏁 Race-day plan</button>`:""}</div>`;
 }
-function openPlannedDay(date){
-  const x=plannedOn(date);if(!x)return;
-  openSheet(`<p class="sub" style="margin:0">${fmtDate(date,{weekday:"long",month:"long",day:"numeric"})}, week ${x.week} of ${x.weeks}</p>
-    ${planHTML({...planToActive(x),why:[PHASE_NOTE[x.phase]||"",x.moved?`Moved from ${fmtDate(x.moved,{weekday:"long"})} because it was missed.`:""].filter(Boolean)})}
-    <div class="row">${x.race?"":`<button class="btn go" id="pd-go">Start this workout</button>`}<button class="btn" id="pd-c">Close</button></div>`);
-  $("pd-c").onclick=closeSheet;if($("pd-go"))$("pd-go").onclick=()=>startActive(planToActive(x));
+function openPlannedDay(date,evId){
+  const ev=evId?eventById(evId):activePlanEvent();if(!ev)return;
+  const x=plannedOn(date,ev);if(!x)return;
+  const today=keyOf(new Date()),P=planView(ev),E=ev.edits||{},ed=E[x.orig]||{},dn=d=>fmtDate(d,{weekday:"long"});
+  const opts=[];if(!x.race)for(let d=parseDate(today<x.date?today:x.date),i=0;i<14;d=addDays(d,1),i++){const k=keyOf(d);if(k>=ev.date)break;if(k<today||k===x.date)continue;opts.push(k);}
+  const busy=k=>P.find(y=>y.date===k&&!y.race&&y.status!=="moved"&&y.status!=="skipped");
+  const why=[PHASE_NOTE[x.phase]||"",x.moved?`Moved from ${dn(x.moved)} because it was missed.`:"",x.userMoved?`You moved this from ${dn(x.userMoved)}.`:"",x.status==="skipped"?"You skipped this one. Skipping the odd session is fine; skipping key sessions often is what costs fitness.":"",x.mark?"Marked as done.":""].filter(Boolean);
+  const Z=zones();
+  openSheet(`<p class="sub" style="margin:0">${fmtDate(x.date,{weekday:"long",month:"long",day:"numeric"})}, week ${x.week} of ${x.weeks}</p>
+    ${planHTML({...planToActive(x),why})}
+    ${x.test?`<h4>Your test results</h4><div class="grid2"><div><label for="pt-h">Average heart rate, last 20 min</label><input id="pt-h" type="number" inputmode="numeric" value="${bio().lthr||""}" placeholder="bpm"></div><div><label for="pt-p">Average pace per ${dU()}</label><input id="pt-p" type="text" inputmode="numeric" value="${bio().tpace?fmtPace(bio().tpace).replace(/ \/.*/,""):""}" placeholder="m:ss"></div></div><button class="btn primary" id="pt-s" style="width:100%;margin-top:8px">Save as my threshold</button><p class="hint">${Z.lthr?`Right now your plan uses ${Z.lthr} bpm${Z.tp?" and "+fmtPace(Z.tp):""}.`:""} Every heart rate and pace target updates when you save.</p>`:""}
+    ${x.race?`<button class="btn primary" id="pd-rd" style="width:100%">🏁 Race-day plan</button>`:`<div class="row">${x.status==="todo"||x.status==="missed"?`<button class="btn go" id="pd-go">Start this workout</button>`:""}${x.status!=="done"||x.mark?`<button class="btn" id="pd-done">${x.mark?"Not done":"Mark done"}</button>`:""}<button class="btn" id="pd-skip">${x.skip?"Unskip":"Skip"}</button></div>
+    ${opts.length?`<label>Move to another day</label><div class="tchips" id="pd-mv" style="--c:#F5F5F7;--ct:#000">${opts.map(k=>{const o=busy(k);return `<button class="tchip" data-v="${k}" title="${o?"Swaps with "+esc(o.title):"Free day"}">${fmtDate(k,{weekday:"short",day:"numeric"})}${o?" ⇄":""}</button>`;}).join("")}</div><p class="hint">⇄ means that day already has a session, and the two will swap.</p>`:""}`}
+    <div class="row">${Object.keys(ed).length?`<button class="btn" id="pd-r">Undo my changes</button>`:""}${evId?`<button class="btn" id="pd-b">Back to plan</button>`:""}<button class="btn primary" id="pd-c">Close</button></div>`);
+  const save=(f,msg,go)=>{const EE={...(ev.edits||{})};f(EE);for(const k in EE)if(!EE[k]||!Object.keys(EE[k]).length)delete EE[k];ev.edits=EE;settings.updatedAt=Date.now();saveLocal();pushSettings();render();haptic("light");if(msg)toast(msg);openPlannedDay(go||x.date,evId);};
+  const setE=(EE,k,patch)=>{const v={...(EE[k]||{}),...patch};for(const q in v)if(v[q]==null||v[q]===false)delete v[q];EE[k]=v;};
+  $("pd-c").onclick=closeSheet;if($("pd-b"))$("pd-b").onclick=()=>openEvent(ev);
+  if($("pd-go"))$("pd-go").onclick=()=>startActive(planToActive(x));
+  if($("pd-rd"))$("pd-rd").onclick=()=>openRaceDay(ev);
+  if($("pd-done"))$("pd-done").onclick=()=>save(EE=>setE(EE,x.orig,{done:!x.mark||null,skip:null}),x.mark?"Marked not done":"Marked done");
+  if($("pd-skip"))$("pd-skip").onclick=()=>save(EE=>setE(EE,x.orig,{skip:!x.skip||null,done:null}),x.skip?"Back in your plan":"Skipped");
+  if($("pd-r"))$("pd-r").onclick=()=>save(EE=>{delete EE[x.orig];for(const k in EE)if(EE[k]&&EE[k].to===x.orig)setE(EE,k,{to:null});},"Back to the original plan",x.orig);
+  if($("pd-mv"))$("pd-mv").querySelectorAll("button").forEach(bt=>bt.onclick=()=>{const k=bt.dataset.v,o=busy(k);
+    save(EE=>{setE(EE,x.orig,{to:k===x.orig?null:k});if(o)setE(EE,o.orig,{to:x.date===o.orig?null:x.date});},o?`Swapped with ${o.title}`:`Moved to ${dn(k)}`,k);});
+  if($("pt-s"))$("pt-s").onclick=()=>{const h=num($("pt-h").value),pv=$("pt-p").value.trim(),pc=pv?parseClock(pv):null;
+    if(!h&&!pc){toast("Enter your heart rate or pace");return;}
+    if(h&&(h<100||h>215)){toast("That heart rate looks off");return;}
+    const tp=pc?Math.round(dU()==="mi"?pc*KM_MI:pc):null;if(tp&&(tp<150||tp>600)){toast("That pace looks off");return;}
+    settings.bio={...bio(),...(h?{lthr:Math.round(h)}:{}),...(tp?{tpace:tp}:{})};settings.updatedAt=Date.now();planCache.clear();invalidate();saveLocal();pushSettings();render();toast("Threshold saved. Targets updated");openPlannedDay(x.date,evId);};
 }
 function openEvent(ev){
   if(!ev)return;
@@ -8942,19 +9149,24 @@ function openEvent(ev){
     const P=planView(ev),byW={};P.forEach(x=>(byW[x.week]=byW[x.week]||[]).push(x));
     const done=P.filter(x=>x.status==="done").length,miss=P.filter(x=>x.status==="missed").length,past=P.filter(x=>x.date<today&&!x.race).length;
     const raw=planFor(ev);if(raw.warn)html+=`<div class="banner" style="border:2px solid var(--gold)">${esc(raw.warn)}</div>`;
+    const PW=planWeeks(P),PWk=Object.fromEntries(PW.map(w=>[w.k,w]));
     html+=`<div class="dstats"><div class="n"><b>${done}/${past}</b><span>Done so far</span></div><div class="n"><b>${miss}</b><span>Missed</span></div><div class="n"><b>${Object.keys(byW).length}</b><span>Weeks</span></div></div>`;
-    for(const w of Object.keys(byW).map(Number)){
-      const L=byW[w],wkStart=weekKey(L[0].date),isPast=keyOf(addDays(parseDate(wkStart),7))<=today;
+    html+=planLoadChart(PW);
+    if(raceMinutes(ev)&&ev.date>=today)html+=`<button class="ins calx" id="ev-rd"><span class="chico">🏁</span><span><b>Race-day plan</b><span>Pacing${ev.type==="run"?" splits":""}, heart rate${ev.type==="ride"?" and power":""} targets, fuel, caffeine and race-week checklist.</span></span></button>`;
+    html+=`<button class="ins calx" data-act="zones"><span class="chico">❤️</span><span><b>Training zones</b><span>The heart rate, pace and power behind every target. Set your own numbers or see how they're estimated.</span></span></button>`;
+    for(const w of Object.keys(byW).map(Number).sort((a,b)=>a-b)){
+      const L=byW[w],wkStart=weekKey(L[0].date),isPast=keyOf(addDays(parseDate(wkStart),7))<=today,wl=PWk[wkStart],ph=(L.find(x=>!x.userMoved)||L[0]).phase;
       if(isPast&&!L.some(x=>x.status==="missed"))continue;
-      html+=`<h4 style="margin:16px 0 4px">Week ${w}, ${L[0].phase.toLowerCase()}<span class="hint" style="font-weight:400;margin-left:6px">${fmtDate(wkStart,{month:"short",day:"numeric"})}</span></h4><div class="tlist">${L.map(x=>{const ic=x.race?"🏁":x.status==="done"?"✓":x.status==="missed"?"✗":x.status==="moved"?"→":"";return `<button class="trow" ${x.status==="moved"?"":`data-pday2="${x.date}"`} style="${x.status==="moved"?"opacity:.5":""}"><span class="mdot" style="background:${x.status==="done"?col(x.type):x.status==="missed"?"#D13B4F":"var(--chip)"};color:${x.status==="todo"?"var(--muted)":"#fff"}">${ic||TYPES[x.type]?.[0]||"•"}</span><div class="tx"><b>${esc(x.title)}</b><span>${fmtDate(x.date,{weekday:"short",month:"short",day:"numeric"})}${x.moved?", moved":""}${x.status==="moved"?", moved later this week":""}${x.est?`, ${x.est} min`:""}</span></div></button>`;}).join("")}</div>`;
+      html+=`<h4 style="margin:16px 0 4px">Week ${w}, ${ph.toLowerCase()}<span class="hint" style="font-weight:400;margin-left:6px">${fmtDate(wkStart,{month:"short",day:"numeric"})}</span></h4>${wl&&wl.p?`<div class="wload"><span>${wl.a!=null?`Load ${Math.round(wl.a)} of ${Math.round(wl.p)} planned`:`Planned load ${Math.round(wl.p)}`}</span>${wl.a!=null?`<i><b style="width:${Math.min(100,Math.round(wl.a/wl.p*100))}%;background:${PH_C[ph]}"></b></i>`:""}</div>`:""}<div class="tlist">${L.map(x=>{const sk=x.status==="skipped",ic=x.race?"🏁":x.status==="done"?"✓":x.status==="missed"?"✗":x.status==="moved"?"→":sk?"–":"";return `<button class="trow" ${x.status==="moved"?"":`data-pday2="${x.date}"`} style="${x.status==="moved"||sk?"opacity:.5":""}"><span class="mdot" style="background:${x.status==="done"?col(x.type):x.status==="missed"?"#D13B4F":"var(--chip)"};color:${x.status==="todo"||sk?"var(--muted)":"#fff"}">${ic||TYPES[x.type]?.[0]||"•"}</span><div class="tx"><b style="${sk?"text-decoration:line-through":""}">${esc(x.title)}</b><span>${fmtDate(x.date,{weekday:"short",month:"short",day:"numeric"})}${x.moved?", moved":""}${x.userMoved?", moved by you":""}${x.status==="moved"?", moved later this week":""}${sk?", skipped":""}${x.est&&!sk?`, ${x.est} min`:""}</span></div></button>`;}).join("")}</div>`;
     }
-    html+=`<p class="hint">Missed key sessions are moved to your next easy day in the same week. Completed means a workout of the same type logged that day.</p>`;
+    html+=`<p class="hint">Tap a session to move, swap, skip or mark it done. Missed key sessions move to your next easy day in the same week by themselves. Completed means a workout of the same type logged that day. Load is effort times minutes, the same as in Stats.</p>`;
   }else html+=`<p class="hint">No training plan for this event. Edit it to build one.</p>`;
   if(ev.date>=today)html+=`<button class="ins calx" id="ev-cal"><span class="chico">${icon("calendar")}</span><span><b>Add to calendar</b><span>${ev.plan?"Every remaining session plus race day, with the full workout in each entry. Re-export after changes to update.":"Puts the event day in your phone's calendar."}</span></span></button>`;
   html+=`<div class="row"><button class="btn" id="ev-e">Edit</button><button class="btn danger" id="ev-d">Delete</button><button class="btn primary" id="ev-c">Close</button></div>`;
   openSheet(html);
   if($("ev-cal"))$("ev-cal").onclick=()=>{haptic("light");exportEventICS(ev);};
-  document.querySelectorAll("[data-pday2]").forEach(b=>b.onclick=()=>openPlannedDay(b.dataset.pday2));
+  document.querySelectorAll("[data-pday2]").forEach(b=>b.onclick=()=>openPlannedDay(b.dataset.pday2,ev.id));
+  if($("ev-rd"))$("ev-rd").onclick=()=>openRaceDay(ev);
   $("ev-c").onclick=closeSheet;$("ev-e").onclick=()=>openEventEditor(ev);
   $("ev-d").onclick=()=>{const b=$("ev-d");if(!b.dataset.armed){b.dataset.armed="1";b.textContent="Tap to confirm";return;}settings.events=events().filter(x=>x.id!==ev.id);settings.updatedAt=Date.now();saveLocal();pushSettings();closeSheet();render();};
 }
@@ -9411,6 +9623,7 @@ function todayHero(){
     ${rd!=null?`<button data-act="checkin2" class="ring" style="display:block;color:${col2}">${ringSVG(rd/100,col2).replace(/<text[^>]*>.*?<\/text>/,`<text x="29" y="35" text-anchor="middle" font-size="17" font-weight="700" fill="currentColor" font-family="-apple-system,Inter,sans-serif">${rd}</text>`)}</button>`:`<button class="chip" data-act="checkin2" style="background:var(--accent);color:var(--on-accent)">Check in</button>`}</div>`;
   if(px)h+=`<div class="trow" style="margin-top:8px"><span class="mdot" style="background:${col(px.type)}">${px.status==="done"?"✓":"▶"}</span><div class="tx"><b>${esc(px.title)}</b><span>${esc(ev.name)}, ${Math.ceil((parseDate(ev.date)-parseDate(today))/864e5)} days to go</span></div>${px.status==="todo"&&!px.race?`<button class="tchip" data-pstart="${today}" style="background:var(--accent);color:var(--on-accent)">Start</button>`:""}</div>`;
   else if(ev)h+=`<div class="trow" style="margin-top:8px"><span class="mdot" style="background:var(--chip)">💤</span><div class="tx"><b>Rest day in your plan</b><span>${esc(ev.name)}</span></div><button class="tchip" data-ev="${ev.id}">Plan</button></div>`;
+  if(ev&&(parseDate(ev.date)-parseDate(today))/864e5<=14&&raceMinutes(ev))h+=`<button class="trow" data-act="raceplan"><span class="mdot" style="background:var(--chip)">🏁</span><div class="tx"><b>Race-day plan</b><span>Pacing, fuel and race-week checklist</span></div></button>`;
   if(q)h+=`<div class="trow"><span class="mdot" style="background:${qDone?"var(--ride)":"var(--chip)"}">${qDone?"✓":"🎯"}</span><div class="tx"><b style="${qDone?"color:var(--muted);text-decoration:line-through":""}">${esc(q.t)}</b><span>Daily quest</span></div><span class="qxp${qDone?" done":""}">+${q.xp} XP</span></div>`;
   return h+`</div>`;
 }
