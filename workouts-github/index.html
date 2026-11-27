@@ -425,7 +425,8 @@ select{-webkit-appearance:none;appearance:none;background-image:linear-gradient(
 .atplace{display:block;font-size:.8rem;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .plc{display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:14px;align-items:center;background:var(--surface);border-radius:14px;padding:14px;margin-bottom:10px;width:100%;text-align:left}
 .plc .pic{width:48px;height:48px;border-radius:12px;display:grid;place-items:center;font-size:1.4rem;background:var(--chip)}
-.pic.haslogo,.tico.haslogo{background:#fff;overflow:hidden;padding:0}
+.pic.haslogo,.tico.haslogo{background:none;padding:0;overflow:hidden;isolation:isolate}
+.haslogo .plimg{background:#fff;object-fit:cover}
 .plimg{width:100%;height:100%;object-fit:contain;display:block;border-radius:inherit}
 .plogo{display:flex;align-items:center;gap:10px}.plogo .btn{flex:none}.plogo .pic{width:56px;height:56px;flex:none}.plimg{max-width:100%}
 .plc b{display:block;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
