@@ -15,9 +15,20 @@
 <script>window.STANDALONE=true;</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>html,body{background:#000}</style>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" onload="this.onload=null;this.rel='stylesheet'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap"></noscript>
+<script>/* if the app hasn't drawn after 12 seconds, offer a way out instead of a blank screen */
+(function(){var err="";addEventListener("error",function(e){if(!err)err=String(e.message||"");});
+setTimeout(function(){try{var a=document.getElementById("app");if(a&&a.children.length)return;
+var b="display:block;width:100%;padding:14px;border-radius:14px;border:0;font:600 16px -apple-system,sans-serif;margin-top:10px;",d=document.createElement("div");
+d.style.cssText="position:fixed;inset:0;z-index:2147483647;background:#000;color:#fff;font:16px -apple-system,sans-serif;display:flex;flex-direction:column;justify-content:center;padding:32px";
+d.innerHTML='<b style="font-size:22px;margin-bottom:8px">Workouts didn\'t open</b><span style="color:#9a9aa0;line-height:1.45">Your workouts are safe on this phone. '+(err?'The app hit an error: '+err.replace(/[<&]/g,"").slice(0,160):'This is usually a slow or patchy connection.')+'</span><button id="bg-r" style="'+b+'background:#CDF54A;color:#000">Try again</button><button id="bg-c" style="'+b+'background:#2a2a2e;color:#fff">Refresh the app files</button>';
+document.body.appendChild(d);document.getElementById("bg-r").onclick=function(){location.reload();};
+document.getElementById("bg-c").onclick=function(){var q=[];if(navigator.serviceWorker)q.push(navigator.serviceWorker.getRegistrations().then(function(r){return Promise.all(r.map(function(x){return x.unregister();}));}));
+if(window.caches)q.push(caches.keys().then(function(k){return Promise.all(k.filter(function(n){return /^workouts-v/.test(n);}).map(function(n){return caches.delete(n);}));}));
+Promise.all(q).then(function(){location.reload();},function(){location.reload();});};}catch(e){}},12000);})();</script>
 <style>/* base rules and later additions (moved out of an old page wrapper) */
-:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}
+:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#000;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}
 .aex-h{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .aex-h .aswap{flex:none;min-height:36px;padding:0 14px}
 

@@ -1,5 +1,5 @@
-// Offline support: the app shell is cached, so it opens with no connection.
-const VERSION = "workouts-v115";
+// Offline support: the app shell is cached, so it opens with no connection or a slow one.
+const VERSION = "workouts-v116";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-180.png"];
 
 self.addEventListener("install", (e) => {
@@ -13,6 +13,9 @@ self.addEventListener("activate", (e) => {
   );
 });
 
+// Waits for a request, but gives up after ms so a weak signal can't hold the app on a blank screen.
+const within = (p, ms) => Promise.race([p, new Promise((r) => setTimeout(() => r(null), ms))]);
+
 self.addEventListener("fetch", (e) => {
   const req = e.request;
   if (req.method !== "GET") return;
@@ -21,15 +24,21 @@ self.addEventListener("fetch", (e) => {
   // The AI hold finder model (75 MB): the app downloads and caches it itself, on request, so leave it alone here.
   if (url.origin === location.origin && url.pathname.includes("/models/")) return;
 
-  // The app itself: try the network first so updates arrive, fall back to the cache offline.
+  // The app itself: use the network when it answers quickly so updates arrive; otherwise open the saved copy
+  // straight away and save the fresh one for next time. Only good responses are saved.
   if (url.origin === location.origin) {
-    e.respondWith(
-      fetch(req, { cache: "no-cache" }).then((res) => {
-        const copy = res.clone();
-        caches.open(VERSION).then((c) => c.put(req, copy));
-        return res;
-      }).catch(() => caches.match(req).then((r) => r || caches.match("./index.html")))
-    );
+    const net = fetch(req, { cache: "no-cache" }).then((res) => {
+      if (res && res.ok && res.type === "basic") { const copy = res.clone(); caches.open(VERSION).then((c) => c.put(req, copy)); }
+      return res;
+    });
+    e.respondWith((async () => {
+      const nav = req.mode === "navigate";
+      const saved = (await caches.match(req)) || (nav ? (await caches.match("./index.html")) || (await caches.match("./")) : null);
+      if (!saved) return net.catch(() => new Response("You're offline and the app isn't saved on this phone yet.", { status: 503, headers: { "Content-Type": "text/plain" } }));
+      const res = await within(net.catch(() => null), nav ? 3000 : 5000);
+      return res && res.ok ? res : saved;
+    })());
+    e.waitUntil(net.then(() => {}, () => {}));
     return;
   }
 
@@ -45,9 +54,9 @@ self.addEventListener("fetch", (e) => {
     return;
   }
 
-  // Fonts and the map library: cache after first use.
+  // Fonts and the map library: cache after first use; never let a failed font fetch break the page.
   if (/fonts\.(googleapis|gstatic)\.com|unpkg\.com/.test(url.host)) {
-    e.respondWith(caches.open(VERSION).then((c) => c.match(req).then((hit) => hit || fetch(req).then((res) => { c.put(req, res.clone()); return res; }))));
+    e.respondWith(caches.open(VERSION).then((c) => c.match(req).then((hit) => hit || fetch(req).then((res) => { if (res.ok || res.type === "opaque") c.put(req, res.clone()); return res; }))).catch(() => fetch(req)));
     return;
   }
 
