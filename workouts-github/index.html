@@ -5076,7 +5076,7 @@ async function drawShare(s,o){
         const x0=left?P+cw*col+cw/2:W/2-(inRow*cw)/2+cw*col+cw/2,top=off+op.y+row*op.cellH;
         if(g.gc)drawGM(x,g.gl,g.gc,x0,top+44,40);else{x.font=fnt(F.num,52);x.textAlign="center";x.fillStyle=ink;const tw=Math.max(80,x.measureText(g.gl).width+36);x.beginPath();if(x.roundRect)x.roundRect(x0-tw/2,top+8,tw,72,36);else x.rect(x0-tw/2,top+8,tw,72);x.globalAlpha=.16;x.fill();x.globalAlpha=1;x.fillText(g.gl,x0,top+62);}
         x.textAlign="center";x.fillStyle=ink;x.font=fnt(F.num,64*F.k/1);x.fillText("×"+g.n,x0,top+150);
-        x.globalAlpha=.8;x.font=fnt(F.label,28);let lab=g.gc?g.gl:"";if(g.fl)lab=(lab?lab+" · ":"")+g.fl+" flash"+(g.fl===1?"":"ed");x.fillText(lab,x0,top+190,cw-10);x.globalAlpha=1;});
+        x.globalAlpha=.8;x.font=fnt(F.label,28);let lab=g.gc?g.gl:"";if(g.fl&&o.flashes!==false)lab=(lab?lab+" · ":"")+g.fl+" flash"+(g.fl===1?"":"ed");x.fillText(lab,x0,top+190,cw-10);x.globalAlpha=1;});
       x.textAlign=left?"left":"center";x.restore();continue;}
     if(op.mus){x.save();x.shadowColor="transparent";const mw=op.h*430/412,cx=left?P+mw/2:W/2;
       drawMuscleMap(x,cx,off+op.y,op.h,op.v,ink,o.rcolor&&o.rcolor!=="same"?o.rcolor:ink);
@@ -5270,7 +5270,7 @@ async function drawPoster(s,o){
     else if(o.sends&&s.type==="climb"){const G=sendGroups(s).slice(0,8);if(G.length){const cols=Math.min(4,G.length),rows=Math.ceil(G.length/cols),cell=230;y+=120;const yg=y;
       push(()=>{x.shadowColor="transparent";const cw=Math.min(240,maxW/cols);G.forEach((g,i)=>{const r=Math.floor(i/cols),inR=Math.min(cols,G.length-r*cols),cx=W/2-(inR*cw)/2+cw*(i%cols)+cw/2,top=off+yg+r*cell;
         if(g.gc)drawGM(x,g.gl,g.gc,cx,top+50,46);else{x.font=PF.wide(48);x.textAlign="center";x.fillStyle=acc;x.fillText(g.gl,cx,top+68);}
-        x.fillStyle=ink;x.textAlign="center";x.font=PF.wide(52);x.fillText("×"+g.n,cx,top+170);x.font=PF.mono(26);x.globalAlpha=.85;if(g.fl)x.fillText(g.fl+" flash"+(g.fl===1?"":"ed"),cx,top+210);x.globalAlpha=1;});});y+=rows*cell;}}
+        x.fillStyle=ink;x.textAlign="center";x.font=PF.wide(52);x.fillText("×"+g.n,cx,top+170);x.font=PF.mono(26);x.globalAlpha=.85;if(g.fl&&o.flashes!==false)x.fillText(g.fl+" flash"+(g.fl===1?"":"ed"),cx,top+210);x.globalAlpha=1;});});y+=rows*cell;}}
     if(o.title){y+=route?70:130;const yt=y,t=titleOf(s);push(()=>{x.fillStyle=ink;x.font=PF.mono(40);x.textAlign="right";x.fillText(t,W-P,off+yt,maxW);});}
     {const more=o.stats.map(k=>by[k]).filter(Boolean).slice(3,7);if(more.length){const rc=statsRowCanvas(more,o);y+=100;const yr=y;push(()=>x.drawImage(rc,(W-rc.width)/2,off+yr));y+=rc.height;}}
     {const ex=await posterExtras(s,o,{mus:true,sends:true,level:true,route:true});if(ex){y+=100;const ye=y;push(()=>x.drawImage(ex,0,off+ye));y+=ex.height;}}
@@ -5355,7 +5355,7 @@ async function posterExtras(s,o,skip){
   if(o.mus&&!skip.mus&&s.type==="lift"&&s.ex&&s.ex.length){const v=musLoad(s);if(Object.keys(v).length)parts.push({h:620,draw:(x,y)=>{x.save();x.shadowColor="transparent";drawMuscleMap(x,W/2,y,540,v,ink,o.accent||"#E8323C");x.restore();x.fillStyle=ink;x.globalAlpha=.9;x.font=PF.mono(32);x.textAlign="center";x.fillText(musTop(v,4).map(([m])=>m).join("  ·  "),W/2,y+600,W-2*P);x.globalAlpha=1;}});}
   if(o.sends&&!skip.sends&&s.type==="climb"){const G=sendGroups(s).slice(0,8);if(G.length){const cols=Math.min(4,G.length),rows=Math.ceil(G.length/cols),cell=230;parts.push({h:rows*cell,draw:(x,y)=>{x.save();x.shadowColor="transparent";const cw=Math.min(240,(W-2*P)/cols);G.forEach((g,i)=>{const r=Math.floor(i/cols),inR=Math.min(cols,G.length-r*cols),cx=W/2-(inR*cw)/2+cw*(i%cols)+cw/2,top=y+r*cell;
     if(g.gc)drawGM(x,g.gl,g.gc,cx,top+50,46);else{x.font=PF.wide(48);x.textAlign="center";x.fillStyle=o.accent||"#E8323C";x.fillText(g.gl,cx,top+68);}
-    x.fillStyle=ink;x.textAlign="center";x.font=PF.wide(52);x.fillText("×"+g.n,cx,top+170);x.font=PF.mono(26);x.globalAlpha=.85;if(g.fl)x.fillText(g.fl+" flash"+(g.fl===1?"":"ed"),cx,top+210);x.globalAlpha=1;});x.restore();}});}}
+    x.fillStyle=ink;x.textAlign="center";x.font=PF.wide(52);x.fillText("×"+g.n,cx,top+170);x.font=PF.mono(26);x.globalAlpha=.85;if(g.fl&&o.flashes!==false)x.fillText(g.fl+" flash"+(g.fl===1?"":"ed"),cx,top+210);x.globalAlpha=1;});x.restore();}});}}
   if(o.prs){const r=getC().by[s.id];const ent=r?[...r.medals,...(r.ymedals||[])].sort((a,b)=>a.rank-b.rank).slice(0,4):[];if(ent.length){const hh=prBlockHeight(ent.length);parts.push({h:hh,draw:(x,y)=>{x.save();x.shadowColor="transparent";const bw=Math.min(W-2*P,880);drawPRBlock(x,(W-bw)/2,y,bw,ent,{style:"glass",radius:28});x.restore();}});}}
   const extra=[];if(o.level&&!skip.level)extra.push("Level "+levelOf(getC().xp));
   if(o.trophies){const r=getC().by[s.id];if(r){const cnt=[0,0,0];r.medals.forEach(m=>cnt[m.rank-1]++);const ps=[];if(cnt[0])ps.push(cnt[0]+" gold");if(cnt[1])ps.push(cnt[1]+" silver");if(cnt[2])ps.push(cnt[2]+" bronze");if(ps.length)extra.push(ps.join(", ")+(r.medals.length===1?" medal":" medals"));if(r.acc.length)extra.push(r.acc.length+(r.acc.length===1?" accolade":" accolades"));}}
@@ -5530,9 +5530,9 @@ let shareDl=null;
 function openShare(s){
   const hasRoute=!!(s.track&&s.track.length>1);
   const o={layout:"stack",size:"fit",color:"#FFFFFF",font:"sport",align:"center",bg:"none",title:true,date:true,place:false,route:hasRoute,trophies:false,level:false,shadow:false,outline:false,rcolor:"same",sends:s.type==="climb"&&sendGroups(s).length>0,mus:s.type==="lift"&&!!(s.ex&&s.ex.length),stats:defaultStats(s),
-    style:"classic",head:"day",accent:"#E8323C",day:true,depth:false,splits:true,bw:true,grain:true,motion:false,upimg:null,logo:"none",glogo:"none",lcol:"volt",lpos:"bc",accOn:"none",_gp:placeOf(s)};let motionSet=false;const hasGL=!!logoOf(placeOf(s));
+    style:"classic",head:"day",accent:"#E8323C",day:true,depth:false,splits:true,bw:true,grain:true,motion:false,upimg:null,logo:"none",glogo:"none",lcol:"volt",lpos:"bc",accOn:"none",flashes:true,_gp:placeOf(s)};let motionSet=false;const hasGL=!!logoOf(placeOf(s));
   /* remember the look you last used (not the stats, which depend on the activity) */
-  const SPK="workouts-share-look-v1",LOOK=["style","layout","size","color","font","align","bg","shadow","outline","accent","accOn","logo","glogo","lcol","lpos","head","grain","bw","motion","rcolor","trophies","level"];
+  const SPK="workouts-share-look-v1",LOOK=["style","layout","size","color","font","align","bg","shadow","outline","accent","accOn","logo","glogo","lcol","lpos","head","grain","bw","motion","rcolor","trophies","level","flashes"];
   try{const sv=JSON.parse(localStorage.getItem(SPK)||"{}");for(const k of LOOK)if(sv[k]!=null)o[k]=sv[k];if(o.bg==="photo"&&!s.photo)o.bg="dark";if(o.style==="trace"&&!hasRoute)o.style="classic";if(o.style==="classic"&&o.size==="poster")o.size="fit";}catch(e){}
   const saveLook=()=>{try{const sv={};for(const k of LOOK)sv[k]=o[k];localStorage.setItem(SPK,JSON.stringify(sv));}catch(e){}};
   const sameDay=live().filter(z=>z.date===s.date).length>1,canSplit=!!trackSplits(s);
@@ -5542,7 +5542,7 @@ function openShare(s){
   const swName=h=>h===STRAVA?"Strava orange":h==="#FFFFFF"?"White":h==="#121212"?"Black":"Color "+h;
   const segH=(id,key,opts)=>`<div class="seg" id="${id}">${opts.map(([v,t])=>`<button data-v="${v}" aria-pressed="${o[key]===v}">${t}</button>`).join("")}</div>`;
   const rr=getC().by[s.id],hasPR=!!(rr&&(rr.medals.length||(rr.ymedals||[]).length));
-  const toggles=[["title","Title"],["date","Date and time"],...(placeName(s)?[["place","Place"]]:[]),...(s.notes?[["notes","Notes"]]:[]),...(hasPR?[["prs","PR card"]]:[]),...(s.type==="climb"&&sendGroups(s).length?[["sends","Sends by grade"]]:[]),...(s.type==="lift"&&s.ex&&s.ex.length?[["mus","Muscles worked"]]:[]),...(hasRoute?[["route","Route"]]:[]),["trophies","Medals"],["level","Level"],["shadow","Shadow"],["outline","Outline"]];
+  const toggles=[["title","Title"],["date","Date and time"],...(placeName(s)?[["place","Place"]]:[]),...(s.notes?[["notes","Notes"]]:[]),...(hasPR?[["prs","PR card"]]:[]),...(s.type==="climb"&&sendGroups(s).length?[["sends","Sends by grade"]]:[]),...(s.type==="climb"&&sendGroups(s).some(g=>g.fl)?[["flashes","Flash counts"]]:[]),...(s.type==="lift"&&s.ex&&s.ex.length?[["mus","Muscles worked"]]:[]),...(hasRoute?[["route","Route"]]:[]),["trophies","Medals"],["level","Level"],["shadow","Shadow"],["outline","Outline"]];
   openSheet(`<h3>Share as image</h3><p class="sub">Transparent PNG unless you pick a background. Put it over a photo in Instagram Stories or any photo editor.</p>
     <div class="preview" id="pv"><span style="color:#fff">Drawing…</span></div>
     <div class="row"><button class="btn primary" id="ssave">Save image</button><button class="btn" id="scopy">Copy image</button></div>
